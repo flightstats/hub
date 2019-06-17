@@ -1,4 +1,4 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.hub;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;

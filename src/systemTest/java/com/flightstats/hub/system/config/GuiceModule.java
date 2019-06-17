@@ -1,7 +1,9 @@
 package com.flightstats.hub.system.config;
 
-import com.flightstats.hub.client.CallbackClientFactory;
-import com.flightstats.hub.client.HubClientFactory;
+import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.clients.callback.CallbackClientFactory;
+import com.flightstats.hub.clients.hub.HubClientFactory;
+import com.flightstats.hub.clients.s3.S3ClientFactory;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -24,6 +26,7 @@ public class GuiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(S3ClientFactory.class).asEagerSingleton();
         Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
         Names.bindProperties(binder(), properties);
 
@@ -56,5 +59,11 @@ public class GuiceModule extends AbstractModule {
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
                 .build();
+    }
+
+    @Singleton
+    @Provides
+    public AmazonS3 s3Client(S3ClientFactory s3ClientFactory) {
+        return s3ClientFactory.getS3Client();
     }
 }

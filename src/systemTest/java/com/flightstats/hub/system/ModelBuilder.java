@@ -1,19 +1,15 @@
 package com.flightstats.hub.system;
 
-import com.flightstats.hub.model.ChannelContentStorageType;
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
-import lombok.Builder;
-import lombok.Setter;
-import lombok.experimental.Wither;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 
-import java.util.Optional;
+import static com.flightstats.hub.model.ChannelType.SINGLE;
 
-import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
 
 @Slf4j
 public class ModelBuilder {
@@ -63,10 +59,21 @@ public class ModelBuilder {
             return this;
         }
 
-        public WebhookBuilder batchType(ChannelContentStorageType type) {
+        public WebhookBuilder batchType(WebhookType type) {
             webhookBuilder.batch(type.toString());
             return this;
         }
+
+        public WebhookBuilder heartbeat(boolean value) {
+            webhookBuilder.heartbeat(value);
+            return this;
+        }
+
+        public WebhookBuilder callbackTimeoutSeconds(int seconds) {
+            webhookBuilder.callbackTimeoutSeconds(seconds);
+            return this;
+        }
+
 
         public Webhook build() {
             return webhookBuilder.build();

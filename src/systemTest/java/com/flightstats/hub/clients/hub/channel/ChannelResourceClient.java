@@ -1,7 +1,8 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.hub.channel;
 
-import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ChannelConfig;
+
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -12,7 +13,7 @@ import retrofit2.http.Path;
 public interface ChannelResourceClient {
 
     @POST("/channel")
-    Call<Object> create(@Body Channel channel);
+    Call<Object> create(@Body ChannelConfig channel);
 
     @GET("/channel/{channelName}")
     Call<ContentKey> get(@Path("channelName") String channelName);

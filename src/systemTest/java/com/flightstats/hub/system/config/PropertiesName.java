@@ -1,11 +1,16 @@
 package com.flightstats.hub.system.config;
 
-class PropertiesName {
-    static final String HELM_RELEASE_NAME = "helm.release.name";
+public class PropertiesName {
+    public static final String HELM_RELEASE_NAME = "helm.release.name";
     static final String HELM_CHART_PATH = "helm.chart.path";
     static final String HELM_CLUSTERED_HUB = "helm.release.hub.isClustered";
     static final String HELM_RELEASE_DELETE = "helm.release.delete";
 
-    static final String HUB_URL_TEMPLATE = "hub.url";
+    public static final String HUB_URL_TEMPLATE = "hub.url";
     static final String CALLBACK_URL_TEMPLATE = "callback.url";
+
+    public static final String S3_URL_TEMPLATE = "s3.url";
+    public static final String S3_REGION = "s3.region";
+    public static final String S3_CREDENTIALS_PATH = "s3.credentials.path";
+    public static final String S3_BUCKET_TEMPLATE = "s3.bucket.name";
 }

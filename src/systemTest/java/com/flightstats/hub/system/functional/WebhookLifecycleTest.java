@@ -2,8 +2,8 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.kubernetes.HubLifecycle;
+import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -16,13 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import javax.inject.Inject;
-import java.util.Collections;
 import java.util.List;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
-import static junit.framework.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import javax.inject.Inject;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -48,8 +47,8 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @BeforeEach
     void before() {
-        channelName = randomAlphaNumeric(10);
-        webhookName = randomAlphaNumeric(10);
+        this.channelName = randomAlphaNumeric(10);
+        this.webhookName = randomAlphaNumeric(10);
     }
 
     private Webhook buildWebhook() {
@@ -64,7 +63,7 @@ class WebhookLifecycleTest extends DependencyInjector {
     void testWebhookWithNoStartItem() {
         String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
-        channelResource.create(channelName);
+        channelResource.createWithDefaults(channelName);
 
         Webhook webhook = buildWebhook().withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
@@ -78,12 +77,9 @@ class WebhookLifecycleTest extends DependencyInjector {
     void testWebhookWithStartItemAndParallelCalls() {
         String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
-        channelResource.create(channelName);
+        channelResource.createWithDefaults(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
-
-        Webhook webhook = buildWebhook().
-                withStartItem(channelItems.get(4)).
-                withParallelCalls(2);
+        Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));
@@ -94,12 +90,9 @@ class WebhookLifecycleTest extends DependencyInjector {
     void testWebhookWithStartItemAndASerialWebhook_expectItemsInOrder() {
         String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
-        channelResource.create(channelName);
+        channelResource.createWithDefaults(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
-
-        Webhook webhook = buildWebhook().
-                withStartItem(channelItems.get(4)).
-                withParallelCalls(1);
+        Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));

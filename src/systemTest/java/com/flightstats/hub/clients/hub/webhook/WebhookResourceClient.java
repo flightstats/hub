@@ -1,4 +1,4 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.hub.webhook;
 
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookErrors;

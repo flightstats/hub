@@ -1,4 +1,4 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.callback;
 
 import okhttp3.HttpUrl;
 import retrofit2.Retrofit;
@@ -13,7 +13,6 @@ public class CallbackClientFactory {
     @Inject
     public CallbackClientFactory(@Named("callback") Retrofit retrofitHub) {
         this.retrofitHub = retrofitHub;
-
     }
 
     public <T> T getCallbackClient(Class<T> serviceClass) {

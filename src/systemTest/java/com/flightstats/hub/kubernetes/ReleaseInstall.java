@@ -1,7 +1,6 @@
 package com.flightstats.hub.kubernetes;
 
 import com.flightstats.hub.system.config.HelmProperties;
-import com.google.protobuf.Descriptors;
 import hapi.chart.ChartOuterClass;
 import hapi.chart.ConfigOuterClass;
 import hapi.release.ReleaseOuterClass;
@@ -16,8 +15,6 @@ import org.microbean.helm.chart.URLChartLoader;
 
 import javax.inject.Inject;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Future;
 
 import static junit.framework.TestCase.assertTrue;
@@ -33,8 +30,7 @@ public class ReleaseInstall {
 
 
     @SneakyThrows
-    public void install() {
-
+    void install() {
         log.info("Hub release {} install begins", getReleaseName());
 
         long start = System.currentTimeMillis();
@@ -89,4 +85,3 @@ public class ReleaseInstall {
         return helmProperties.getChartPath();
     }
 }
-

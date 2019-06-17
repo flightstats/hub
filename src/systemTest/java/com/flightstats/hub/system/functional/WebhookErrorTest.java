@@ -10,6 +10,7 @@ import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Collections;
 
@@ -27,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 class WebhookErrorTest extends DependencyInjector {
     @Inject
     private ChannelService channelService;
@@ -70,7 +74,7 @@ class WebhookErrorTest extends DependencyInjector {
     }
 
     private void initChannelAndWebhook() {
-        channelService.create(channelName);
+        channelService.createWithDefaults(channelName);
 
         createWebhook();
     }
@@ -119,6 +123,7 @@ class WebhookErrorTest extends DependencyInjector {
     }
 
     @RepeatedTest(3)
+    @SneakyThrows
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
         // verify that errors are created for the first item
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
@@ -144,13 +149,6 @@ class WebhookErrorTest extends DependencyInjector {
         // verify that no errors exist on the hub
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
-
-        log.info("deleting {} and {}", channelName, webhookName);
-        this.channelService.delete(channelName);
-        this.webhookService.delete(webhookName);
-
-        log.info("creating {} and {}", channelName, webhookName);
-        initChannelAndWebhook();
     }
 
     @AfterEach

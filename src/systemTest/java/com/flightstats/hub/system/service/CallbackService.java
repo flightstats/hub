@@ -1,10 +1,10 @@
 package com.flightstats.hub.system.service;
 
-import com.flightstats.hub.client.CallbackClientFactory;
-import com.flightstats.hub.client.CallbackResourceClient;
+import com.flightstats.hub.clients.callback.CallbackClientFactory;
+import com.flightstats.hub.clients.callback.CallbackResourceClient;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.WebhookCallback;
 import com.flightstats.hub.model.WebhookErrors;
+import com.flightstats.hub.model.WebhookCallback;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
@@ -12,7 +12,6 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +23,6 @@ import static org.awaitility.Awaitility.await;
 @Slf4j
 public class CallbackService {
 
-    private static final String EMPTY_STRING = "";
     private CallbackResourceClient callbackResourceClient;
     private WebhookService webhookResource;
     private HttpUrl callbackBaseUrl;
@@ -40,7 +38,7 @@ public class CallbackService {
         return getCallbackBaseUrl() + "callback/" + webhookName;
     }
 
-    public HttpUrl getCallbackBaseUrl() {
+    private HttpUrl getCallbackBaseUrl() {
         return callbackBaseUrl;
     }
 
