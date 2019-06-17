@@ -25,7 +25,7 @@ public class GuiceModule extends AbstractModule {
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
     private final Properties properties;
 
-    GuiceModule(Properties properties) {
+    public GuiceModule(Properties properties) {
         this.properties = properties;
     }
 

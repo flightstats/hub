@@ -96,7 +96,6 @@ class WebhookErrorTest {
 
     @RepeatedTest(3)
     void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
-        fail();
         // verify that errors are created for the first item
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
@@ -130,7 +129,6 @@ class WebhookErrorTest {
     @RepeatedTest(3)
     @SneakyThrows
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
-        fail();
         // verify that errors are created for the first item
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)

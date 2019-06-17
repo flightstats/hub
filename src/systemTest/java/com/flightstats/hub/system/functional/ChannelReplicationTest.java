@@ -65,7 +65,6 @@ class ChannelReplicationTest {
 
     @Test
     void replication_itemInBothChannels_item() {
-        fail();
         itemUri1 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
         Object objectFromSource = channelService.getItem(itemUri1);
         Awaitility.await()
@@ -81,7 +80,6 @@ class ChannelReplicationTest {
 
     @Test
     void replication_itemsInBothChannels_item() {
-        fail();
         itemUri1 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
         itemUri2 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
         itemUri3 = channelService.addItem(replicationSourceChannelName, TEST_DATA);

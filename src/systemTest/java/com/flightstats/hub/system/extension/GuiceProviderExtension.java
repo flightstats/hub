@@ -1,7 +1,9 @@
 package com.flightstats.hub.system.extension;
 
 import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.config.GuiceModule;
 import com.flightstats.hub.system.config.PropertiesLoader;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -18,10 +20,14 @@ public class GuiceProviderExtension implements BeforeAllCallback {
         log.info("guice injection extension");
         ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
         log.info("$$$$$$$$$$$$$$ injector {}", store.get("injector", Injector.class));
-        if (store.get("injector", Injector.class) == null) {
+        String PROPERTY_FILE_NAME = "system-test-hub.properties";
+        Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
+        store.getOrComputeIfAbsent("injector", (thing) -> {
             log.info("injecting stuff");
-            String PROPERTY_FILE_NAME = "system-test-hub.properties";
-            Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
+            return Guice.createInjector(new GuiceModule(properties));
+        }, Injector.class);
+        /*
+        if (store.get("injector", Injector.class) == null) {
 
             store.put("properties", properties);
 
@@ -29,9 +35,11 @@ public class GuiceProviderExtension implements BeforeAllCallback {
             log.info("injector {}", injector);
             store.put("injector", injector);
         }
+        */
     }
 
 //    @Override
+
 //    @SneakyThrows
 //    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
 //        log.info("guice injection extension");
