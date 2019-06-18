@@ -1,6 +1,5 @@
 package com.flightstats.hub.system.service;
 
-import com.amazonaws.services.dynamodbv2.xspec.B;
 import com.flightstats.hub.clients.callback.CallbackClientFactory;
 import com.flightstats.hub.clients.callback.CallbackResourceClient;
 import com.flightstats.hub.model.ContentKey;
@@ -10,12 +9,10 @@ import com.flightstats.hub.model.WebhookType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
-import org.awaitility.Duration;
 import retrofit2.Call;
 import retrofit2.Response;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -98,13 +95,10 @@ public class CallbackService {
 
     public boolean itemsNotSentToWebhook(String webhookName, List<String> channelItems, WebhookType type) {
         try {
-            List<Boolean> notInWebhook = new ArrayList<>();
-            // wait for N duration before checking the webhook
             int assertAfterWaitSeconds = type.equals(WebhookType.MINUTE) ? 90 : 30;
             Thread.sleep(assertAfterWaitSeconds * 1000);
             List<String> callbackItems = getItemsReceivedByCallback(webhookName);
-            notInWebhook.add(callbackItems.stream().noneMatch(channelItems::contains));
-            return notInWebhook.stream().allMatch(val -> val);
+            return callbackItems.stream().noneMatch(channelItems::contains);
         } catch (Exception e) {
             log.error(e.getMessage());
             return false;

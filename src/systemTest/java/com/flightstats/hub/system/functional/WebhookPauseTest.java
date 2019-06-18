@@ -7,7 +7,6 @@ import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.WebhookService;
-import org.awaitility.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -16,7 +15,6 @@ import javax.inject.Inject;
 
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertFalse;
