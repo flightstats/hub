@@ -27,7 +27,6 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback {
     @Override
     @SneakyThrows
     public void beforeAll(ExtensionContext context) {
-        log.debug("before test execution");
         ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
         setHubLifecycle(context);
 
@@ -35,18 +34,16 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback {
     }
 
     static class HubLifecycleSetup implements CloseableResource, AutoCloseable {
-        private static final AtomicInteger creations = new AtomicInteger();
 
         @SuppressWarnings("unused") // used via reflection
         HubLifecycleSetup() {
-            log.debug("setting up hub lifecycle");
+            log.info("setting up hub lifecycle");
             hubLifecycle.get().setup();
-            assertEquals(1, creations.incrementAndGet(), "Singleton pattern failure!");
         }
 
         @Override
         public void close() {
-            log.debug("tearing down hub lifecycle");
+            log.info("tearing down hub lifecycle");
             Optional.ofNullable(hubLifecycle.get())
                     .ifPresent(HubLifecycle::cleanup);
         }
