@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static junit.framework.Assert.assertTrue;
 
 @Slf4j
 class TimedWebhooksTest extends TestClassWrapper {
@@ -105,7 +105,7 @@ class TimedWebhooksTest extends TestClassWrapper {
     }
 
     @ParameterizedTest
-    @EnumSource(value = WebhookType.class, names = {"MINUTE", "SECOND"})
+    @EnumSource(value = WebhookType.class, names = { "SECOND", "MINUTE" })
     void timedWebhookBatch_hasExpectedItems_items(WebhookType type) {
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(() -> channelAndWebhookFactory(type));
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(this::addItems);

@@ -22,7 +22,7 @@ public class GuiceProviderExtension implements BeforeAllCallback {
     }
 
     private Injector createInjector() {
-        log.info("loading properties and creating instantiating DI");
+        log.debug("loading properties and instantiating DI");
         Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
         return Guice.createInjector(new GuiceModule(properties));
     }
