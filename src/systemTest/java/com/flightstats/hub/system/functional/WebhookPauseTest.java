@@ -37,7 +37,7 @@ class WebhookPauseTest extends TestClassWrapper {
         Webhook webhook = modelBuilder.webhookBuilder()
                 .webhookName(webhookName)
                 .channelName(channelName)
-                .parallelCalls(new Random().nextInt(4))
+                .parallelCalls(3)
                 .batchType(type)
                 .build();
         webhookService.insertAndVerify(webhook);
@@ -50,7 +50,7 @@ class WebhookPauseTest extends TestClassWrapper {
                 .channelName(channelName)
                 .isPaused(pause)
                 .batchType(WebhookType.valueOf(webhook.getBatch()))
-                .parallelCalls(new Random().nextInt(2))
+                .parallelCalls(1)
                 .build();
         webhookService.updateAndVerify(updatedWebhook);
     }
