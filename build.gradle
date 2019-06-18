@@ -63,8 +63,6 @@ task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verif
     systemProperties System.properties.findAll { property ->
         property.key.startsWith("systemTest.")
     }
-    systemProperty 'junit.jupiter.execution.parallel.enabled', 'TRUE'
-    systemProperty 'junit.jupiter.execution.parallel.mode.default', 'CONCURRENT'
 
     useJUnitPlatform()
     testLogging {
