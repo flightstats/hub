@@ -10,6 +10,7 @@ import com.flightstats.hub.system.service.WebhookService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -21,12 +22,9 @@ import javax.inject.Singleton;
 import java.util.Properties;
 
 @Slf4j
+@AllArgsConstructor
 public class GuiceModule extends AbstractModule {
     private final Properties properties;
-
-    public GuiceModule(Properties properties) {
-        this.properties = properties;
-    }
 
     @Override
     protected void configure() {

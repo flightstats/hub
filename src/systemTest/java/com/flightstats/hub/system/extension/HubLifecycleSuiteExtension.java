@@ -11,18 +11,17 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 import static org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
 
 @Slf4j
 public class HubLifecycleSuiteExtension implements BeforeAllCallback {
-    private static final Namespace NAMESPACE = Namespace.GLOBAL;
     private static final AtomicReference<HubLifecycle> hubLifecycle = new AtomicReference<>();
 
     @Override
     @SneakyThrows
     public void beforeAll(ExtensionContext context) {
-        ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
+        ExtensionContext.Store store = context.getRoot().getStore(GLOBAL);
         setHubLifecycle(context);
 
         store.getOrComputeIfAbsent(HubLifecycleSetup.class);
@@ -47,7 +46,7 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback {
     private void setHubLifecycle(ExtensionContext context) {
         if (hubLifecycle.get() == null) {
             Injector injector = context.getRoot()
-                    .getStore(NAMESPACE)
+                    .getStore(GLOBAL)
                     .get("injector", Injector.class);
             hubLifecycle.set(injector.getInstance(HubLifecycle.class));
         }
