@@ -105,7 +105,7 @@ class TimedWebhooksTest extends TestClassWrapper {
     }
 
     @ParameterizedTest
-    @EnumSource(value = WebhookType.class, names = {"MINUTE", "SECOND"})
+    @EnumSource(value = WebhookType.class, names = { "SECOND", "MINUTE" })
     void timedWebhookBatch_hasExpectedItems_items(WebhookType type) {
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(() -> channelAndWebhookFactory(type));
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(this::addItems);

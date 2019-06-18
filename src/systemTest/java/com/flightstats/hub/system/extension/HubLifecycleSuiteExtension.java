@@ -12,13 +12,15 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import static org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
 
 @Slf4j
-public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCallback {
+public class HubLifecycleSuiteExtension implements BeforeAllCallback {
     private static final Namespace NAMESPACE = Namespace.GLOBAL;
     private static final AtomicReference<HubLifecycle> hubLifecycle = new AtomicReference<>();
 
@@ -32,34 +34,21 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
         store.getOrComputeIfAbsent(HubLifecycleSetup.class);
     }
 
-    @Override
-    @SneakyThrows
-    public void afterAll(ExtensionContext context) {
-        log.debug("after all extension");
-        ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
-        setHubLifecycle(context);
-        store.getOrComputeIfAbsent(HubLifecycleTeardown.class);
-    }
+    static class HubLifecycleSetup implements CloseableResource, AutoCloseable {
+        private static final AtomicInteger creations = new AtomicInteger();
 
-    static class HubLifecycleSetup implements CloseableResource {
+        @SuppressWarnings("unused") // used via reflection
         HubLifecycleSetup() {
+            log.debug("setting up hub lifecycle");
             hubLifecycle.get().setup();
+            assertEquals(1, creations.incrementAndGet(), "Singleton pattern failure!");
         }
 
         @Override
         public void close() {
-            // do nothing
-        }
-    }
-
-    static class HubLifecycleTeardown implements CloseableResource {
-        HubLifecycleTeardown() {
-            Optional.ofNullable(hubLifecycle.get()).ifPresent(HubLifecycle::cleanup);
-        }
-
-        @Override
-        public void close() {
-            // do nothing
+            log.debug("tearing down hub lifecycle");
+            Optional.ofNullable(hubLifecycle.get())
+                    .ifPresent(HubLifecycle::cleanup);
         }
     }
 
