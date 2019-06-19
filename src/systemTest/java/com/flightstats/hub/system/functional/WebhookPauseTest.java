@@ -15,7 +15,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import javax.inject.Inject;
 
 import java.util.List;
-import java.util.Random;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertFalse;

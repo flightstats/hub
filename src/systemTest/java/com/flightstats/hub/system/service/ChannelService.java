@@ -83,9 +83,33 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    public byte [] addItemError(String channelName) {
+    public byte[] addItemError(String channelName) {
         Call<ChannelItem> call = channelItemResourceClient.add(channelName, "anything");
         Optional<ResponseBody> optionalError = Optional.ofNullable(call.execute().errorBody());
+        if (optionalError.isPresent()) {
+            return optionalError.get().bytes();
+        }
+        return new byte[] {};
+    }
+
+    private Object getItemResponse(String path) {
+        FormattedStringHelper helper = new FormattedStringHelper().withExtractedUrlPaths(path, hubBaseUrl.toString());
+        return channelItemResourceClient.get(
+                helper.getChannelName(),
+                helper.getYear(),
+                helper.getMonth(),
+                helper.getDay(),
+                helper.getHour(),
+                helper.getMinute(),
+                helper.getSecond(),
+                helper.getMillis(),
+                helper.getHashKey());
+    }
+
+    @SneakyThrows
+    public byte[] getItemError(String path) {
+        Object response = getItemResponse(path);
+        Optional<ResponseBody> optionalError = Optional.ofNullable(((Call) response).execute().errorBody());
         if (optionalError.isPresent()) {
             return optionalError.get().bytes();
         }
@@ -111,17 +135,7 @@ public class ChannelService {
 
     @SneakyThrows
     public Optional<Object> getItem(String path) {
-        FormattedStringHelper helper = new FormattedStringHelper().withExtractedUrlPaths(path, hubBaseUrl.toString());
-        Object response = channelItemResourceClient.get(
-                helper.getChannelName(),
-                helper.getYear(),
-                helper.getMonth(),
-                helper.getDay(),
-                helper.getHour(),
-                helper.getMinute(),
-                helper.getSecond(),
-                helper.getMillis(),
-                helper.getHashKey());
+        Object response = getItemResponse(path);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
