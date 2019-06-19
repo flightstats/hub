@@ -23,9 +23,9 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -40,6 +40,7 @@ public class S3Config {
     private final ContentRetriever contentRetriever;
     private final ChannelService channelService;
     private final S3Properties s3Properties;
+    private final long lifecycleRulesManagerOffsetMinutes;
 
     @Inject
     public S3Config(HubS3Client s3Client,
@@ -54,6 +55,7 @@ public class S3Config {
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
         this.s3Properties = s3Properties;
+        this.lifecycleRulesManagerOffsetMinutes = s3Properties.getLifecycleRulesManagerOffsetMinutes();
         if (s3Properties.isConfigManagementEnabled()) {
             HubServices.register(new S3ConfigInit());
         }
@@ -83,9 +85,8 @@ public class S3Config {
 
         @Override
         protected Scheduler scheduler() {
-            Random random = new Random();
-            long minutes = TimeUnit.HOURS.toMinutes(6);
-            long delayMinutes = minutes + (long) random.nextInt((int) minutes);
+            long delayMinutes = lifecycleRulesManagerOffsetMinutes +
+                    ThreadLocalRandom.current().nextLong(lifecycleRulesManagerOffsetMinutes);
             log.info("scheduling S3Config with delay " + delayMinutes);
             return Scheduler.newFixedDelaySchedule(0, delayMinutes, TimeUnit.MINUTES);
         }
