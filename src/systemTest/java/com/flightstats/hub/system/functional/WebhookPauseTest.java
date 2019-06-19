@@ -7,6 +7,7 @@ import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.WebhookService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -60,6 +61,12 @@ class WebhookPauseTest extends TestClassWrapper {
         channelName = randomAlphaNumeric(10);
         webhookName = randomAlphaNumeric(10);
         channelService.createWithDefaults(channelName);
+    }
+
+    @AfterEach
+    void cleanup() {
+        channelService.delete(channelName);
+        webhookService.delete(webhookName);
     }
 
     @ParameterizedTest
