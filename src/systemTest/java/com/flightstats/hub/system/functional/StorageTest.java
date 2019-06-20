@@ -3,7 +3,9 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
 import com.flightstats.hub.system.extension.TestClassWrapper;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
+import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemRetriever;
 import com.flightstats.hub.system.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -23,7 +25,11 @@ class StorageTest extends TestClassWrapper {
     private String channelName;
     private String itemUri;
     @Inject
-    private ChannelService channelService;
+    private ChannelConfigService channelConfigService;
+    @Inject
+    private ChannelItemCreator itemCreator;
+    @Inject
+    private ChannelItemRetriever itemRetriever;
     @Inject
     private S3Service s3Service;
 
@@ -40,15 +46,15 @@ class StorageTest extends TestClassWrapper {
                     ChannelConfig channel = ChannelConfig.builder()
                             .name(channelName)
                             .storage(type.toString()).build();
-                    channelService.create(channel);
-                    itemUri = channelService.addItem(channelName, TEST_DATA);
+                    channelConfigService.create(channel);
+                    itemUri = itemCreator.addItem(channelName, TEST_DATA);
                     return itemUri != null;
                 });
     }
 
     @AfterEach
     void cleanup() {
-        channelService.delete(channelName);
+        channelConfigService.delete(channelName);
     }
 
     @ParameterizedTest
@@ -57,7 +63,7 @@ class StorageTest extends TestClassWrapper {
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
-                .until(() -> channelService.getItem(itemUri).orElse("").equals(TEST_DATA));
+                .until(() -> itemRetriever.getItem(itemUri).orElse("").equals(TEST_DATA));
     }
 
     @ParameterizedTest

@@ -7,7 +7,7 @@ import com.flightstats.hub.clients.s3.S3ClientFactory;
 import com.flightstats.hub.model.adapters.HubDateTimeTypeAdapter;
 import com.flightstats.hub.model.adapters.HubDateTypeAdapter;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.WebhookService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,7 +41,7 @@ public class GuiceModule extends AbstractModule {
 
         bind(HubClientFactory.class);
         bind(CallbackClientFactory.class);
-        bind(ChannelService.class);
+        bind(ChannelConfigService.class);
         bind(WebhookService.class);
         bind(CallbackService.class);
     }
