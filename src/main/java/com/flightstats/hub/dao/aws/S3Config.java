@@ -40,7 +40,7 @@ public class S3Config {
     private final ContentRetriever contentRetriever;
     private final ChannelService channelService;
     private final S3Properties s3Properties;
-    private final long lifecycleRulesManagerOffsetMinutes;
+    private final long s3TtlEnforcerOffsetMinutes;
 
     @Inject
     public S3Config(HubS3Client s3Client,
@@ -55,7 +55,7 @@ public class S3Config {
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
         this.s3Properties = s3Properties;
-        this.lifecycleRulesManagerOffsetMinutes = s3Properties.getLifecycleRulesManagerOffsetMinutes();
+        this.s3TtlEnforcerOffsetMinutes = s3Properties.getS3TtlEnforcerOffsetMinutes();
         if (s3Properties.isConfigManagementEnabled()) {
             HubServices.register(new S3ConfigInit());
         }
@@ -85,8 +85,8 @@ public class S3Config {
 
         @Override
         protected Scheduler scheduler() {
-            long delayMinutes = lifecycleRulesManagerOffsetMinutes +
-                    ThreadLocalRandom.current().nextLong(lifecycleRulesManagerOffsetMinutes);
+            long delayMinutes = s3TtlEnforcerOffsetMinutes +
+                    ThreadLocalRandom.current().nextLong(s3TtlEnforcerOffsetMinutes);
             log.info("scheduling S3Config with delay " + delayMinutes);
             return Scheduler.newFixedDelaySchedule(0, delayMinutes, TimeUnit.MINUTES);
         }

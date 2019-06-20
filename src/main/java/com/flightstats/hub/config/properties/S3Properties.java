@@ -101,6 +101,6 @@ public class S3Properties {
         return propertiesLoader.getProperty("s3.maxChunkMB", 40);
     }
 
-    public long getLifecycleRulesManagerOffsetMinutes() { return propertiesLoader.getProperty("s3.lifecycleRulesManager.offset.minutes", 60 * 6); }
+    public long getS3TtlEnforcerOffsetMinutes() { return propertiesLoader.getProperty("s3.ttlEnforcer.offset.minutes", 60 * 6); }
 
 }
