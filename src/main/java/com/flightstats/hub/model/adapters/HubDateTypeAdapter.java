@@ -1,4 +1,4 @@
-package com.flightstats.hub.model;
+package com.flightstats.hub.model.adapters;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
@@ -17,7 +17,7 @@ import java.util.TimeZone;
 /**
  * Copied from Gson.  Would be nice to be able to specify the date format.
  */
-final class HubDateTypeAdapter extends TypeAdapter<Date> {
+public final class HubDateTypeAdapter extends TypeAdapter<Date> {
 
     private final DateFormat enUsFormat
             = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.US);
