@@ -1,25 +1,22 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.model.Webhook;
 import javax.inject.Inject;
 
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -29,17 +26,14 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-class WebhookErrorTest extends DependencyInjector {
+class WebhookErrorTest extends TestClassWrapper {
     @Inject
     private ChannelService channelService;
     @Inject
     private WebhookService webhookService;
     @Inject
     private CallbackService callbackService;
-    @Inject
-    private HubLifecycle hubLifecycle;
     @Inject
     private ModelBuilder modelBuilder;
 
@@ -50,7 +44,6 @@ class WebhookErrorTest extends DependencyInjector {
 
     @BeforeAll
     void hubSetup() {
-        hubLifecycle.setup();
         nameSeed = randomAlphaNumeric(5);
     }
 
@@ -159,10 +152,4 @@ class WebhookErrorTest extends DependencyInjector {
             this.webhookService.delete(webhookName);
         }
     }
-
-    @AfterAll
-    void hubCleanup() {
-        hubLifecycle.cleanup();
-    }
-
 }

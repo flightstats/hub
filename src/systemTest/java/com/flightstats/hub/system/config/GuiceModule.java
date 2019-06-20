@@ -10,6 +10,7 @@ import com.flightstats.hub.system.service.WebhookService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -21,13 +22,13 @@ import javax.inject.Singleton;
 import java.util.Properties;
 
 @Slf4j
+@AllArgsConstructor
 public class GuiceModule extends AbstractModule {
-    private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
+    private final Properties properties;
 
     @Override
     protected void configure() {
         bind(S3ClientFactory.class).asEagerSingleton();
-        Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
         Names.bindProperties(binder(), properties);
 
         bind(HubClientFactory.class);

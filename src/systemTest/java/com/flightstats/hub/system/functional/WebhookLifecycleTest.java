@@ -2,30 +2,25 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.kubernetes.HubLifecycle;
-import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
+import javax.inject.Inject;
 import java.util.List;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import javax.inject.Inject;
 
 @Slf4j
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class WebhookLifecycleTest extends DependencyInjector {
+class WebhookLifecycleTest extends TestClassWrapper {
     @Inject
     private CallbackService callbackResource;
     @Inject
@@ -33,17 +28,10 @@ class WebhookLifecycleTest extends DependencyInjector {
     @Inject
     private WebhookService webhookResource;
     @Inject
-    private HubLifecycle hubLifecycle;
-    @Inject
     private ModelBuilder modelBuilder;
 
     private String channelName;
     private String webhookName;
-
-    @BeforeAll
-    void hubSetup() {
-        hubLifecycle.setup();
-    }
 
     @BeforeEach
     void before() {
@@ -74,7 +62,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @Test
     @SneakyThrows
-    void testWebhookWithStartItemAndParallelCalls() {
+    void testWebhookWithStartItem() {
         String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         channelResource.createWithDefaults(channelName);
@@ -87,7 +75,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @Test
     @SneakyThrows
-    void testWebhookWithStartItemAndASerialWebhook_expectItemsInOrder() {
+    void testWebhookWithStartItem_expectItemsInOrder() {
         String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
         channelResource.createWithDefaults(channelName);
@@ -104,10 +92,5 @@ class WebhookLifecycleTest extends DependencyInjector {
     void after() {
         channelResource.delete(channelName);
         webhookResource.delete(webhookName);
-    }
-
-    @AfterAll
-    void hubCleanup() {
-        hubLifecycle.cleanup();
     }
 }

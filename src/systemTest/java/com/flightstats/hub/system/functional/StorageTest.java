@@ -1,38 +1,35 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
-import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
-import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import javax.inject.Inject;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-class StorageTest extends DependencyInjector {
+class StorageTest extends TestClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
-
     private String channelName;
     private String itemUri;
     @Inject
     private ChannelService channelService;
     @Inject
     private S3Service s3Service;
-    @Inject
-    private HubLifecycle hubLifecycle;
 
-    @BeforeAll
-    void hubSetup() {
-        hubLifecycle.setup();
+    @BeforeEach
+    void setup() {
+        channelName = randomAlphaNumeric(10);
     }
 
     private void createAndAddItemsToChannel(ChannelType type) {
@@ -56,7 +53,7 @@ class StorageTest extends DependencyInjector {
 
     @ParameterizedTest
     @EnumSource(ChannelType.class)
-    void bothChannelStorage_itemStoredInChannel_item(ChannelType type) {
+    void bothChannelStorage_itemInSpoke_item(ChannelType type) {
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)

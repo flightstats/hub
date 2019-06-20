@@ -3,7 +3,7 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -22,9 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static junit.framework.Assert.assertTrue;
 
 @Slf4j
-class TimedWebhooksTest extends DependencyInjector {
+class TimedWebhooksTest extends TestClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final int CHANNEL_COUNT = 5;
     private static final int TIMEOUT = 5 * 60;
@@ -104,7 +105,7 @@ class TimedWebhooksTest extends DependencyInjector {
     }
 
     @ParameterizedTest
-    @EnumSource(value = WebhookType.class, names = {"MINUTE", "SECOND"})
+    @EnumSource(value = WebhookType.class, names = { "SECOND", "MINUTE" })
     void timedWebhookBatch_hasExpectedItems_items(WebhookType type) {
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(() -> channelAndWebhookFactory(type));
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(this::addItems);
@@ -113,7 +114,7 @@ class TimedWebhooksTest extends DependencyInjector {
             String webhookName = webhook.getName();
             String channelName = webhookService.getChannelName(webhook);
             List<String> itemsPosted = getItemsPostedForChannel(channelName);
-            callbackService.areItemsEventuallySentToWebhook(webhookName, itemsPosted);
+            assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, itemsPosted));
         });
     }
 }

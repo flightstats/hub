@@ -64,6 +64,18 @@ public class WebhookService {
     }
 
     @SneakyThrows
+    public Webhook get(String webhookName) {
+        try {
+            Call<Webhook> call = webhookResourceClient.get(webhookName);
+            Response<Webhook> response = call.execute();
+            return response.body();
+        } catch(Exception e) {
+            log.error("failed to get webhook: {} {}", webhookName, e.getMessage());
+            throw e;
+        }
+    }
+
+    @SneakyThrows
     public void delete(String webhookName) {
         webhookResourceClient.delete(webhookName).execute();
     }

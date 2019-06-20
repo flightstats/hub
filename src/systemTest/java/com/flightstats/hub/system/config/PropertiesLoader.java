@@ -4,14 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 import java.util.Properties;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-class PropertiesLoader {
-    Properties loadProperties(String propertiesFileName) {
+public class PropertiesLoader {
+    public Properties loadProperties(String propertiesFileName) {
         Properties properties = new Properties();
         properties.putAll(loadFileProperties(propertiesFileName));
         properties.putAll(getSystemTestSystemProperties());
