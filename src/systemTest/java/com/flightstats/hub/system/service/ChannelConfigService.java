@@ -51,6 +51,14 @@ public class ChannelConfigService {
     }
 
     @SneakyThrows
+    public void update(ChannelConfig channel) {
+        Call<Object> call = channelResourceClient.update(channel.getName(), configWithOwner(channel));
+        Response<Object> response = call.execute();
+        log.info("channel update response {}, channelName, {}", response, channel.getName());
+        assertEquals(CREATED.getStatusCode(), response.code());
+    }
+
+    @SneakyThrows
     public void delete(String channelName) {
         this.channelResourceClient.delete(channelName).execute();
     }
