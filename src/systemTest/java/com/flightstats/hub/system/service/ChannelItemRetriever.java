@@ -2,19 +2,13 @@ package com.flightstats.hub.system.service;
 
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
-import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.ChannelItemPathParts;
-import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQueryResult;
-import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
-import okhttp3.ResponseBody;
-import org.joda.time.DateTime;
 import retrofit2.Call;
-import retrofit2.Response;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -30,10 +24,6 @@ public class ChannelItemRetriever {
         this.channelItemResourceClient = hubClientFactory.getHubClient(ChannelItemResourceClient.class);
         this.hubBaseUrl = hubClientFactory.getHubBaseUrl();
         this.pathPartsBuilder = new ChannelItemPathPartsBuilder(this.hubBaseUrl.toString());
-    }
-
-    public String getChannelUrl(String channelName) {
-        return getHubBaseUrl() + "channel/" + channelName;
     }
 
     private HttpUrl getHubBaseUrl() {

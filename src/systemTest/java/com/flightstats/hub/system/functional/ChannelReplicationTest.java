@@ -93,7 +93,4 @@ class ChannelReplicationTest extends TestClassWrapper {
         byte [] error = itemCreator.addItemError(replicationDestChannelName);
         assertEquals(new String(error), replicationDestChannelName + " cannot modified while replicating");
     }
-
-
-
 }

@@ -36,7 +36,7 @@ public class ChannelItemPathPartsBuilder {
                 .build();
     }
 
-    public String getTrimmedPath(String path) {
+    private String getTrimmedPath(String path) {
         return path.replace(baseUrl + "channel/", "");
     }
 }

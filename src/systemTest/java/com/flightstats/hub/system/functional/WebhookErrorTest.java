@@ -8,7 +8,6 @@ import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
-import com.flightstats.hub.system.service.ChannelItemRetriever;
 import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
