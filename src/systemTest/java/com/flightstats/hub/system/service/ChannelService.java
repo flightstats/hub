@@ -16,6 +16,7 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import javax.inject.Inject;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +60,7 @@ public class ChannelService {
         Call<Object> call = channelResourceClient.create(channel.toBuilder().owner(CHANNEL_OWNER).build());
         Response<Object> response = call.execute();
         log.info("channel creation response {}, channelName, {}", response, channel.getName());
+        log.info("error response, {}", new String(response.errorBody().bytes(), StandardCharsets.UTF_8));
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 

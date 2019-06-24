@@ -11,12 +11,10 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.microbean.helm.ReleaseManager;
 import org.microbean.helm.Tiller;
-import org.microbean.helm.chart.DirectoryChartLoader;
 import org.microbean.helm.chart.URLChartLoader;
 
 import javax.inject.Inject;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.concurrent.Future;
 
 import static junit.framework.TestCase.assertTrue;
@@ -32,7 +30,7 @@ public class ReleaseInstall {
 
     private InstallReleaseRequest.Builder getRequestBuilder() {
         InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
-        requestBuilder.setTimeout(300L);
+        requestBuilder.setTimeout(1000L);
         requestBuilder.setName(getReleaseName());
         requestBuilder.setWait(true);
         requestBuilder.setDisableHooks(false);
@@ -83,7 +81,6 @@ public class ReleaseInstall {
         try (DefaultKubernetesClient client = new DefaultKubernetesClient();
              Tiller tiller = new Tiller(client);
              ReleaseManager releaseManager = new ReleaseManager(tiller)) {
-
             Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
             ReleaseOuterClass.Release release = releaseFuture.get().getRelease();
             assertTrue(release.hasChart());
