@@ -3,6 +3,7 @@ package com.flightstats.hub.system.service;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
 import com.flightstats.hub.model.ChannelItem;
+import com.flightstats.hub.model.ChannelItemPathParts;
 import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
@@ -30,12 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 public class ChannelItemCreator {
     private final ChannelItemResourceClient channelItemResourceClient;
-    private final ChannelItemPathPartsBuilder pathPartsBuilder;
+    private final HttpUrl hubBaseUrl;
 
     @Inject
     public ChannelItemCreator(HubClientFactory hubClientFactory) {
-        HttpUrl hubBaseUrl = hubClientFactory.getHubBaseUrl();
-        this.pathPartsBuilder = new ChannelItemPathPartsBuilder(hubBaseUrl.toString());
+        this.hubBaseUrl = hubClientFactory.getHubBaseUrl();
 
         this.channelItemResourceClient = hubClientFactory.getHubClient(ChannelItemResourceClient.class);
     }
@@ -80,9 +80,7 @@ public class ChannelItemCreator {
     }
 
     public SortedSet<ChannelItemWithBody> addHistoricalItems(String channelName, List<DateTime> insertionDates) {
-        Comparator<ChannelItemWithBody> comparator = Comparator.comparing(item ->
-                pathPartsBuilder.buildFromItemUrl(item.getUrl()).getDateTime()
-        );
+        Comparator<ChannelItemWithBody> comparator = Comparator.comparing(this::getDateTimeForItem);
         return insertionDates.stream()
                 .map(time -> addHistoricalItem(channelName, time, randomAlphanumeric(5)))
                 .collect(Collectors.toCollection(() -> new TreeSet<>(comparator)));
@@ -97,4 +95,13 @@ public class ChannelItemCreator {
         }
         return new byte[] {};
     }
+
+    private DateTime getDateTimeForItem(ChannelItemWithBody channelItem) {
+        return ChannelItemPathParts.builder()
+                .itemUrl(channelItem.getUrl())
+                .baseUrl(hubBaseUrl)
+                .build()
+                .getDateTime();
+    }
+
 }
