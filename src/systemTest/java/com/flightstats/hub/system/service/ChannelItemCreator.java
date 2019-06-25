@@ -22,7 +22,9 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,11 +43,9 @@ public class ChannelItemCreator {
     }
 
     public List<String> addItems(String channelName, Object data, int count) {
-        List<String> channelItems = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            channelItems.add(addItem(channelName, data));
-        }
-        return channelItems;
+        return IntStream.range(0, count)
+                .mapToObj(index -> addItem(channelName, data))
+                .collect(toList());
     }
 
     @SneakyThrows

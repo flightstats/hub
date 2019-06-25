@@ -4,8 +4,6 @@ import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
 import com.flightstats.hub.model.ChannelItemPathParts;
 import com.flightstats.hub.model.ChannelItemQueryDirection;
-import com.flightstats.hub.model.ChannelItemWithBody;
-import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQueryResult;
 import lombok.SneakyThrows;
@@ -73,13 +71,13 @@ public class ChannelItemRetriever {
 
     @SneakyThrows
     public Optional<Object> getEarliestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.EARLIEST);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getLatestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.LATEST);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 

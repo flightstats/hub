@@ -29,11 +29,7 @@ public class ChannelConfigService {
     }
 
     public String getChannelUrl(String channelName) {
-        return getHubBaseUrl() + "channel/" + channelName;
-    }
-
-    private HttpUrl getHubBaseUrl() {
-        return hubBaseUrl;
+        return hubBaseUrl + "channel/" + channelName;
     }
 
     @SneakyThrows
@@ -64,10 +60,8 @@ public class ChannelConfigService {
     }
 
     private ChannelConfig configWithOwner(ChannelConfig config) {
-        ChannelConfig.ChannelConfigBuilder builder = config.toBuilder();
-        if (config.getOwner().isEmpty()) {
-            builder.owner(CHANNEL_OWNER);
-        }
-        return builder.build();
+        return config.toBuilder()
+                .owner(config.getOwner().isEmpty() ? CHANNEL_OWNER : config.getOwner())
+                .build();
     }
 }

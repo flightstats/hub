@@ -2,14 +2,14 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Value;
 import okhttp3.HttpUrl;
 import org.joda.time.DateTime;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-@Getter
+@Value
 @Builder
 public class ChannelItemPathParts {
     String path;

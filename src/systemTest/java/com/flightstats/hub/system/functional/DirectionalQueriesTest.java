@@ -21,8 +21,8 @@ import java.util.SortedSet;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static com.flightstats.hub.model.ChannelItemQueryDirection.NEXT;
-import static com.flightstats.hub.model.ChannelItemQueryDirection.PREVIOUS;
+import static com.flightstats.hub.model.ChannelItemQueryDirection.next;
+import static com.flightstats.hub.model.ChannelItemQueryDirection.previous;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,7 +72,7 @@ class DirectionalQueriesTest extends TestClassWrapper {
     void next_returnsNextItem() {
         ChannelItemWithBody currentItem = getNthItem(3);
 
-        Object actualNext = itemRetriever.getDirectionalItem(currentItem.getUrl(), NEXT)
+        Object actualNext = itemRetriever.getDirectionalItem(currentItem.getUrl(), next)
                 .orElseThrow(AssertionError::new);
 
         ChannelItemWithBody expectedNext = getNthItem(4);
@@ -84,7 +84,7 @@ class DirectionalQueriesTest extends TestClassWrapper {
         ChannelItemWithBody currentItem = getNthItem(2);
         List<String> expectedNext = getItemsInRange(3, 4).stream().map(ChannelItemWithBody::getUrl).collect(toList());
 
-        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(currentItem.getUrl(), NEXT, 2)
+        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(currentItem.getUrl(), next, 2)
                 .orElseThrow(AssertionError::new);
 
         assertEquals(expectedNext, Lists.newArrayList(actualItems.get_links().getUris()));
@@ -94,7 +94,7 @@ class DirectionalQueriesTest extends TestClassWrapper {
     void previous_returnsPreviousItem() {
         ChannelItemWithBody currentItem = getNthItem(6);
 
-        Object actualNext = itemRetriever.getDirectionalItem(currentItem.getUrl(), PREVIOUS)
+        Object actualNext = itemRetriever.getDirectionalItem(currentItem.getUrl(), previous)
                 .orElseThrow(AssertionError::new);
 
         ChannelItemWithBody expectedNext = getNthItem(5);
@@ -106,7 +106,7 @@ class DirectionalQueriesTest extends TestClassWrapper {
         ChannelItemWithBody currentItem = getNthItem(8);
         List<String> expectedNext = getItemsInRange(6, 7).stream().map(ChannelItemWithBody::getUrl).collect(toList());
 
-        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(currentItem.getUrl(), PREVIOUS, 2)
+        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(currentItem.getUrl(), previous, 2)
                 .orElseThrow(AssertionError::new);
 
         assertEquals(expectedNext, Lists.newArrayList(actualItems.get_links().getUris()));
