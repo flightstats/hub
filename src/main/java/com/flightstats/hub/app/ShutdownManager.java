@@ -46,7 +46,7 @@ public class ShutdownManager {
 
     public boolean shutdown(boolean useLock) throws Exception {
         log.warn("shutting down!");
-        String[] tags = {"restart", "shutdown"};
+        String[] tags = {"restart", "shutdown", "app-lifecycle"};
         statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
         statsdReporter.mute();
 
