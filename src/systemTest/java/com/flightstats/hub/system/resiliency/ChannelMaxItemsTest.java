@@ -2,8 +2,11 @@ package com.flightstats.hub.system.resiliency;
 
 import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.system.extension.SingletonTestInjectionExtension;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
+import com.flightstats.hub.system.service.ChannelItemRetriever;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -20,10 +23,10 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.SortedSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.joda.time.Duration.standardHours;
 
@@ -38,25 +41,42 @@ class ChannelMaxItemsTest {
             "      properties: \n" +
             "        s3.ttlEnforcer.offset.minutes: 2";
     private static final String TEST_DATA = "TEST_DATA";
-    private static final List<String> channelItems = new LinkedList<>();
+    private static final List<String> channelItems = new ArrayList<>();
     private final String channelName = randomAlphaNumeric(10);
     private String extraChannelItem;
     private String shouldBeDeleted;
     @Inject
-    private ChannelService channelService;
+    private ChannelItemRetriever channelItemRetriever;
+    @Inject
+    private ChannelConfigService channelConfigService;
+    @Inject
+    private ChannelItemCreator channelItemCreator;
     @Inject
     private HubLifecycle hubLifecycle;
 
     @BeforeAll
     void setup() {
         hubLifecycle.setup(CUSTOM_YAML_FOR_HELM);
+        DateTime historicalDate = new DateTime().minus(standardHours(25));
         ChannelConfig channelConfig = ChannelConfig.builder()
                 .name(channelName)
-                .mutableTime(new DateTime().minus(standardHours(25)))
-                .maxItems(5)
+//                .mutableTime(historicalDate)
                 .build();
-        channelService.create(channelConfig);
-        channelItems.addAll(channelService.addItems(channelName, TEST_DATA, 5));
+        ChannelConfig channelConfig2 = ChannelConfig.builder()
+                .name(channelName + "REPL")
+                .maxItems(5)
+                .replicationSource(channelConfigService.getChannelUrl(channelName))
+                .build();
+        channelConfigService.create(channelConfig);
+        channelConfigService.create(channelConfig2);
+        List<DateTime> historicalDates = IntStream.range(0, 5).mapToObj(historicalDate::minusMinutes).collect(Collectors.toList());
+        SortedSet<ChannelItemWithBody> c = channelItemCreator.addHistoricalItems(channelName, historicalDates);
+        channelItems.addAll(c.stream().map(ChannelItemWithBody::getUrl).collect(Collectors.toList()));
+        ChannelConfig channelConfig3 = channelConfig.toBuilder()
+                .mutableTime(historicalDate.minusMinutes(10))
+                .build();
+        extraChannelItem = channelItemCreator.addHistoricalItem(channelName, historicalDate.minusMinutes(6), randomAlphaNumeric(5)).getUrl();
+        channelConfigService.update(channelConfig3);
     }
 
     @AfterAll
@@ -69,14 +89,12 @@ class ChannelMaxItemsTest {
         Awaitility.await()
                 .atMost(Duration.ONE_MINUTE)
                 .until(() -> items.parallelStream()
-                        .allMatch(item -> channelService.getItem(item).orElse("").equals(TEST_DATA)));
+                        .allMatch(item -> channelItemRetriever.getItem(item).orElse("").equals(TEST_DATA)));
     }
 
     @Test
     @Order(0)
     void channelMaxItems_addsMaxItemsPlusOne_maxItemsStored() {
-        verifyItemList(channelItems);
-        extraChannelItem = channelService.addItem(channelName, TEST_DATA);
         shouldBeDeleted = channelItems.get(0);
         log.info("channel items: {}", channelItems);
         log.info("to delete? {}", shouldBeDeleted);
@@ -85,22 +103,22 @@ class ChannelMaxItemsTest {
         log.info("extraChannelItem: {}", extraChannelItem);
         verifyItemList(nextItems);
     }
-
-    @Test
-    @Order(1)
-    void channelMaxItems_getFirstItem_404() {
-        Awaitility.await()
-                .pollInterval(Duration.TEN_SECONDS)
-                .atMost(new Duration(5, TimeUnit.MINUTES))
-                .until(() -> {
-                    Optional<Object> f = channelService.getItem(shouldBeDeleted);
-                    log.info("$$$$$$$$$$$$$$ {}", f);
-                    List<String> g = new ArrayList<>(channelItems);
-                    g.add(extraChannelItem);
-                    g.forEach(item -> log.info("@@@@@ {}", channelService.getItem(item).orElse("")));
-                    return f.isPresent() && f.get().equals("");
-                });
-    }
+//
+//    @Test
+//    @Order(1)
+//    void channelMaxItems_getFirstItem_404() {
+//        Awaitility.await()
+//                .pollInterval(Duration.TEN_SECONDS)
+//                .atMost(new Duration(5, TimeUnit.MINUTES))
+//                .until(() -> {
+//                    Optional<Object> f = channelItemRetriever.getItem(shouldBeDeleted);
+//                    log.info("$$$$$$$$$$$$$$ {}", f);
+//                    List<String> g = new ArrayList<>(channelItems);
+//                    g.add(extraChannelItem);
+//                    g.forEach(item -> log.info("@@@@@ {}", channelItemRetriever.getItem(item).orElse("")));
+//                    return f.isPresent() && f.get().equals("");
+//                });
+//    }
 //
 //    @Test
 //    @Order(2)

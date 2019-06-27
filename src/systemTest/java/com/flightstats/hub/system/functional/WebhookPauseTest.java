@@ -1,12 +1,12 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.WebhookService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,9 @@ class WebhookPauseTest extends TestClassWrapper {
     private String webhookName;
     private String channelName;
     @Inject
-    private ChannelService channelService;
+    private ChannelConfigService channelConfigService;
+    @Inject
+    private ChannelItemCreator channelItemCreator;
     @Inject
     private WebhookService webhookService;
     @Inject
@@ -61,12 +63,12 @@ class WebhookPauseTest extends TestClassWrapper {
     void setup() {
         channelName = randomAlphaNumeric(10);
         webhookName = randomAlphaNumeric(10);
-        channelService.createWithDefaults(channelName);
+        channelConfigService.createWithDefaults(channelName);
     }
 
     @AfterEach
     void cleanup() {
-        channelService.delete(channelName);
+        channelConfigService.delete(channelName);
         webhookService.delete(webhookName);
     }
 
@@ -75,13 +77,13 @@ class WebhookPauseTest extends TestClassWrapper {
     void webhookPause_webhookStartPaused_itemsCalledBackAfterUnpause(WebhookType type) {
         Webhook webhook = createWebhook(type, true);
         assertTrue(webhookService.get(webhookName).isPaused());
-        List<String> whilePausedItems = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> whilePausedItems = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         assertTrue(callbackService.itemsNotSentToWebhook(webhookName, whilePausedItems, type),
                 "items sent while webhook paused!");
 
         updatePauseOnWebhook(webhook, false);
         assertFalse(webhookService.get(webhookName).isPaused());
-        List<String> unpausedItems = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> unpausedItems = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, unpausedItems));
     }
 
@@ -90,12 +92,12 @@ class WebhookPauseTest extends TestClassWrapper {
     void webhookPause_webhookStartUnpaused_itemsNotCalledBackAfterPause(WebhookType type) {
         Webhook webhook = createWebhook(type, false);
         assertFalse(webhookService.get(webhookName).isPaused());
-        List<String> items = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> items = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, items));
 
         updatePauseOnWebhook(webhook, true);
         assertTrue(webhookService.get(webhookName).isPaused());
-        List<String> whilePausedItems = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> whilePausedItems = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         assertTrue(callbackService.itemsNotSentToWebhook(webhookName, whilePausedItems, type),
                 "items sent while webhook paused!");
 
@@ -105,17 +107,17 @@ class WebhookPauseTest extends TestClassWrapper {
     @EnumSource(WebhookType.class)
     void webhookPause_webhookPauseAndUnPause_itemsNotCalledBackDuringPause(WebhookType type) {
         Webhook webhook = createWebhook(type, false);
-        List<String> items = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> items = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         updatePauseOnWebhook(webhook, true);
         Webhook pausedWebhook = webhookService.get(webhookName);
         assertTrue(pausedWebhook.isPaused());
-        List<String> whilePausedItems = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> whilePausedItems = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         assertTrue(callbackService.itemsNotSentToWebhook(webhookName, whilePausedItems, type),
                 "items sent while webhook paused!");
         updatePauseOnWebhook(webhook, false);
         Webhook unpausedWebhook = webhookService.get(webhookName);
         assertFalse(unpausedWebhook.isPaused());
-        List<String> unpausedItems = channelService.addItems(channelName, TEST_DATA, 5);
+        List<String> unpausedItems = channelItemCreator.addItems(channelName, TEST_DATA, 5);
         unpausedItems.addAll(items);
         assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, unpausedItems));
     }

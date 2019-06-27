@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.model.adapters.HubDateTimeTypeAdapter;
+import com.flightstats.hub.model.adapters.HubDateTypeAdapter;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -88,7 +90,7 @@ public class ChannelConfig implements Serializable, NamedType {
             this.ttlDays = 120;
             this.maxItems = 0;
         } else {
-            this.ttlDays = ttlDays;
+            this.ttlDays =  ttlDays;
             this.maxItems = maxItems;
         }
 

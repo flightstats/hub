@@ -4,7 +4,8 @@ import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,9 @@ class WebhookLifecycleTest extends TestClassWrapper {
     @Inject
     private CallbackService callbackResource;
     @Inject
-    private ChannelService channelResource;
+    private ChannelConfigService channelResource;
+    @Inject
+    private ChannelItemCreator itemCreator;
     @Inject
     private WebhookService webhookResource;
     @Inject
@@ -56,7 +59,7 @@ class WebhookLifecycleTest extends TestClassWrapper {
         Webhook webhook = buildWebhook().withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
 
-        List<String> channelItems = channelResource.addItems(channelName, data, 10);
+        List<String> channelItems = itemCreator.addItems(channelName, data, 10);
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItems));
     }
 
@@ -66,7 +69,7 @@ class WebhookLifecycleTest extends TestClassWrapper {
         String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         channelResource.createWithDefaults(channelName);
-        List<String> channelItems = channelResource.addItems(channelName, data, 10);
+        List<String> channelItems = itemCreator.addItems(channelName, data, 10);
         Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
@@ -79,7 +82,7 @@ class WebhookLifecycleTest extends TestClassWrapper {
         String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
         channelResource.createWithDefaults(channelName);
-        List<String> channelItems = channelResource.addItems(channelName, data, 10);
+        List<String> channelItems = itemCreator.addItems(channelName, data, 10);
         Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
