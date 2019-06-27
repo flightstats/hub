@@ -35,6 +35,8 @@ JAVA_OPTS="
  -XX:NewSize=$NEW_SIZE
  -XX:+UseG1GC
  -XX:MaxGCPauseMillis=100
+ -XX:+HeapDumpOnOutOfMemoryError
+ -XX:HeapDumpPath=/mnt/log
  -XX:+ExitOnOutOfMemoryError
  -Dsun.rmi.dgc.client.gcInterval=300000
  -Dsun.rmi.dgc.server.gcInterval=300000
