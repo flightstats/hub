@@ -3,6 +3,7 @@ package com.flightstats.hub.app;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.health.HubHealthCheck;
+import com.flightstats.hub.metrics.MetricNames;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -48,6 +49,7 @@ public class ShutdownManager {
         log.warn("shutting down!");
         String[] tags = {"restart", "shutdown"};
         statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
+        reportEvent(MetricNames.LIFECYCLE_SHUTDOWN_START);
         statsdReporter.mute();
 
         if (hubHealthCheck.isShuttingDown()) {
@@ -76,6 +78,7 @@ public class ShutdownManager {
 
         HubServices.stopAll();
         log.warn("completed shutdown tasks, exiting JVM");
+        reportEvent(MetricNames.LIFECYCLE_SHUTDOWN_COMPLETE);
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;
     }
@@ -112,6 +115,11 @@ public class ShutdownManager {
                 }
             }
         }
+    }
+
+    private void reportEvent(String eventName) {
+        String[] tags = {"restart", "shutdown"};
+        statsdReporter.incrementCounter(eventName, tags);
     }
 
     private class ShutdownManagerService extends AbstractIdleService {
