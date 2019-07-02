@@ -3,7 +3,7 @@ package com.flightstats.hub.app;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.MetricNames;
+import com.flightstats.hub.metrics.MetricsType;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
 @Singleton
 @Slf4j
 public class ShutdownManager {
-
+    private static final MetricsType HUB_SHUTDOWN_METRIC = MetricsType.LIFECYCLE_SHUTDOWN;
     private static final String PATH = "/ShutdownManager";
 
     private final HubHealthCheck hubHealthCheck;
@@ -47,9 +47,8 @@ public class ShutdownManager {
 
     public boolean shutdown(boolean useLock) throws Exception {
         log.warn("shutting down!");
-        String[] tags = {"restart", "shutdown"};
-        statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
-        reportEvent(MetricNames.LIFECYCLE_SHUTDOWN_START);
+        statsdReporter.incrementEventStart(HUB_SHUTDOWN_METRIC);
+        statsdReporter.event("Hub Restart Shutdown", "shutting down", HUB_SHUTDOWN_METRIC.getTags());
         statsdReporter.mute();
 
         if (hubHealthCheck.isShuttingDown()) {
@@ -78,7 +77,7 @@ public class ShutdownManager {
 
         HubServices.stopAll();
         log.warn("completed shutdown tasks, exiting JVM");
-        reportEvent(MetricNames.LIFECYCLE_SHUTDOWN_COMPLETE);
+        statsdReporter.incrementEventCompletion(HUB_SHUTDOWN_METRIC);
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;
     }
@@ -115,11 +114,6 @@ public class ShutdownManager {
                 }
             }
         }
-    }
-
-    private void reportEvent(String eventName) {
-        String[] tags = {"restart", "shutdown"};
-        statsdReporter.incrementCounter(eventName, tags);
     }
 
     private class ShutdownManagerService extends AbstractIdleService {

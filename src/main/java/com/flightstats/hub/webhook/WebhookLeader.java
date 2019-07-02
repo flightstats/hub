@@ -11,7 +11,7 @@ import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricNames;
+import com.flightstats.hub.metrics.MetricsType;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
@@ -36,6 +36,7 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 
 @Slf4j
 class WebhookLeader implements Lockable {
+    private static final MetricsType LEADERSHIP_METRIC = MetricsType.WEBHOOK_LEADERSHIP;
 
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
@@ -115,7 +116,7 @@ class WebhookLeader implements Lockable {
             return;
         }
         log.info("taking leadership {} {}", webhook, leadership.hasLeadership());
-        statsdReporter.incrementCounter(MetricNames.WEBHOOK_LEADERSHIP_START, "name:" + webhook.getName());
+        statsdReporter.incrementEventStart(LEADERSHIP_METRIC, "name:" + webhook.getName());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
         retryer = WebhookRetryer.builder()
@@ -159,7 +160,7 @@ class WebhookLeader implements Lockable {
                 webhookStateReaper.delete(webhook.getName());
             }
             log.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
-            statsdReporter.incrementCounter(MetricNames.WEBHOOK_LEADERSHIP_COMPLETE, "name:" + webhook.getName());
+            statsdReporter.incrementEventCompletion(LEADERSHIP_METRIC, "name:" + webhook.getName());
             webhookStrategy = null;
             executorService = null;
         }
