@@ -96,7 +96,7 @@ public class CallbackService {
     public boolean itemsNotSentToWebhook(String webhookName, List<String> channelItems, WebhookType type) {
         try {
             int assertAfterWaitSeconds = type.equals(WebhookType.MINUTE) ? 90 : 30;
-            Thread.sleep(assertAfterWaitSeconds * 1000);
+            Thread.sleep(TimeUnit.SECONDS.toMillis(assertAfterWaitSeconds));
             List<String> callbackItems = getItemsReceivedByCallback(webhookName);
             return callbackItems.stream().noneMatch(channelItems::contains);
         } catch (Exception e) {
