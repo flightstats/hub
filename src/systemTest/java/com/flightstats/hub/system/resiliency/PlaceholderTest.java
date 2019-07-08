@@ -20,7 +20,7 @@ import javax.inject.Inject;
 class PlaceholderTest {
     private static final String CUSTOM_YAML_FOR_HELM = "hub: \n" +
             "  hub: \n" +
-            "    image: flightstats/hub:can-set-the-build-version-here \n" +
+            "    image: flightstats/hub:latest \n" +
             "    configMap: \n" +
             "      properties: \n" +
             "        can.set.custom.properties: here";
