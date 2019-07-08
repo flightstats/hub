@@ -1,6 +1,7 @@
 package com.flightstats.hub.clients.hub.channel;
 
 import com.flightstats.hub.model.ChannelItem;
+import com.flightstats.hub.model.ChannelItemQueryDirection;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQueryResult;
 import retrofit2.Call;
@@ -15,6 +16,11 @@ public interface ChannelItemResourceClient {
     @POST("/channel/{channelName}")
     Call<ChannelItem> add(@Path("channelName") String channelName,
                           @Body Object item);
+
+    @POST("/channel/{channelName}/{historicalPath}")
+    Call<ChannelItem> addHistorical(@Path("channelName") String channelName,
+                               @Path(value="historicalPath", encoded=true) String historicalPath,
+                               @Body Object item);
 
     @GET("/channel/{channelName}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
     Call<Object> get(@Path("channelName") String channelName,
@@ -36,4 +42,13 @@ public interface ChannelItemResourceClient {
                                               @Path("m") int minute,
                                               @Path("s") int second,
                                               @Query("location") Location location);
+
+    @GET("/channel/{itemPath}/{direction}/{numberOfItems}")
+    Call<TimeQueryResult> getDirectionalItems(@Path(value="itemPath", encoded=true) String itemPath,
+                                              @Path("direction") ChannelItemQueryDirection direction,
+                                              @Path("numberOfItems") int numberOfItems);
+
+    @GET("/channel/{itemPath}/{direction}")
+    Call<Object> getDirectionalItem(@Path(value="itemPath", encoded=true) String itemPath,
+                                    @Path("direction") ChannelItemQueryDirection direction);
 }

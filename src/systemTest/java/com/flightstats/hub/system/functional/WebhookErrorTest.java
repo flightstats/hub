@@ -1,25 +1,23 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.model.Webhook;
 import javax.inject.Inject;
 
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -29,17 +27,16 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-class WebhookErrorTest extends DependencyInjector {
+class WebhookErrorTest extends TestClassWrapper {
     @Inject
-    private ChannelService channelService;
+    private ChannelConfigService channelConfigService;
+    @Inject
+    private ChannelItemCreator itemCreator;
     @Inject
     private WebhookService webhookService;
     @Inject
     private CallbackService callbackService;
-    @Inject
-    private HubLifecycle hubLifecycle;
     @Inject
     private ModelBuilder modelBuilder;
 
@@ -50,7 +47,6 @@ class WebhookErrorTest extends DependencyInjector {
 
     @BeforeAll
     void hubSetup() {
-        hubLifecycle.setup();
         nameSeed = randomAlphaNumeric(5);
     }
 
@@ -74,7 +70,7 @@ class WebhookErrorTest extends DependencyInjector {
     }
 
     private void initChannelAndWebhook() {
-        channelService.createWithDefaults(channelName);
+        channelConfigService.createWithDefaults(channelName);
 
         createWebhook();
     }
@@ -96,12 +92,12 @@ class WebhookErrorTest extends DependencyInjector {
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
                 .build();
-        String firstUrl = channelService.addItem(channelName, item);
+        String firstUrl = itemCreator.addItem(channelName, item);
 
         verifyHasReceivedErrorForItem(firstUrl);
 
         // adding second item to channel
-        channelService.addItem(channelName, "{ name:\"item2\" }");
+        itemCreator.addItem(channelName, "{ name:\"item2\" }");
 
         // delete webhook
         log.info("Deleting webhook {}", webhookName);
@@ -113,7 +109,7 @@ class WebhookErrorTest extends DependencyInjector {
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
 
         // add new item and wait to hear about it
-        String thirdUrl = channelService.addItem(channelName, "{ name:\"item3\" }");
+        String thirdUrl = itemCreator.addItem(channelName, "{ name:\"item3\" }");
         log.info("Adding new item to channel {}", thirdUrl);
         assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, Collections.singletonList(thirdUrl)));
 
@@ -129,12 +125,12 @@ class WebhookErrorTest extends DependencyInjector {
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
                 .build();
-        String firstUrl = channelService.addItem(channelName, item);
+        String firstUrl = itemCreator.addItem(channelName, item);
 
         verifyHasReceivedErrorForItem(firstUrl);
 
         // add new item
-        String secondUrl = channelService.addItem(channelName, "{ name:\"item2\" }");
+        String secondUrl = itemCreator.addItem(channelName, "{ name:\"item2\" }");
         log.info("Adding new item to channel {}", secondUrl);
 
         // move cursor to firstUrl so it skips over the error
@@ -155,14 +151,8 @@ class WebhookErrorTest extends DependencyInjector {
     void after(TestInfo testInfo, RepetitionInfo repetitionInfo) {
         if (repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
             log.info("deleting {} and {}", channelName, webhookName);
-            this.channelService.delete(channelName);
+            this.channelConfigService.delete(channelName);
             this.webhookService.delete(webhookName);
         }
     }
-
-    @AfterAll
-    void hubCleanup() {
-        hubLifecycle.cleanup();
-    }
-
 }

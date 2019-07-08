@@ -1,14 +1,16 @@
 package com.flightstats.hub.kubernetes;
 
-import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.config.HelmProperties;
+import com.google.inject.Singleton;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.List;
 
 @Slf4j
-public class HubLifecycle extends DependencyInjector {
+@Singleton
+public class HubLifecycle {
     @Inject
     private HelmProperties helmProperties;
 
@@ -24,6 +26,7 @@ public class HubLifecycle extends DependencyInjector {
     @Inject
     private ServiceDelete serviceDelete;
 
+    @SneakyThrows
     public void setup() {
         if (releaseStatus.releaseExists(getReleaseName())) {
             log.info("Release is already installed; skipping");
