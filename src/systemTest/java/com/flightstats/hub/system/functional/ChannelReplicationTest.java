@@ -2,7 +2,9 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.system.extension.TestClassWrapper;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
+import com.flightstats.hub.system.service.ChannelItemRetriever;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -29,39 +31,43 @@ class ChannelReplicationTest extends TestClassWrapper {
     private String itemUri2;
     private String itemUri3;
     @Inject
-    private ChannelService channelService;
+    private ChannelConfigService channelConfigService;
+    @Inject
+    private ChannelItemCreator itemCreator;
+    @Inject
+    private ChannelItemRetriever itemRetriever;
 
     @BeforeEach
     @SneakyThrows
     void before() {
         replicationSourceChannelName = randomAlphaNumeric(10) + REPL_SOURCE;
         replicationDestChannelName = randomAlphaNumeric(10) + REPL_DEST;
-        String replicationSource = channelService.getChannelUrl(replicationSourceChannelName);
+        String replicationSource = channelConfigService.getChannelUrl(replicationSourceChannelName);
         ChannelConfig destination = ChannelConfig.builder()
                 .name(replicationDestChannelName)
                 .replicationSource(replicationSource).build();
-        channelService.createWithDefaults(replicationSourceChannelName);
-        channelService.create(destination);
+        channelConfigService.createWithDefaults(replicationSourceChannelName);
+        channelConfigService.create(destination);
         // give the repl channel time to create it's webhook
         Thread.sleep(3500);
     }
 
     @AfterEach
     void cleanup() {
-        channelService.delete(replicationSourceChannelName);
-        channelService.delete(replicationDestChannelName);
+        channelConfigService.delete(replicationSourceChannelName);
+        channelConfigService.delete(replicationDestChannelName);
     }
 
     @Test
     void replication_itemInBothChannels_item() {
-        itemUri1 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
-        Object objectFromSource = channelService.getItem(itemUri1);
+        itemUri1 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
+        Object objectFromSource = itemRetriever.getItem(itemUri1);
         Awaitility.await()
                 .pollInterval(Duration.ONE_SECOND)
                 .atMost(new Duration(90, TimeUnit.SECONDS))
                 .until(() -> {
                     String destUri = itemUri1.replace(replicationSourceChannelName, replicationDestChannelName);
-                    Object result = channelService.getItem(destUri);
+                    Object result = itemRetriever.getItem(destUri);
                     return objectFromSource.equals(result);
                 });
     }
@@ -69,25 +75,22 @@ class ChannelReplicationTest extends TestClassWrapper {
 
     @Test
     void replication_itemsInBothChannels_item() {
-        itemUri1 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
-        itemUri2 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
-        itemUri3 = channelService.addItem(replicationSourceChannelName, TEST_DATA);
-        Object objectFromSource = channelService.getItem(itemUri1);
+        itemUri1 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
+        itemUri2 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
+        itemUri3 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
+        Object objectFromSource = itemRetriever.getItem(itemUri1);
         Awaitility.await()
                 .pollInterval(Duration.FIVE_SECONDS)
                 .atMost(new Duration(90, TimeUnit.SECONDS))
                 .until(() -> Stream.of(itemUri1, itemUri2, itemUri3)
                             .map(uri -> uri.replace(replicationSourceChannelName, replicationDestChannelName))
-                            .map(channelService::getItem)
+                            .map(itemRetriever::getItem)
                             .allMatch(objectFromSource::equals));
     }
 
     @Test
     void replication_throwsOnAddItemToDestChannel_exception() {
-        byte [] error = channelService.addItemError(replicationDestChannelName);
+        byte [] error = itemCreator.addItemError(replicationDestChannelName);
         assertEquals(new String(error), replicationDestChannelName + " cannot modified while replicating");
     }
-
-
-
 }
