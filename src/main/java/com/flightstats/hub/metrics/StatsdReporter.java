@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,6 +41,14 @@ public class StatsdReporter {
 
     public void incrementCounter(String name, String... tags) {
         reportWithBothClients(statsDClient -> statsDClient.incrementCounter(name, tags));
+    }
+
+    public void incrementEventStart(MetricsType metricsType, String... additionalTags) {
+        incrementCounter(metricsType.getEventType() + ".start", ArrayUtils.addAll(metricsType.getTags(), additionalTags));
+    }
+
+    public void incrementEventCompletion(MetricsType metricsType, String... additionalTags) {
+        incrementCounter(metricsType.getEventType() + ".complete", ArrayUtils.addAll(metricsType.getTags(), additionalTags));
     }
 
     public void increment(String name, String... tags) {
