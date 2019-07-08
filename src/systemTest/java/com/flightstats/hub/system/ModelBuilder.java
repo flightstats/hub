@@ -3,7 +3,7 @@ package com.flightstats.hub.system;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -13,28 +13,28 @@ import static com.flightstats.hub.model.ChannelType.SINGLE;
 
 @Slf4j
 public class ModelBuilder {
-    private final ChannelService channelService;
+    private final ChannelConfigService channelConfigService;
     private final CallbackService callbackService;
 
     @Inject
-    public ModelBuilder(ChannelService channelService,
+    public ModelBuilder(ChannelConfigService channelConfigService,
                         CallbackService callbackService) {
-        this.channelService = channelService;
+        this.channelConfigService = channelConfigService;
         this.callbackService = callbackService;
     }
 
     public WebhookBuilder webhookBuilder() {
-        return new WebhookBuilder(channelService, callbackService);
+        return new WebhookBuilder(channelConfigService, callbackService);
     }
 
 
     public static class WebhookBuilder {
-        ChannelService channelService;
+        ChannelConfigService channelConfigService;
         CallbackService callbackService;
         Webhook.WebhookBuilder webhookBuilder;
 
-        WebhookBuilder(ChannelService channelService, CallbackService callbackService) {
-            this.channelService = channelService;
+        WebhookBuilder(ChannelConfigService channelConfigService, CallbackService callbackService) {
+            this.channelConfigService = channelConfigService;
             this.callbackService = callbackService;
             this.webhookBuilder = Webhook.builder()
                     .batch(SINGLE.toString());
@@ -49,7 +49,7 @@ public class ModelBuilder {
 
         public WebhookBuilder channelName(String channelName) {
             webhookBuilder
-                    .channelUrl(channelService.getChannelUrl(channelName));
+                    .channelUrl(channelConfigService.getChannelUrl(channelName));
             return this;
         }
 

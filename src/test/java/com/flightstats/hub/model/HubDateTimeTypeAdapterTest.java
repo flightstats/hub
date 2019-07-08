@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.model.adapters.HubDateTimeTypeAdapter;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.jupiter.api.Test;
