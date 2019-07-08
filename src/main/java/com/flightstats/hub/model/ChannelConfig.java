@@ -90,7 +90,7 @@ public class ChannelConfig implements Serializable, NamedType {
             this.ttlDays = 120;
             this.maxItems = 0;
         } else {
-            this.ttlDays =  ttlDays;
+            this.ttlDays = ttlDays;
             this.maxItems = maxItems;
         }
 

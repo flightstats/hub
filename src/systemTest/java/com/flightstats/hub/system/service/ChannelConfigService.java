@@ -11,9 +11,6 @@ import retrofit2.Response;
 
 import javax.inject.Inject;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
-
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,22 +37,11 @@ public class ChannelConfigService {
         create(ChannelConfig.builder().name(channelName).owner(CHANNEL_OWNER).build());
     }
 
-    private void logOptionalError(Response<Object> response, String callerName) {
-        Optional.ofNullable(response.errorBody()).ifPresent(responseBody -> {
-            try {
-                log.info(this.getClass().getName() + callerName + " {}", new String(responseBody.bytes(), StandardCharsets.UTF_8));
-            } catch (Exception e) {
-                log.info("{}", e.getMessage());
-            }
-        });
-    }
-
     @SneakyThrows
     public void create(ChannelConfig channel) {
         Call<Object> call = channelResourceClient.create(configWithOwner(channel));
         Response<Object> response = call.execute();
         log.info("channel creation response {}, channelName, {}", response, channel.getName());
-        logOptionalError(response, ".create()");
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 
@@ -64,7 +50,6 @@ public class ChannelConfigService {
         Call<Object> call = channelResourceClient.update(channel.getName(), configWithOwner(channel));
         Response<Object> response = call.execute();
         log.info("channel update response {}, channelName, {}", response, channel.getName());
-        logOptionalError(response, ".update()");
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 

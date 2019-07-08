@@ -15,7 +15,6 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import javax.inject.Inject;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -70,13 +69,6 @@ public class ChannelItemCreator {
 
         Response<ChannelItem> response = call.execute();
         log.info("channel item creation response {} ", response);
-        if (response.errorBody() != null) {
-            try {
-                log.info(new String(response.errorBody().bytes()), StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                //
-            }
-        }
         assertEquals(CREATED.getStatusCode(), response.code());
         assertNotNull(response);
         assertNotNull(response.body());
