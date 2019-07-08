@@ -4,8 +4,6 @@ import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
 import com.flightstats.hub.model.ChannelItemPathParts;
 import com.flightstats.hub.model.ChannelItemQueryDirection;
-import com.flightstats.hub.model.ChannelItemWithBody;
-import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQueryResult;
 import lombok.SneakyThrows;
@@ -19,19 +17,20 @@ import java.util.Optional;
 @Slf4j
 public class ChannelItemRetriever {
     private final ChannelItemResourceClient channelItemResourceClient;
-    private final ChannelItemPathPartsBuilder pathPartsBuilder;
     private final HttpUrl hubBaseUrl;
 
     @Inject
     public ChannelItemRetriever(HubClientFactory hubClientFactory) {
         this.channelItemResourceClient = hubClientFactory.getHubClient(ChannelItemResourceClient.class);
         this.hubBaseUrl = hubClientFactory.getHubBaseUrl();
-        this.pathPartsBuilder = new ChannelItemPathPartsBuilder(this.hubBaseUrl.toString());
     }
 
     @SneakyThrows
     public Optional<Object> getItem(String path) {
-        ChannelItemPathParts pathParts = pathPartsBuilder.buildFromItemUrl(path);
+        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
+                .itemUrl(path)
+                .baseUrl(hubBaseUrl)
+                .build();
         Object response = channelItemResourceClient.get(
                 pathParts.getChannelName(),
                 pathParts.getYear(),
@@ -47,7 +46,10 @@ public class ChannelItemRetriever {
 
     @SneakyThrows
     public Optional<TimeQueryResult> getDirectionalItems(String itemUrl, ChannelItemQueryDirection direction, int numberOfItems) {
-        ChannelItemPathParts pathParts = pathPartsBuilder.buildFromItemUrl(itemUrl);
+        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
+                .itemUrl(itemUrl)
+                .baseUrl(hubBaseUrl)
+                .build();
         Call<TimeQueryResult> response = channelItemResourceClient.getDirectionalItems(
                 pathParts.getPath(),
                 direction,
@@ -59,28 +61,32 @@ public class ChannelItemRetriever {
 
     @SneakyThrows
     public Optional<Object> getDirectionalItem(String itemUrl, ChannelItemQueryDirection direction) {
-        ChannelItemPathParts pathParts = pathPartsBuilder.buildFromItemUrl(itemUrl);
+        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
+                .itemUrl(itemUrl)
+                .baseUrl(hubBaseUrl)
+                .build();
         Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getEarliestItem(String channelName) {
-        String path = pathPartsBuilder.getChannelItemPathPartExtractor(getChannelUrl(channelName)).getPath();
-        Object response = channelItemResourceClient.getDirectionalItem(path, ChannelItemQueryDirection.EARLIEST);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getLatestItem(String channelName) {
-        String path = pathPartsBuilder.getChannelItemPathPartExtractor(getChannelUrl(channelName)).getPath();
-        Object response = channelItemResourceClient.getDirectionalItem(path, ChannelItemQueryDirection.LATEST);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     private Optional<TimeQueryResult> getItemByTimeFromLocation(String path, Location location) {
-        ChannelItemPathParts pathParts = pathPartsBuilder.buildFromItemUrl(path);
+        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
+                .itemUrl(path)
+                .baseUrl(hubBaseUrl)
+                .build();
         Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(
                 pathParts.getChannelName(),
                 pathParts.getYear(),
@@ -94,13 +100,4 @@ public class ChannelItemRetriever {
         op.filter(o -> o.get_links() != null);
         return op;
     }
-
-    private String getChannelUrl(String channelName) {
-        return getHubBaseUrl() + "channel/" + channelName;
-    }
-
-    private HttpUrl getHubBaseUrl() {
-        return hubBaseUrl;
-    }
-
 }

@@ -3,6 +3,7 @@ package com.flightstats.hub.system.service;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
 import com.flightstats.hub.model.ChannelItem;
+import com.flightstats.hub.model.ChannelItemPathParts;
 import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
@@ -22,7 +23,9 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,22 +34,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 public class ChannelItemCreator {
     private final ChannelItemResourceClient channelItemResourceClient;
-    private final ChannelItemPathPartsBuilder pathPartsBuilder;
+    private final HttpUrl hubBaseUrl;
 
     @Inject
     public ChannelItemCreator(HubClientFactory hubClientFactory) {
-        HttpUrl hubBaseUrl = hubClientFactory.getHubBaseUrl();
-        this.pathPartsBuilder = new ChannelItemPathPartsBuilder(hubBaseUrl.toString());
+        this.hubBaseUrl = hubClientFactory.getHubBaseUrl();
 
         this.channelItemResourceClient = hubClientFactory.getHubClient(ChannelItemResourceClient.class);
     }
 
     public List<String> addItems(String channelName, Object data, int count) {
-        List<String> channelItems = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            channelItems.add(addItem(channelName, data));
-        }
-        return channelItems;
+        return IntStream.range(0, count)
+                .mapToObj(index -> addItem(channelName, data))
+                .collect(toList());
     }
 
     @SneakyThrows
@@ -88,9 +88,7 @@ public class ChannelItemCreator {
     }
 
     public SortedSet<ChannelItemWithBody> addHistoricalItems(String channelName, List<DateTime> insertionDates) {
-        Comparator<ChannelItemWithBody> comparator = Comparator.comparing(item ->
-                pathPartsBuilder.buildFromItemUrl(item.getUrl()).getDateTime()
-        );
+        Comparator<ChannelItemWithBody> comparator = Comparator.comparing(this::getDateTimeForItem);
         return insertionDates.stream()
                 .map(time -> addHistoricalItem(channelName, time, randomAlphanumeric(5)))
                 .collect(Collectors.toCollection(() -> new TreeSet<>(comparator)));
@@ -105,4 +103,13 @@ public class ChannelItemCreator {
         }
         return new byte[] {};
     }
+
+    private DateTime getDateTimeForItem(ChannelItemWithBody channelItem) {
+        return ChannelItemPathParts.builder()
+                .itemUrl(channelItem.getUrl())
+                .baseUrl(hubBaseUrl)
+                .build()
+                .getDateTime();
+    }
+
 }
