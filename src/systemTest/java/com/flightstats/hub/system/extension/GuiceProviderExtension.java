@@ -10,14 +10,15 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.Properties;
 
+import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
+
 @Slf4j
 public class GuiceProviderExtension implements BeforeAllCallback {
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.GLOBAL;
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
+        ExtensionContext.Store store = context.getRoot().getStore(GLOBAL);
         store.getOrComputeIfAbsent("injector", (thing) -> createInjector(), Injector.class);
     }
 

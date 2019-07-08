@@ -14,6 +14,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.joda.time.DateTime;
@@ -27,12 +28,9 @@ import java.util.Date;
 import java.util.Properties;
 
 @Slf4j
+@AllArgsConstructor
 public class GuiceModule extends AbstractModule {
     private final Properties properties;
-
-    public GuiceModule(Properties properties) {
-        this.properties = properties;
-    }
 
     @Override
     protected void configure() {

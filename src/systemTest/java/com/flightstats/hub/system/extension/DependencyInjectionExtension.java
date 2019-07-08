@@ -7,9 +7,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
+
 @Slf4j
 public class DependencyInjectionExtension implements BeforeAllCallback {
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.GLOBAL;
     @Override
     public void beforeAll(ExtensionContext context) {
         Optional.ofNullable(getInjector(context)).ifPresent(injector -> {
@@ -18,6 +19,6 @@ public class DependencyInjectionExtension implements BeforeAllCallback {
     }
 
     private Injector getInjector(ExtensionContext context) {
-        return context.getRoot().getStore(NAMESPACE).get("injector", Injector.class);
+        return context.getRoot().getStore(GLOBAL).get("injector", Injector.class);
     }
 }
