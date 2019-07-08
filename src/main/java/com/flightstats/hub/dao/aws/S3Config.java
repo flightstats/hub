@@ -92,10 +92,10 @@ public class S3Config {
 
     }
 
-    private class S3ConfigLockable implements Lockable {
+    class S3ConfigLockable implements Lockable {
         final Iterable<ChannelConfig> configurations;
 
-        private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
+        S3ConfigLockable(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
         }
 
@@ -105,7 +105,7 @@ public class S3Config {
             updateMaxItems();
         }
 
-        private void updateMaxItems() {
+        void updateMaxItems() {
             log.info("updating max items");
             for (ChannelConfig config : configurations) {
                 if (config.getMaxItems() > 0 && !config.getKeepForever()) {
