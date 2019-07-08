@@ -5,6 +5,7 @@ import com.flightstats.hub.clients.callback.CallbackResourceClient;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.WebhookErrors;
 import com.flightstats.hub.model.WebhookCallback;
+import com.flightstats.hub.model.WebhookType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
@@ -86,6 +87,18 @@ public class CallbackService {
             await().atMost(90, TimeUnit.SECONDS).until(() ->
                 getItemsReceivedByCallback(webhookName).containsAll(expectedChannelItems));
             return true;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean itemsNotSentToWebhook(String webhookName, List<String> channelItems, WebhookType type) {
+        try {
+            int assertAfterWaitSeconds = type.equals(WebhookType.MINUTE) ? 90 : 30;
+            Thread.sleep(assertAfterWaitSeconds * 1000);
+            List<String> callbackItems = getItemsReceivedByCallback(webhookName);
+            return callbackItems.stream().noneMatch(channelItems::contains);
         } catch (Exception e) {
             log.error(e.getMessage());
             return false;

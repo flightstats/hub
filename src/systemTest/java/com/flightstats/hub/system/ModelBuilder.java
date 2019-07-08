@@ -74,6 +74,11 @@ public class ModelBuilder {
             return this;
         }
 
+        public WebhookBuilder isPaused(boolean isPaused) {
+            webhookBuilder.paused(isPaused);
+            return this;
+        }
+
 
         public Webhook build() {
             return webhookBuilder.build();
