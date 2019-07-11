@@ -9,9 +9,12 @@ import org.joda.time.DateTime;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static java.lang.String.format;
+
 @Value
 @Builder
 public class ChannelItemPathParts {
+    String itemUrl;
     String path;
 
     public String getChannelName() {
@@ -27,6 +30,11 @@ public class ChannelItemPathParts {
                 .replace(getChannelName(), "")
                 .replace(getHashKey(), "")
                 .substring(1);
+    }
+
+    public String getSecondUrl() {
+        String overlyGranularPathParts = format("%03d/%s", getMillis(), getHashKey());
+        return getItemUrl().substring(0, getItemUrl().indexOf(overlyGranularPathParts) - 1);
     }
 
     public DateTime getDateTime() {
@@ -63,7 +71,6 @@ public class ChannelItemPathParts {
 
     public static class ChannelItemPathPartsBuilder {
         private HttpUrl baseUrl;
-        private String itemUrl;
 
         public ChannelItemPathPartsBuilder baseUrl(HttpUrl baseUrl) {
             this.baseUrl = baseUrl;
