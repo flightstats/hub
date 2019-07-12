@@ -62,19 +62,13 @@ class S3Util {
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);
         ObjectListing listing = s3Client.listObjects(request);
-        log.info("delete before listing max keys {}", listing.getMaxKeys());
         List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
         for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
             ContentPath contentKey = ContentPath.fromUrl(StringUtils.substringAfter(objectSummary.getKey(), channelPath)).get();
-            int compare = contentKey.compareTo(limitKey);
-            log.info("limit key {}", limitKey);
-            log.info("compare key {}", contentKey);
-            log.info("content key comparison {}", compare);
-            if (compare < 0) {
+            if (contentKey.compareTo(limitKey) < 0) {
                 keys.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
             }
         }
-        log.info("delete before keys size {}", keys.size());
         if (keys.isEmpty()) {
             return false;
         }
