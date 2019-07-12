@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import retrofit2.Call;
+import retrofit2.Response;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -65,20 +66,37 @@ public class ChannelItemRetriever {
                 .itemUrl(itemUrl)
                 .baseUrl(hubBaseUrl)
                 .build();
-        Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction);
+        Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction, true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getEarliestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest, true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getLatestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, true);
         return Optional.ofNullable(((Call) response).execute().body());
+    }
+
+    @SneakyThrows
+    public Optional<String> getLatestItemUrl(String channelName, boolean stable) {
+        Call<Object> call = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, stable);
+        Response response = ((Call) call).execute();
+        if (response.isSuccessful()) {
+            return Optional.of(response.raw().request().url().toString());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @SneakyThrows
+    public Optional<String> getLatestUnstableItemUrl(String channelName) {
+        return getLatestItemUrl(channelName, false);
+
     }
 
     @SneakyThrows
