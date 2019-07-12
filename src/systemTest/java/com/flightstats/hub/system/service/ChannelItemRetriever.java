@@ -101,22 +101,4 @@ public class ChannelItemRetriever {
         return op;
     }
 
-    @SneakyThrows
-    public Optional<TimeQueryResult> getItemsForHourFromLocation(String path, Location location) {
-        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
-                .itemUrl(path)
-                .baseUrl(hubBaseUrl)
-                .build();
-        Call<TimeQueryResult> response = channelItemResourceClient.getItemsHourPath(
-                pathParts.getChannelName(),
-                pathParts.getYear(),
-                pathParts.getMonth(),
-                pathParts.getDay(),
-                pathParts.getHour(),
-                location);
-        Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
-        op.filter(o -> o.get_links() != null);
-        return op;
-    }
-
 }

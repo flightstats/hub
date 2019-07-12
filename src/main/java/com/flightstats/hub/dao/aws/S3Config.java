@@ -106,7 +106,7 @@ public class S3Config {
             updateMaxItems();
         }
 
-        void updateMaxItems() {
+        private void updateMaxItems() {
             log.info("iterating channels for max items update");
             for (ChannelConfig config : configurations) {
                 if (config.getMaxItems() > 0 && !config.getKeepForever()) {
@@ -116,7 +116,7 @@ public class S3Config {
         }
 
         @SneakyThrows
-        private void updateMaxItems(String channelName) {
+        void updateMaxItems(String channelName) {
             Optional<ChannelConfig> channelConfig = Optional.ofNullable(channelConfigDao.get(channelName));
             channelConfig.filter(config -> config.getMaxItems() > 0 && !config.getKeepForever())
                     .ifPresent(this::updateMaxItems);

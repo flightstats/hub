@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
@@ -104,7 +105,7 @@ public class S3Service {
                 .replace(hubBaseUrl + "/channel/", "") : "";
     }
 
-    public boolean confirmItemsInS3(ChannelType storage, String fullPath, String channelName) {
+    public boolean confirmItemInS3(ChannelType storage, String fullPath, String channelName) {
         try {
             String path;
             byte[] result;
@@ -130,9 +131,13 @@ public class S3Service {
         }
     }
 
+    public boolean confirmItemsInS3(ChannelType storage, List<String> paths, String channelName) {
+        return paths.stream().allMatch(path -> confirmItemInS3(storage, path, channelName));
+    }
+
     public boolean confirmItemNotInS3(ChannelType storage, String fullPath, String channelName) {
         try {
-            return !confirmItemsInS3(storage, fullPath, channelName);
+            return !confirmItemInS3(storage, fullPath, channelName);
         } catch (AmazonS3Exception e) {
             log.info("unexpected error: ", e.getMessage());
             return e.getStatusCode() == 404;
