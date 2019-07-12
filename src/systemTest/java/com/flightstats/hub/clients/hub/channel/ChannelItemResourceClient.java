@@ -43,6 +43,14 @@ public interface ChannelItemResourceClient {
                                               @Path("s") int second,
                                               @Query("location") Location location);
 
+    @GET("/channel/{channelName}/{Y}/{M}/{D}/{h}")
+    Call<TimeQueryResult> getItemsHourPath(@Path("channelName") String channelName,
+                                              @Path("Y") int year,
+                                              @Path("M") int month,
+                                              @Path("D") int day,
+                                              @Path("h") int hour,
+                                              @Query("location") Location location);
+
     @GET("/channel/{itemPath}/{direction}/{numberOfItems}")
     Call<TimeQueryResult> getDirectionalItems(@Path(value="itemPath", encoded=true) String itemPath,
                                               @Path("direction") ChannelItemQueryDirection direction,

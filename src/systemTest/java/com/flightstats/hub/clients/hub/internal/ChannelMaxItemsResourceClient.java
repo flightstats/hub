@@ -8,5 +8,5 @@ import retrofit2.http.Path;
 public interface ChannelMaxItemsResourceClient {
 
     @PATCH("/internal/max-items/{channel}")
-    Call<Object> enforceMaxItems(@Path("channel") String channel);
+    Call<Void> enforceMaxItems(@Path("channel") String channel);
 }

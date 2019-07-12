@@ -73,6 +73,7 @@ public class ReleaseInstall {
                 "  installCallbackserver: " + helmProperties.isCallbackServerInstalledByHelm() + "\n" +
                 "hub: \n" +
                 "  hub: \n" +
+                "    image: flightstats/hub:max-items-system-tests7 \n" +
                 "    clusteredHub: \n" +
                 "      enabled: " + helmProperties.isHubInstallClustered() + "\n";
     }

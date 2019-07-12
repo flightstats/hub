@@ -22,8 +22,8 @@ public class HubInternalService {
     @SneakyThrows
     public void enforceMaxItems(String channelName) {
         try {
-            Call<Object> call = channelMaxItemsResourceClient.enforceMaxItems(channelName);
-            Response response = call.execute();
+            Call<Void> call = channelMaxItemsResourceClient.enforceMaxItems(channelName);
+            Response<Void> response = call.execute();
             log.info("max items enforcer response status: " + response.code());
         } catch (Exception e) {
             log.warn("error max items enforcer response: ", e.getMessage());

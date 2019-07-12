@@ -16,6 +16,7 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -112,6 +113,13 @@ public class S3Config {
                     updateMaxItems(config);
                 }
             }
+        }
+
+        @SneakyThrows
+        void updateMaxItems(String channelName) {
+            Optional<ChannelConfig> channelConfig = Optional.ofNullable(channelConfigDao.get(channelName));
+            channelConfig.filter(config -> config.getMaxItems() > 0 && !config.getKeepForever())
+                    .ifPresent(this::updateMaxItems);
         }
 
         private void updateMaxItems(ChannelConfig config) {

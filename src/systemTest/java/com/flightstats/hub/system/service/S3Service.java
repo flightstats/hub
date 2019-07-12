@@ -129,4 +129,14 @@ public class S3Service {
             return false;
         }
     }
+
+    public boolean confirmItemNotInS3(ChannelType storage, String fullPath, String channelName) {
+        try {
+            return !confirmItemsInS3(storage, fullPath, channelName);
+        } catch (AmazonS3Exception e) {
+            log.info("unexpected error: ", e.getMessage());
+            return e.getStatusCode() == 404;
+        }
+
+    }
 }
