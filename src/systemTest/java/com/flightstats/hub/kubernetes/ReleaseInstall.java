@@ -37,14 +37,6 @@ public class ReleaseInstall {
         return requestBuilder;
     }
 
-    private InstallReleaseRequest.Builder configureRequestBuilder() {
-        InstallReleaseRequest.Builder requestBuilder = getRequestBuilder();
-        ConfigOuterClass.Config.Builder valuesBuilder = requestBuilder.getValuesBuilder();
-        valuesBuilder.setRaw(getOverrideValuesYaml());
-        requestBuilder.setValues(valuesBuilder.build());
-        return requestBuilder;
-    }
-
     private InstallReleaseRequest.Builder configureRequestBuilder(String customYaml) {
         InstallReleaseRequest.Builder requestBuilder = getRequestBuilder();
         ConfigOuterClass.Config.Builder valuesBuilder = requestBuilder.getValuesBuilder();
@@ -64,7 +56,7 @@ public class ReleaseInstall {
 
     @SneakyThrows
     void install() {
-        install(configureRequestBuilder());
+        install(configureRequestBuilder(""));
     }
 
     @SneakyThrows
@@ -99,6 +91,7 @@ public class ReleaseInstall {
                 "  installCallbackserver: " + helmProperties.isCallbackServerInstalledByHelm() + "\n" +
                 "hub: \n" +
                 "  hub: \n" +
+                "    image: " + helmProperties.getHubDockerImage() + "\n" +
                 "    clusteredHub: \n" +
                 "      enabled: " + helmProperties.isHubInstallClustered() + "\n";
     }

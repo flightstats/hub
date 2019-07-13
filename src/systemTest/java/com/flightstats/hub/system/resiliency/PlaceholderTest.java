@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
 
@@ -15,21 +16,20 @@ import javax.inject.Inject;
     A temporary example of how SingletonTestInjectionExtension can be used with custom hub setup
 */
 @Slf4j
-@ExtendWith(SingletonTestInjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PlaceholderTest {
-    private static final String CUSTOM_YAML_FOR_HELM = "hub: \n" +
-            "  hub: \n" +
-            "    image: flightstats/hub:latest \n" +
-            "    configMap: \n" +
-            "      properties: \n" +
-            "        can.set.custom.properties: here";
+
+    @RegisterExtension
+    static SingletonTestInjectionExtension preTest = SingletonTestInjectionExtension.builder()
+            .hubDockerImage("flightstats/hub:max-items-system-tests7")
+            .build();
+
     @Inject
     private HubLifecycle hubLifecycle;
 
     @BeforeAll
     void setup() {
-        hubLifecycle.setup(CUSTOM_YAML_FOR_HELM);
+        hubLifecycle.setup();
     }
 
     @AfterAll
