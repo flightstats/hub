@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DirectionalQueriesTest extends TestClassWrapper {
     private String historicalChannelName;
-    private DateTime mutableTimeEnd = DateTime.now().minusDays(1);
+    private DateTime mutableTimeEnd = DateTime.parse("2016-04-15T12:00:10.000Z");
     private SortedSet<ChannelItemWithBody> insertedItems;
     @Inject
     private ChannelConfigService channelConfigService;
@@ -47,7 +47,7 @@ class DirectionalQueriesTest extends TestClassWrapper {
                 .build();
         channelConfigService.create(config);
 
-        insertedItems = insertHistoricalItems(10, itemNumber -> mutableTimeEnd.minusMinutes(10 - itemNumber));
+        insertedItems = insertHistoricalItems(10, itemNumber -> mutableTimeEnd.minusSeconds(10 - itemNumber));
 
         ChannelConfig updatedConfig = config.toBuilder()
                 .mutableTime(mutableTimeEnd.minusDays(11))
@@ -70,9 +70,9 @@ class DirectionalQueriesTest extends TestClassWrapper {
 
     @Test
     void next_returnsNextItem() {
-        ChannelItemWithBody currentItem = getNthItem(3);
+        String startingUrl = getNthItemUrl(3, ChannelItemWithBody::getItemUrl);
 
-        Object actualNext = itemRetriever.getDirectionalItem(currentItem.getUrl(), next)
+        Object actualNext = itemRetriever.getDirectionalItem(startingUrl, next)
                 .orElseThrow(AssertionError::new);
 
         ChannelItemWithBody expectedNext = getNthItem(4);
@@ -81,10 +81,21 @@ class DirectionalQueriesTest extends TestClassWrapper {
 
     @Test
     void nextN_returnsNItemsAfterRequested() {
-        ChannelItemWithBody currentItem = getNthItem(2);
-        List<String> expectedNext = getItemsInRange(3, 4).stream().map(ChannelItemWithBody::getUrl).collect(toList());
+        String startingUrl = getNthItemUrl(2, ChannelItemWithBody::getItemUrl);
+        List<String> expectedNext = getItemsInRange(3, 4).stream().map(ChannelItemWithBody::getItemUrl).collect(toList());
 
-        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(currentItem.getUrl(), next, 2)
+        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(startingUrl, next, 2)
+                .orElseThrow(AssertionError::new);
+
+        assertEquals(expectedNext, Lists.newArrayList(actualItems.get_links().getUris()));
+    }
+
+    @Test
+    void nextN_returnsNSecondsIncludingRequestedSecond() {
+        String startingUrl = getNthItemUrl(2, ChannelItemWithBody::getSecondUrl);
+        List<String> expectedNext = getItemsInRange(2, 3).stream().map(ChannelItemWithBody::getSecondUrl).collect(toList());
+
+        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(startingUrl, next, 2)
                 .orElseThrow(AssertionError::new);
 
         assertEquals(expectedNext, Lists.newArrayList(actualItems.get_links().getUris()));
@@ -92,9 +103,9 @@ class DirectionalQueriesTest extends TestClassWrapper {
 
     @Test
     void previous_returnsPreviousItem() {
-        ChannelItemWithBody currentItem = getNthItem(6);
+        String startingUrl = getNthItemUrl(6, ChannelItemWithBody::getItemUrl);
 
-        Object actualNext = itemRetriever.getDirectionalItem(currentItem.getUrl(), previous)
+        Object actualNext = itemRetriever.getDirectionalItem(startingUrl, previous)
                 .orElseThrow(AssertionError::new);
 
         ChannelItemWithBody expectedNext = getNthItem(5);
@@ -103,10 +114,21 @@ class DirectionalQueriesTest extends TestClassWrapper {
 
     @Test
     void previousN_returnsNItemsBeforeRequested() {
-        ChannelItemWithBody currentItem = getNthItem(8);
-        List<String> expectedNext = getItemsInRange(6, 7).stream().map(ChannelItemWithBody::getUrl).collect(toList());
+        String startingUrl = getNthItemUrl(8, ChannelItemWithBody::getItemUrl);
+        List<String> expectedNext = getItemsInRange(6, 7).stream().map(ChannelItemWithBody::getItemUrl).collect(toList());
 
-        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(currentItem.getUrl(), previous, 2)
+        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(startingUrl, previous, 2)
+                .orElseThrow(AssertionError::new);
+
+        assertEquals(expectedNext, Lists.newArrayList(actualItems.get_links().getUris()));
+    }
+
+    @Test
+    void previousN_returnsNSecondsBeforeRequestedSecond() {
+        String startingUrl = getNthItemUrl(8, ChannelItemWithBody::getSecondUrl);
+        List<String> expectedNext = getItemsInRange(6, 7).stream().map(ChannelItemWithBody::getSecondUrl).collect(toList());
+
+        TimeQueryResult actualItems = itemRetriever.getDirectionalItems(startingUrl, previous, 2)
                 .orElseThrow(AssertionError::new);
 
         assertEquals(expectedNext, Lists.newArrayList(actualItems.get_links().getUris()));
@@ -132,6 +154,10 @@ class DirectionalQueriesTest extends TestClassWrapper {
 
     private ChannelItemWithBody getNthItem(int itemNumber) {
         return new ArrayList<>(insertedItems).get(itemNumber - 1);
+    }
+
+    private String getNthItemUrl(int itemNumber, Function<ChannelItemWithBody, String> urlRetriever) {
+        return urlRetriever.apply(getNthItem(itemNumber));
     }
 
     private List<ChannelItemWithBody> getItemsInRange(int firstItemNumber, int lastItemNumber) {
