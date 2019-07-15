@@ -74,7 +74,8 @@ public class ChannelItemCreator {
         assertNotNull(response.body());
 
         return ChannelItemWithBody.builder()
-                .url(response.body().get_links().getSelf().getHref())
+                .baseUrl(hubBaseUrl)
+                .itemUrl(response.body().get_links().getSelf().getHref())
                 .body(itemIdentifier)
                 .build();
     }
@@ -98,7 +99,7 @@ public class ChannelItemCreator {
 
     private DateTime getDateTimeForItem(ChannelItemWithBody channelItem) {
         return ChannelItemPathParts.builder()
-                .itemUrl(channelItem.getUrl())
+                .itemUrl(channelItem.getPath())
                 .baseUrl(hubBaseUrl)
                 .build()
                 .getDateTime();
