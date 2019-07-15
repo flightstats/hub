@@ -35,14 +35,6 @@ public class HubLifecycle {
         }
     }
 
-    public void setup(String customYaml) {
-        if (releaseStatus.releaseExists(getReleaseName())) {
-            log.info("Release is already installed; skipping");
-        } else {
-            releaseInstall.install(customYaml);
-        }
-    }
-
     public void serviceDelete(List<String> serviceName) {
         serviceDelete.execute(getReleaseName(), serviceName);
     }

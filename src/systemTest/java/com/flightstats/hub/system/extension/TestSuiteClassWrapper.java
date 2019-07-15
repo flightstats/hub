@@ -7,5 +7,5 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(HubLifecycleSuiteExtension.class)
 @ExtendWith(DependencyInjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestClassWrapper {
+public class TestSuiteClassWrapper {
 }

@@ -3,7 +3,7 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
@@ -26,7 +26,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static junit.framework.Assert.assertTrue;
 
 @Slf4j
-class TimedWebhooksTest extends TestClassWrapper {
+class TimedWebhooksTest extends TestSuiteClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final int CHANNEL_COUNT = 5;
     private static final int TIMEOUT = 5 * 60;

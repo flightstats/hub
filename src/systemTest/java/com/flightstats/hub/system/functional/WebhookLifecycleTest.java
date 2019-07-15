@@ -2,7 +2,7 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 @Slf4j
-class WebhookLifecycleTest extends TestClassWrapper {
+class WebhookLifecycleTest extends TestSuiteClassWrapper {
     @Inject
     private CallbackService callbackResource;
     @Inject

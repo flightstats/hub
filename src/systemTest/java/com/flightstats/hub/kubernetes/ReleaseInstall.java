@@ -22,10 +22,12 @@ import static junit.framework.TestCase.assertTrue;
 @Slf4j
 public class ReleaseInstall {
     private final HelmProperties helmProperties;
+    private final HelmYamlOverride helmYamlOverride;
 
     @Inject
-    public ReleaseInstall(HelmProperties helmProperties) {
+    public ReleaseInstall(HelmProperties helmProperties, HelmYamlOverride helmYamlOverride) {
         this.helmProperties = helmProperties;
+        this.helmYamlOverride = helmYamlOverride;
     }
 
     private InstallReleaseRequest.Builder getRequestBuilder() {
@@ -37,11 +39,10 @@ public class ReleaseInstall {
         return requestBuilder;
     }
 
-    private InstallReleaseRequest.Builder configureRequestBuilder(String customYaml) {
+    private InstallReleaseRequest.Builder configureRequestBuilder() {
         InstallReleaseRequest.Builder requestBuilder = getRequestBuilder();
         ConfigOuterClass.Config.Builder valuesBuilder = requestBuilder.getValuesBuilder();
-        String values = getOverrideValuesYaml() + customYaml;
-        valuesBuilder.setRaw(values);
+        valuesBuilder.setRaw(helmYamlOverride.getYaml());
         requestBuilder.setValues(valuesBuilder.build());
         return requestBuilder;
     }
@@ -56,12 +57,7 @@ public class ReleaseInstall {
 
     @SneakyThrows
     void install() {
-        install(configureRequestBuilder(""));
-    }
-
-    @SneakyThrows
-    void install(String customYaml) {
-        install(configureRequestBuilder(customYaml));
+        install(configureRequestBuilder());
     }
 
     @SneakyThrows
@@ -81,19 +77,6 @@ public class ReleaseInstall {
         }
 
         log.info("Hub release {} install completed in {} ms", getReleaseName(), (System.currentTimeMillis() - start));
-    }
-
-    private String getOverrideValuesYaml() {
-        return "tags: \n" +
-                "  installHub: " + helmProperties.isHubInstalledByHelm() + "\n" +
-                "  installZookeeper: " + helmProperties.isZookeeperInstalledByHelm() + "\n" +
-                "  installLocalstack: " + helmProperties.isLocalstackInstalledByHelm() + "\n" +
-                "  installCallbackserver: " + helmProperties.isCallbackServerInstalledByHelm() + "\n" +
-                "hub: \n" +
-                "  hub: \n" +
-                "    image: " + helmProperties.getHubDockerImage() + "\n" +
-                "    clusteredHub: \n" +
-                "      enabled: " + helmProperties.isHubInstallClustered() + "\n";
     }
 
     private String getReleaseName() {

@@ -2,7 +2,7 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
@@ -20,7 +20,7 @@ import javax.inject.Inject;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-class StorageTest extends TestClassWrapper {
+class StorageTest extends TestSuiteClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private String channelName;
     private String itemUri;

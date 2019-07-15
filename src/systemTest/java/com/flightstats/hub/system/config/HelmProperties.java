@@ -1,11 +1,11 @@
 package com.flightstats.hub.system.config;
 
-import lombok.Getter;
+import lombok.Value;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Getter
+@Value
 public class HelmProperties {
     private final String releaseName;
     private final String chartPath;
