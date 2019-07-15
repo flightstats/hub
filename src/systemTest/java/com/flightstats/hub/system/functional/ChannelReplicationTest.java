@@ -60,7 +60,7 @@ class ChannelReplicationTest extends TestClassWrapper {
 
     @Test
     void replication_itemInBothChannels_item() {
-        itemUri1 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
+        itemUri1 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA).getItemUrl();
         Object objectFromSource = itemRetriever.getItem(itemUri1);
         Awaitility.await()
                 .pollInterval(Duration.ONE_SECOND)
@@ -75,9 +75,9 @@ class ChannelReplicationTest extends TestClassWrapper {
 
     @Test
     void replication_itemsInBothChannels_item() {
-        itemUri1 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
-        itemUri2 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
-        itemUri3 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA);
+        itemUri1 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA).getItemUrl();
+        itemUri2 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA).getItemUrl();
+        itemUri3 = itemCreator.addItem(replicationSourceChannelName, TEST_DATA).getItemUrl();
         Object objectFromSource = itemRetriever.getItem(itemUri1);
         Awaitility.await()
                 .pollInterval(Duration.FIVE_SECONDS)

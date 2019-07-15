@@ -42,14 +42,14 @@ public class ChannelItemCreator {
         this.channelItemResourceClient = hubClientFactory.getHubClient(ChannelItemResourceClient.class);
     }
 
-    public List<String> addItems(String channelName, Object data, int count) {
+    public List<ChannelItemWithBody> addItems(String channelName, Object data, int count) {
         return IntStream.range(0, count)
                 .mapToObj(index -> addItem(channelName, data))
                 .collect(toList());
     }
 
     @SneakyThrows
-    public String addItem(String channelName, Object data) {
+    public ChannelItemWithBody addItem(String channelName, Object data) {
         Call<ChannelItem> call = channelItemResourceClient.add(channelName, data);
         Response<ChannelItem> response = call.execute();
         log.info("channel item creation response {} ", response);
@@ -57,7 +57,7 @@ public class ChannelItemCreator {
         assertNotNull(response);
         assertNotNull(response.body());
 
-        return response.body().get_links().getSelf().getHref();
+        return buildChannelItem(response, data);
     }
 
     @SneakyThrows
@@ -73,11 +73,7 @@ public class ChannelItemCreator {
         assertNotNull(response);
         assertNotNull(response.body());
 
-        return ChannelItemWithBody.builder()
-                .baseUrl(hubBaseUrl)
-                .itemUrl(response.body().get_links().getSelf().getHref())
-                .body(itemIdentifier)
-                .build();
+        return buildChannelItem(response, itemIdentifier);
     }
 
     public SortedSet<ChannelItemWithBody> addHistoricalItems(String channelName, List<DateTime> insertionDates) {
@@ -103,6 +99,14 @@ public class ChannelItemCreator {
                 .baseUrl(hubBaseUrl)
                 .build()
                 .getDateTime();
+    }
+
+    private ChannelItemWithBody buildChannelItem(Response<ChannelItem> response, Object body) {
+        return ChannelItemWithBody.builder()
+                .baseUrl(hubBaseUrl)
+                .itemUrl(response.body().get_links().getSelf().getHref())
+                .body(body)
+                .build();
     }
 
 }

@@ -47,7 +47,7 @@ class StorageTest extends TestClassWrapper {
                             .name(channelName)
                             .storage(type.toString()).build();
                     channelConfigService.create(channel);
-                    itemUri = itemCreator.addItem(channelName, TEST_DATA);
+                    itemUri = itemCreator.addItem(channelName, TEST_DATA).getItemUrl();
                     return itemUri != null;
                 });
     }
