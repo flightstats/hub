@@ -42,7 +42,7 @@ public class ReleaseInstall {
     private InstallReleaseRequest.Builder configureRequestBuilder() {
         InstallReleaseRequest.Builder requestBuilder = getRequestBuilder();
         ConfigOuterClass.Config.Builder valuesBuilder = requestBuilder.getValuesBuilder();
-        valuesBuilder.setRaw(helmYamlOverride.getYaml());
+        valuesBuilder.setRaw(helmYamlOverride.get());
         requestBuilder.setValues(valuesBuilder.build());
         return requestBuilder;
     }

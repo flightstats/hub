@@ -1,10 +1,13 @@
 package com.flightstats.hub.system.config;
 
+import com.flightstats.hub.system.resiliency.PlaceholderTest;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Properties;
 
 @Value
+@Slf4j
 public class PropertiesLoaderOverride {
     private final Properties properties;
 
@@ -12,13 +15,17 @@ public class PropertiesLoaderOverride {
         this.properties = properties;
     }
 
-    public PropertiesLoaderOverride withHubDockerImage(String image) {
-        properties.setProperty(PropertiesName.HUB_DOCKER_IMAGE, image);
-        return this;
+
+    private Properties placeholderTestRegister() {
+        properties.setProperty(PropertiesName.HUB_DOCKER_IMAGE, PlaceholderTest.IMAGE);
+        return properties;
     }
 
-    public String getDefaultHubDockerImage() {
-        return properties.getProperty(PropertiesName.HUB_DOCKER_IMAGE);
+    public Properties get(Object test) {
+        if (test.getClass().equals(PlaceholderTest.class)) {
+            return placeholderTestRegister();
+        }
+        return properties;
     }
 
 }

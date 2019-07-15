@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Slf4j
 public class HelmYamlOverride {
-    private static final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     private final HelmProperties helmProperties;
 
     @Inject
@@ -21,41 +21,41 @@ public class HelmYamlOverride {
     }
 
     @SneakyThrows
-    String getYaml() {
-        String yaml = objectMapper.writeValueAsString(build());
+    String get() {
+        String yaml = mapper.writeValueAsString(build());
         log.info("starting helm cluster install with yaml: {}", yaml);
         return yaml;
     }
 
     private Map<String, Object> buildClusteredHub() {
         Map<String, Object> clusteredHub = new HashMap<>();
-        clusteredHub.put("enabled", helmProperties.isHubInstallClustered());
+        clusteredHub.put(YamlKeys.CLUSTER_HUB_ENABLED, helmProperties.isHubInstallClustered());
         return clusteredHub;
     }
 
     private Map<String, Object> buildHub() {
         Map<String, Object> hub = new HashMap<>();
         Map<String, Object> hubInner = new HashMap<>();
-        hubInner.put("image", helmProperties.getHubDockerImage());
-        hubInner.put("clusteredHub", buildClusteredHub());
+        hubInner.put(YamlKeys.IMAGE, helmProperties.getHubDockerImage());
+        hubInner.put(YamlKeys.CLUSTER_HUB, buildClusteredHub());
 
-        hub.put("hub", hubInner);
+        hub.put(YamlKeys.HUB, hubInner);
         return hub;
     }
 
     private Map<String, Object> buildTags() {
         Map<String, Object> tags = new HashMap<>();
-        tags.put("installHub", helmProperties.isHubInstalledByHelm());
-        tags.put("installZookeeper", helmProperties.isZookeeperInstalledByHelm());
-        tags.put("installLocalstack", helmProperties.isLocalstackInstalledByHelm());
-        tags.put("installCallbackserver", helmProperties.isCallbackServerInstalledByHelm());
+        tags.put(YamlKeys.INSTALL_HUB, helmProperties.isHubInstalledByHelm());
+        tags.put(YamlKeys.INSTALL_ZK, helmProperties.isZookeeperInstalledByHelm());
+        tags.put(YamlKeys.INSTALL_LOCALSTACK, helmProperties.isLocalstackInstalledByHelm());
+        tags.put(YamlKeys.INSTALL_CB_SERVER, helmProperties.isCallbackServerInstalledByHelm());
         return tags;
     }
 
     private Map<String, Map<String, Object>> build() {
         Map<String, Map<String, Object>> yamlValues = new HashMap<>();
-        yamlValues.put("tags", buildTags());
-        yamlValues.put("hub", buildHub());
+        yamlValues.put(YamlKeys.TAGS, buildTags());
+        yamlValues.put(YamlKeys.HUB, buildHub());
         return yamlValues;
     }
 
