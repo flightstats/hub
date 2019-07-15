@@ -22,28 +22,28 @@ public class HelmYamlOverride {
 
     @SneakyThrows
     String getYaml() {
-        String yaml = objectMapper.writeValueAsString(buildValueStructure());
+        String yaml = objectMapper.writeValueAsString(build());
         log.info("starting helm cluster install with yaml: {}", yaml);
         return yaml;
     }
 
-    private Map<String, Object> buildClusteredHubValues() {
+    private Map<String, Object> buildClusteredHub() {
         Map<String, Object> clusteredHub = new HashMap<>();
         clusteredHub.put("enabled", helmProperties.isHubInstallClustered());
         return clusteredHub;
     }
 
-    private Map<String, Object> buildHubValues() {
+    private Map<String, Object> buildHub() {
         Map<String, Object> hub = new HashMap<>();
         Map<String, Object> hubInner = new HashMap<>();
         hubInner.put("image", helmProperties.getHubDockerImage());
-        hubInner.put("clusteredHub", buildClusteredHubValues());
+        hubInner.put("clusteredHub", buildClusteredHub());
 
         hub.put("hub", hubInner);
         return hub;
     }
 
-    private Map<String, Object> buildTagValues() {
+    private Map<String, Object> buildTags() {
         Map<String, Object> tags = new HashMap<>();
         tags.put("installHub", helmProperties.isHubInstalledByHelm());
         tags.put("installZookeeper", helmProperties.isZookeeperInstalledByHelm());
@@ -52,10 +52,10 @@ public class HelmYamlOverride {
         return tags;
     }
 
-    private Map<String, Map<String, Object>> buildValueStructure() {
+    private Map<String, Map<String, Object>> build() {
         Map<String, Map<String, Object>> yamlValues = new HashMap<>();
-        yamlValues.put("tags", buildTagValues());
-        yamlValues.put("hub", buildHubValues());
+        yamlValues.put("tags", buildTags());
+        yamlValues.put("hub", buildHub());
         return yamlValues;
     }
 
