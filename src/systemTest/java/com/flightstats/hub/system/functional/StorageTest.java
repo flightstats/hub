@@ -75,10 +75,10 @@ class StorageTest extends TestSuiteClassWrapper {
                 .atMost(Duration.TWO_MINUTES)
                 .until(() -> {
                     if (type.equals(ChannelType.BOTH)) {
-                        return s3Service.confirmItemsInS3(ChannelType.SINGLE, itemUri, channelName) &&
-                                s3Service.confirmItemsInS3(ChannelType.BATCH, itemUri, channelName);
+                        return s3Service.confirmItemInS3(ChannelType.SINGLE, itemUri, channelName) &&
+                                s3Service.confirmItemInS3(ChannelType.BATCH, itemUri, channelName);
                     } else {
-                        return s3Service.confirmItemsInS3(type, itemUri, channelName);
+                        return s3Service.confirmItemInS3(type, itemUri, channelName);
                     }
                 });
     }

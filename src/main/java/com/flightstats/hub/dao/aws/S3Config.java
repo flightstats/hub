@@ -16,6 +16,7 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -36,23 +37,20 @@ public class S3Config {
 
     private final DistributedAsyncLockRunner distributedLockRunner;
     private final Dao<ChannelConfig> channelConfigDao;
+    private final MaxItemsEnforcer maxItemsEnforcer;
     private final HubS3Client s3Client;
-    private final ContentRetriever contentRetriever;
-    private final ChannelService channelService;
     private final S3Properties s3Properties;
 
     @Inject
     public S3Config(HubS3Client s3Client,
                     DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                    ContentRetriever contentRetriever,
-                    ChannelService channelService,
+                    MaxItemsEnforcer maxItemsEnforcer,
                     S3Properties s3Properties) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
-        this.channelService = channelService;
-        this.contentRetriever = contentRetriever;
+        this.maxItemsEnforcer = maxItemsEnforcer;
         this.s3Properties = s3Properties;
         if (s3Properties.isConfigManagementEnabled()) {
             HubServices.register(new S3ConfigInit());
@@ -102,52 +100,7 @@ public class S3Config {
         @Override
         public void takeLeadership(Leadership leadership) {
             updateTtlDays();
-            updateMaxItems();
-        }
-
-        private void updateMaxItems() {
-            log.info("updating max items");
-            for (ChannelConfig config : configurations) {
-                if (config.getMaxItems() > 0 && !config.getKeepForever()) {
-                    updateMaxItems(config);
-                }
-            }
-        }
-
-        private void updateMaxItems(ChannelConfig config) {
-            String name = config.getDisplayName();
-            log.info("updating max items for channel {}", name);
-            ActiveTraces.start("S3Config.updateMaxItems", name);
-            Optional<ContentKey> optional = contentRetriever.getLatest(name, false);
-            if (optional.isPresent()) {
-                ContentKey latest = optional.get();
-                if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {
-                    updateMaxItems(config, latest);
-                }
-            }
-            ActiveTraces.end();
-            log.info("completed max items for channel {}", name);
-
-        }
-
-        private void updateMaxItems(ChannelConfig config, ContentKey latest) {
-            SortedSet<ContentKey> keys = new TreeSet<>();
-            keys.add(latest);
-            String name = config.getDisplayName();
-            DirectionQuery query = DirectionQuery.builder()
-                    .channelName(name)
-                    .startKey(latest)
-                    .next(false)
-                    .stable(false)
-                    .earliestTime(config.getTtlTime())
-                    .count((int) (config.getMaxItems() - 1))
-                    .build();
-            keys.addAll(contentRetriever.query(query));
-            if (keys.size() == config.getMaxItems()) {
-                ContentKey limitKey = keys.first();
-                log.info("deleting keys before {}", limitKey);
-                channelService.deleteBefore(name, limitKey);
-            }
+            maxItemsEnforcer.updateMaxItems(configurations);
         }
 
         private void updateTtlDays() {
