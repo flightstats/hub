@@ -45,6 +45,21 @@ public class ChannelItemRetriever {
     }
 
     @SneakyThrows
+    public Optional<TimeQueryResult> getItemsForDayLocation(String path, Location location) {
+        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
+                .itemUrl(path)
+                .baseUrl(hubBaseUrl)
+                .build();
+        Call<TimeQueryResult> response = channelItemResourceClient.getItemForTimeFromLocation(
+                pathParts.getChannelName(),
+                pathParts.getYear(),
+                pathParts.getMonth(),
+                pathParts.getDay(),
+                location);
+        return Optional.ofNullable(response.execute().body());
+    }
+
+    @SneakyThrows
     public Optional<TimeQueryResult> getDirectionalItems(String itemUrl, ChannelItemQueryDirection direction, int numberOfItems) {
         ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
                 .itemUrl(itemUrl)
@@ -81,23 +96,4 @@ public class ChannelItemRetriever {
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
-    @SneakyThrows
-    private Optional<TimeQueryResult> getItemByTimeFromLocation(String path, Location location) {
-        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
-                .itemUrl(path)
-                .baseUrl(hubBaseUrl)
-                .build();
-        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(
-                pathParts.getChannelName(),
-                pathParts.getYear(),
-                pathParts.getMonth(),
-                pathParts.getDay(),
-                pathParts.getHour(),
-                pathParts.getMinute(),
-                pathParts.getSecond(),
-                location);
-        Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
-        op.filter(o -> o.get_links() != null);
-        return op;
-    }
 }
