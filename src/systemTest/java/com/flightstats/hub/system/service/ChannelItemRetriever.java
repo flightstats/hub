@@ -45,6 +45,26 @@ public class ChannelItemRetriever {
     }
 
     @SneakyThrows
+    public Optional<Object> getItemFromLocation(String path, Location location) {
+        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
+                .itemUrl(path)
+                .baseUrl(hubBaseUrl)
+                .build();
+        Object response = channelItemResourceClient.get(
+                pathParts.getChannelName(),
+                pathParts.getYear(),
+                pathParts.getMonth(),
+                pathParts.getDay(),
+                pathParts.getHour(),
+                pathParts.getMinute(),
+                pathParts.getSecond(),
+                pathParts.getMillis(),
+                pathParts.getHashKey(),
+                location);
+        return Optional.ofNullable(((Call) response).execute().body());
+    }
+
+    @SneakyThrows
     public Optional<TimeQueryResult> getDirectionalItems(String itemUrl, ChannelItemQueryDirection direction, int numberOfItems) {
         ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
                 .itemUrl(itemUrl)
@@ -79,26 +99,6 @@ public class ChannelItemRetriever {
     public Optional<Object> getLatestItem(String channelName) {
         Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest);
         return Optional.ofNullable(((Call) response).execute().body());
-    }
-
-    @SneakyThrows
-    public Optional<TimeQueryResult> getItemsForSecondFromLocation(String path, Location location) {
-        ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
-                .itemUrl(path)
-                .baseUrl(hubBaseUrl)
-                .build();
-        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(
-                pathParts.getChannelName(),
-                pathParts.getYear(),
-                pathParts.getMonth(),
-                pathParts.getDay(),
-                pathParts.getHour(),
-                pathParts.getMinute(),
-                pathParts.getSecond(),
-                location);
-        Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
-        op.filter(o -> o.get_links() != null);
-        return op;
     }
 
 }
