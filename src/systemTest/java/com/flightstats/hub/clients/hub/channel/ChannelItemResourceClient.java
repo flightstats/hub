@@ -3,6 +3,7 @@ package com.flightstats.hub.clients.hub.channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.ChannelItemQueryDirection;
 import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.model.TimeQueryResult;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -33,17 +34,12 @@ public interface ChannelItemResourceClient {
                      @Path("millis") int millis,
                      @Path("hash") String hash);
 
-    @GET("/channel/{channelName}/{year}/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}")
-    Call<Object> get(@Path("channelName") String channelName,
-                     @Path("year") int year,
-                     @Path("month") int month,
-                     @Path("day") int day,
-                     @Path("hour") int hour,
-                     @Path("minute") int minute,
-                     @Path("second") int second,
-                     @Path("millis") int millis,
-                     @Path("hash") String hash,
-                     @Query("location") Location location);
+    @GET("/channel/{channelName}/{year}/{month}/{day}")
+    Call<TimeQueryResult> getItemForTimeFromLocation(@Path("channelName") String channelName,
+                                               @Path("year") int year,
+                                               @Path("month") int month,
+                                               @Path("day") int day,
+                                               @Query("location") Location location);
 
 
     @GET("/channel/{itemPath}/{direction}/{numberOfItems}")

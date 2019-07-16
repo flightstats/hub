@@ -45,23 +45,18 @@ public class ChannelItemRetriever {
     }
 
     @SneakyThrows
-    public Optional<Object> getItemFromLocation(String path, Location location) {
+    public Optional<TimeQueryResult> getItemsForDayLocation(String path, Location location) {
         ChannelItemPathParts pathParts = ChannelItemPathParts.builder()
                 .itemUrl(path)
                 .baseUrl(hubBaseUrl)
                 .build();
-        Object response = channelItemResourceClient.get(
+        Call<TimeQueryResult> response = channelItemResourceClient.getItemForTimeFromLocation(
                 pathParts.getChannelName(),
                 pathParts.getYear(),
                 pathParts.getMonth(),
                 pathParts.getDay(),
-                pathParts.getHour(),
-                pathParts.getMinute(),
-                pathParts.getSecond(),
-                pathParts.getMillis(),
-                pathParts.getHashKey(),
                 location);
-        return Optional.ofNullable(((Call) response).execute().body());
+        return Optional.ofNullable(response.execute().body());
     }
 
     @SneakyThrows

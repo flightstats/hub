@@ -20,10 +20,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import javax.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static org.hamcrest.core.Is.is;
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ChannelMaxItemsEnforcementTest extends TestClassWrapper {
@@ -47,7 +49,8 @@ class ChannelMaxItemsEnforcementTest extends TestClassWrapper {
     }
 
     private boolean confirmInLocation(String item, Location location) {
-        return channelItemRetriever.getItemFromLocation(item, location).filter(i -> i.equals(TEST_DATA)).isPresent();
+        return channelItemRetriever.getItemsForDayLocation(item, location)
+                .filter(i -> Arrays.asList(i.get_links().getUris()).contains(item)).isPresent();
     }
 
     private void waitUntilAllItemsAreInS3(ChannelType type) {
@@ -61,7 +64,7 @@ class ChannelMaxItemsEnforcementTest extends TestClassWrapper {
                         Location location = type.equals(ChannelType.BATCH) ? Location.LONG_TERM_BATCH : Location.LONG_TERM_SINGLE;
                         return items.stream().allMatch(item -> confirmInLocation(item, location));
                     }
-                });
+                }, is(true));
     }
 
     private void createChannelWithMaxItems(ChannelType type) {
@@ -107,7 +110,7 @@ class ChannelMaxItemsEnforcementTest extends TestClassWrapper {
                         Location location = type.equals(ChannelType.BATCH) ? Location.LONG_TERM_BATCH : Location.LONG_TERM_SINGLE;
                         return !confirmInLocation(path, location);
                     }
-                });
+                }, is(true));
     }
 
 
@@ -116,9 +119,10 @@ class ChannelMaxItemsEnforcementTest extends TestClassWrapper {
     void maxItemsTest_oldestItemDeletedFromS3_itemNotInS3(ChannelType type) {
         // GIVEN
         createChannelWithMaxItems(type);
-        addMaxItems();
-        waitAMinute(type);
         String path = addExtraItem();
+        waitAMinute(type);
+        addMaxItems();
+
         waitUntilAllItemsAreInS3(type);
 
         // WHEN
