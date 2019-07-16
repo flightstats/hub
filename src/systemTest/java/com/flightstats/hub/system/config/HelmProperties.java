@@ -12,9 +12,6 @@ public class HelmProperties {
     private final String hubDockerImage;
     private final boolean shouldDeleteRelease;
     private final boolean isClusteredHubInstall;
-    private final boolean hubInstalledByHelm;
-    private final boolean localstackInstalledByHelm;
-    private final boolean callbackServerInstalledByHelm;
     private final boolean releaseDeletable;
     private final ServiceProperties serviceProperties;
 
@@ -30,12 +27,15 @@ public class HelmProperties {
         this.isClusteredHubInstall = isClusteredHubInstall;
         this.shouldDeleteRelease = shouldDeleteRelease;
         this.hubDockerImage = hubDockerImage;
-        this.hubInstalledByHelm = serviceProperties.getHubUrl().contains(releaseName);
-        this.localstackInstalledByHelm = serviceProperties.getHubUrl().contains(releaseName);
-        this.callbackServerInstalledByHelm = serviceProperties.getCallbackUrl().contains(releaseName);
         this.releaseDeletable = shouldDeleteRelease;
         this.serviceProperties = serviceProperties;
     }
+
+    public boolean isHubInstalledByHelm() { return serviceProperties.getHubUrl().contains(releaseName); }
+
+    public boolean isLocalstackInstalledByHelm() { return serviceProperties.getHubUrl().contains(releaseName); }
+
+    public boolean isCallbackServerInstalledByHelm() { return serviceProperties.getCallbackUrl().contains(releaseName); }
 
     public boolean isHubInstallClustered() { return isClusteredHubInstall && isHubInstalledByHelm(); }
 
