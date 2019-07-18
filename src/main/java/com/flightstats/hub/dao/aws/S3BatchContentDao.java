@@ -159,9 +159,8 @@ public class S3BatchContentDao implements ContentDao {
         long start = System.currentTimeMillis();
         try {
             GetObjectRequest request = new GetObjectRequest(bucketName, getS3BatchItemsKey(channel, minutePath));
-            try (S3Object object = s3Client.getObject(request)) {
-                return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
-            }
+            S3Object object = s3Client.getObject(request);
+            return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
         } finally {
             statsdReporter.time(channel, "s3.get", start, "type:batch");
         }

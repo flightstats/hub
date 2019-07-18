@@ -199,19 +199,18 @@ public class S3LargeContentDao implements ContentDao {
         long start = System.currentTimeMillis();
         try {
             GetObjectRequest request = new GetObjectRequest(bucketName, getS3ContentKey(channelName, key, false));
-            try (S3Object object = s3Client.getObject(request)) {
-                ObjectMetadata metadata = object.getObjectMetadata();
-                Map<String, String> userData = metadata.getUserMetadata();
-                Content.Builder builder = Content.builder();
-                String type = userData.get("type");
-                if (!type.equals("none")) {
-                    builder.withContentType(type);
-                }
-                builder.withContentKey(key);
-                builder.withStream(object.getObjectContent());
-                builder.withLarge(true);
-                return builder.build();
+            S3Object object = s3Client.getObject(request);
+            ObjectMetadata metadata = object.getObjectMetadata();
+            Map<String, String> userData = metadata.getUserMetadata();
+            Content.Builder builder = Content.builder();
+            String type = userData.get("type");
+            if (!type.equals("none")) {
+                builder.withContentType(type);
             }
+            builder.withContentKey(key);
+            builder.withStream(object.getObjectContent());
+            builder.withLarge(true);
+            return builder.build();
 
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
