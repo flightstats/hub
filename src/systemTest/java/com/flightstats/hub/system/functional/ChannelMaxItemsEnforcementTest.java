@@ -3,7 +3,7 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
 import com.flightstats.hub.model.Location;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
@@ -28,7 +28,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.hamcrest.core.Is.is;
 
 @Execution(ExecutionMode.SAME_THREAD)
-class ChannelMaxItemsEnforcementTest extends TestClassWrapper {
+class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final int MAX_ITEMS = 5;
     private final List<String> items = new ArrayList<>();

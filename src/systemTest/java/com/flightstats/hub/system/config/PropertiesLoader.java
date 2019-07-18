@@ -53,4 +53,5 @@ public class PropertiesLoader {
     private String isHelmHubClustered(Properties properties) {
         return properties.getProperty(PropertiesName.HELM_CLUSTERED_HUB, "true");
     }
+
 }

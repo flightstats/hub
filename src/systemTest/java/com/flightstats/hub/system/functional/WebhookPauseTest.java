@@ -5,7 +5,7 @@ import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.WebhookService;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +21,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class WebhookPauseTest extends TestClassWrapper {
+class WebhookPauseTest extends TestSuiteClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private String webhookName;
     private String channelName;

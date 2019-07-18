@@ -8,6 +8,7 @@ public class PropertiesName {
 
     public static final String HUB_URL_TEMPLATE = "hub.url";
     static final String CALLBACK_URL_TEMPLATE = "callback.url";
+    public static final String HUB_DOCKER_IMAGE = "hub.docker.image";
 
     public static final String S3_URL_TEMPLATE = "s3.url";
     public static final String S3_REGION = "s3.region";

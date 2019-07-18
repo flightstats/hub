@@ -3,7 +3,7 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.model.TimeQueryResult;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
 import com.flightstats.hub.system.service.ChannelConfigService;
@@ -27,7 +27,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class DirectionalQueriesTest extends TestClassWrapper {
+class DirectionalQueriesTest extends TestSuiteClassWrapper {
     private String historicalChannelName;
     private DateTime mutableTimeEnd = DateTime.parse("2016-04-15T12:00:10.000Z");
     private SortedSet<ChannelItemWithBody> insertedItems;

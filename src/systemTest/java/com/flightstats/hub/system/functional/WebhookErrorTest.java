@@ -5,7 +5,7 @@ import javax.inject.Inject;
 
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
-class WebhookErrorTest extends TestClassWrapper {
+class WebhookErrorTest extends TestSuiteClassWrapper {
     @Inject
     private ChannelConfigService channelConfigService;
     @Inject

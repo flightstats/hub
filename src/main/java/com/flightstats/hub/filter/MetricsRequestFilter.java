@@ -29,7 +29,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 @Provider
 public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
-
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";

@@ -63,6 +63,7 @@ task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verif
     systemProperties System.properties.findAll { property ->
         property.key.startsWith("systemTest.")
     }
+    systemProperty 'kubernetes.websocket.ping.interval', 30000
 
     useJUnitPlatform()
     testLogging {

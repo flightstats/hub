@@ -22,39 +22,53 @@ import static junit.framework.TestCase.assertTrue;
 @Slf4j
 public class ReleaseInstall {
     private final HelmProperties helmProperties;
+    private final HelmYamlOverride helmYamlOverride;
 
     @Inject
-    public ReleaseInstall(HelmProperties helmProperties) {
+    public ReleaseInstall(HelmProperties helmProperties, HelmYamlOverride helmYamlOverride) {
         this.helmProperties = helmProperties;
+        this.helmYamlOverride = helmYamlOverride;
     }
 
+    private InstallReleaseRequest.Builder getRequestBuilder() {
+        InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
+        requestBuilder.setTimeout(1000L);
+        requestBuilder.setName(getReleaseName());
+        requestBuilder.setWait(true);
+        requestBuilder.setDisableHooks(false);
+        return requestBuilder;
+    }
+
+    private InstallReleaseRequest.Builder configureRequestBuilder() {
+        InstallReleaseRequest.Builder requestBuilder = getRequestBuilder();
+        ConfigOuterClass.Config.Builder valuesBuilder = requestBuilder.getValuesBuilder();
+        valuesBuilder.setRaw(helmYamlOverride.get());
+        requestBuilder.setValues(valuesBuilder.build());
+        return requestBuilder;
+    }
+
+    @SneakyThrows
+    private ChartOuterClass.Chart.Builder getUrlChartBuilder() {
+        try (URLChartLoader chartLoader = new URLChartLoader()) {
+            log.info("Hub helm chart location {} ", getChartPath());
+            return chartLoader.load(new URL(getChartPath()));
+        }
+    }
 
     @SneakyThrows
     void install() {
+        install(configureRequestBuilder());
+    }
+
+    @SneakyThrows
+    private void install(InstallReleaseRequest.Builder requestBuilder) {
         log.info("Hub release {} install begins", getReleaseName());
 
         long start = System.currentTimeMillis();
-        ChartOuterClass.Chart.Builder chartBuilder;
-        try (URLChartLoader chartLoader = new URLChartLoader()) {
-            log.info("Hub helm chart location {} ", getChartPath());
-            chartBuilder = chartLoader.load(new URL(getChartPath()));
-        }
-
+        ChartOuterClass.Chart.Builder chartBuilder = getUrlChartBuilder();
         try (DefaultKubernetesClient client = new DefaultKubernetesClient();
              Tiller tiller = new Tiller(client);
              ReleaseManager releaseManager = new ReleaseManager(tiller)) {
-
-            InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
-            requestBuilder.setTimeout(300L);
-            requestBuilder.setName(getReleaseName());
-            requestBuilder.setWait(true);
-            requestBuilder.setDisableHooks(false);
-
-
-            ConfigOuterClass.Config.Builder valuesBuilder = requestBuilder.getValuesBuilder();
-            valuesBuilder.setRaw(getOverrideValuesYaml());
-            requestBuilder.setValues(valuesBuilder.build());
-
             Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
             ReleaseOuterClass.Release release = releaseFuture.get().getRelease();
             assertTrue(release.hasChart());
@@ -63,18 +77,6 @@ public class ReleaseInstall {
         }
 
         log.info("Hub release {} install completed in {} ms", getReleaseName(), (System.currentTimeMillis() - start));
-    }
-
-    private String getOverrideValuesYaml() {
-        return "tags: \n" +
-                "  installHub: " + helmProperties.isHubInstalledByHelm() + "\n" +
-                "  installZookeeper: " + helmProperties.isZookeeperInstalledByHelm() + "\n" +
-                "  installLocalstack: " + helmProperties.isLocalstackInstalledByHelm() + "\n" +
-                "  installCallbackserver: " + helmProperties.isCallbackServerInstalledByHelm() + "\n" +
-                "hub: \n" +
-                "  hub: \n" +
-                "    clusteredHub: \n" +
-                "      enabled: " + helmProperties.isHubInstallClustered() + "\n";
     }
 
     private String getReleaseName() {

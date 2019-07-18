@@ -1,7 +1,7 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.system.extension.TestClassWrapper;
+import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
 import com.flightstats.hub.system.service.ChannelConfigService;
@@ -21,7 +21,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-class ChannelReplicationTest extends TestClassWrapper {
+class ChannelReplicationTest extends TestSuiteClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final String REPL_SOURCE = "REPL_TEST_SOURCE";
     private static final String REPL_DEST = "REPL_TEST_DEST";
