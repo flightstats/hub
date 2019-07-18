@@ -29,7 +29,6 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Singleton;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -153,7 +152,6 @@ public class S3BatchContentDao implements ContentDao {
         return builder.build();
     }
 
-    @SneakyThrows
     private ZipInputStream getZipInputStream(String channel, ContentPathKeys minutePath) {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
         long start = System.currentTimeMillis();
