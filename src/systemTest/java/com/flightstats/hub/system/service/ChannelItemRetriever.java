@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import retrofit2.Call;
+import retrofit2.Response;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -80,20 +81,35 @@ public class ChannelItemRetriever {
                 .itemUrl(itemUrl)
                 .baseUrl(hubBaseUrl)
                 .build();
-        Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction);
+        Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction, "IMMUTABLE", true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getEarliestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest, "IMMUTABLE", true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getLatestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest);
+        return getLatestItem(channelName,false);
+    }
+
+    @SneakyThrows
+    public Optional<Object> getLatestItem(String channelName, boolean mutable) {
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, mutable ? "MUTABLE" : "IMMUTABLE", true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
+    @SneakyThrows
+    public Optional<String> getLatestItemUrl(String channelName, boolean mutable) {
+        Call<Object> call = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, mutable ? "MUTABLE" : "IMMUTABLE", true);
+        Response response = ((Call) call).execute();
+        if (response.isSuccessful()) {
+            return Optional.of(response.raw().request().url().toString());
+        } else {
+            return Optional.empty();
+        }
+    }
 }
