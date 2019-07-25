@@ -51,5 +51,6 @@ public interface ChannelItemResourceClient {
     @GET("/channel/{itemPath}/{direction}")
     Call<Object> getDirectionalItem(@Path(value="itemPath", encoded=true) String itemPath,
                                     @Path("direction") ChannelItemQueryDirection direction,
+                                    @Query("epoch") String epoch,
                                     @Query("stable") Boolean stable);
 }

@@ -66,37 +66,36 @@ public class ChannelItemRetriever {
                 .itemUrl(itemUrl)
                 .baseUrl(hubBaseUrl)
                 .build();
-        Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction, true);
+        Object response = channelItemResourceClient.getDirectionalItem(pathParts.getPath(), direction, "IMMUTABLE", true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getEarliestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest, true);
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.earliest, "IMMUTABLE", true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
     public Optional<Object> getLatestItem(String channelName) {
-        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, true);
+        return getLatestItem(channelName,false);
+    }
+
+    @SneakyThrows
+    public Optional<Object> getLatestItem(String channelName, boolean mutable) {
+        Object response = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, mutable ? "MUTABLE" : "IMMUTABLE", true);
         return Optional.ofNullable(((Call) response).execute().body());
     }
 
     @SneakyThrows
-    public Optional<String> getLatestItemUrl(String channelName, boolean stable) {
-        Call<Object> call = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, stable);
+    public Optional<String> getLatestItemUrl(String channelName, boolean mutable) {
+        Call<Object> call = channelItemResourceClient.getDirectionalItem(channelName, ChannelItemQueryDirection.latest, mutable ? "MUTABLE" : "IMMUTABLE", true);
         Response response = ((Call) call).execute();
         if (response.isSuccessful()) {
             return Optional.of(response.raw().request().url().toString());
         } else {
             return Optional.empty();
         }
-    }
-
-    @SneakyThrows
-    public Optional<String> getLatestUnstableItemUrl(String channelName) {
-        return getLatestItemUrl(channelName, false);
-
     }
 
     @SneakyThrows
