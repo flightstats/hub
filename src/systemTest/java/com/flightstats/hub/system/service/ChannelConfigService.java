@@ -3,7 +3,7 @@ package com.flightstats.hub.system.service;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.channel.ChannelResourceClient;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ChannelConfigExpirationSettings;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
@@ -12,11 +12,9 @@ import retrofit2.Response;
 
 import javax.inject.Inject;
 
-import java.util.Optional;
+import java.util.Collections;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -53,11 +51,34 @@ public class ChannelConfigService {
     }
 
     @SneakyThrows
+    public ChannelConfig getUncached(String channelName) {
+        Call<ChannelConfig> call = channelResourceClient.getUncachedConfig(channelName);
+        Response<ChannelConfig> response = call.execute();
+        return response.body();
+    }
+
+    @SneakyThrows
     public void update(ChannelConfig channel) {
         Call<Object> call = channelResourceClient.update(channel.getName(), configWithOwner(channel));
         Response<Object> response = call.execute();
         log.info("channel update response {}, channelName, {}", response, channel.getName());
         assertEquals(CREATED.getStatusCode(), response.code());
+    }
+
+    public void updateExpirationSettings(ChannelConfig channel) {
+        ChannelConfigExpirationSettings expirationSettings = ChannelConfigExpirationSettings.builder()
+                .channelName(channel.getName())
+                .keepForever(channel.getKeepForever())
+                .maxItems(channel.getMaxItems())
+                .ttlDays(channel.getTtlDays())
+                .mutableTime(channel.getMutableTime())
+                .build();
+
+        dynamoService.updateChannelConfig(expirationSettings);
+        ChannelConfig updatedConfig = getUncached(channel.getName()).toBuilder()
+                .tags(Collections.singletonList("updated-expiration-settings"))
+                .build();
+        update(updatedConfig);
     }
 
     @SneakyThrows
