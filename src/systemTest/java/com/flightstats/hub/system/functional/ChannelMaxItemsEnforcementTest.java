@@ -1,6 +1,7 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.model.ChannelType;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
@@ -31,7 +32,7 @@ import static org.hamcrest.core.Is.is;
 class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final int MAX_ITEMS = 5;
-    private final List<String> items = new ArrayList<>();
+    private final List<ChannelItemWithBody> items = new ArrayList<>();
     private String channelName;
     @Inject
     private ChannelConfigService channelConfigService;
@@ -48,9 +49,9 @@ class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
         channelConfigService.delete(channelName);
     }
 
-    private boolean confirmInLocation(String item, Location location) {
-        return channelItemRetriever.getItemsForDayLocation(item, location)
-                .filter(i -> Arrays.asList(i.get_links().getUris()).contains(item)).isPresent();
+    private boolean confirmInLocation(ChannelItemWithBody item, Location location) {
+        return channelItemRetriever.getItemsForDayLocation(item.getItemUrl(), location)
+                .filter(i -> Arrays.asList(i.get_links().getUris()).contains(item.getItemUrl())).isPresent();
     }
 
     private void waitUntilAllItemsAreInS3(ChannelType type) {
@@ -93,22 +94,22 @@ class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
         }
     }
 
-    private String addExtraItem() {
-        String item = channelItemCreator.addItem(channelName, TEST_DATA);
+    private ChannelItemWithBody addExtraItem() {
+        ChannelItemWithBody item = channelItemCreator.addItem(channelName, TEST_DATA);
         items.add(item);
         return item;
     }
 
-    private void confirmDelete(ChannelType type, String path) {
+    private void confirmDelete(ChannelType type, ChannelItemWithBody item) {
         Awaitility.await().pollInterval(Duration.FIVE_SECONDS)
                 .atMost(Duration.TWO_MINUTES)
                 .until(() -> {
                     if (type.equals(ChannelType.BOTH)) {
-                        return !confirmInLocation(path, Location.LONG_TERM_SINGLE) &&
-                                !confirmInLocation(path, Location.LONG_TERM_BATCH);
+                        return !confirmInLocation(item, Location.LONG_TERM_SINGLE) &&
+                                !confirmInLocation(item, Location.LONG_TERM_BATCH);
                     } else {
                         Location location = type.equals(ChannelType.BATCH) ? Location.LONG_TERM_BATCH : Location.LONG_TERM_SINGLE;
-                        return !confirmInLocation(path, location);
+                        return !confirmInLocation(item, location);
                     }
                 }, is(true));
     }
@@ -119,7 +120,7 @@ class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
     void maxItemsTest_oldestItemDeletedFromS3_itemNotInS3(ChannelType type) {
         // GIVEN
         createChannelWithMaxItems(type);
-        String path = addExtraItem();
+        ChannelItemWithBody item = addExtraItem();
         waitAMinute(type);
         addMaxItems();
 
@@ -130,7 +131,7 @@ class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
 
 
         // THEN
-        confirmDelete(type, path);
+        confirmDelete(type, item);
     }
 }
 

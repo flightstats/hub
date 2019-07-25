@@ -1,5 +1,6 @@
 package com.flightstats.hub.system.functional;
 
+import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static java.util.stream.Collectors.toList;
 import static junit.framework.Assert.assertTrue;
 
 @Slf4j
@@ -85,10 +87,11 @@ class TimedWebhooksTest extends TestSuiteClassWrapper {
         try {
             for (int i = 0; i <= 3; i++) {
                 channels.parallelStream().forEach(channelName -> {
-                    List<String> nextItems = itemCreator.addItems(channelName, TEST_DATA, CHANNEL_COUNT / 4);
                     ConcurrentLinkedQueue<String> items = new ConcurrentLinkedQueue<>();
                     channelItemsPosted.putIfAbsent(channelName, items);
-                    nextItems.forEach(item -> channelItemsPosted.get(channelName).add(item));
+                    itemCreator.addItems(channelName, TEST_DATA, CHANNEL_COUNT / 4).stream()
+                            .map(ChannelItemWithBody::getItemUrl)
+                            .forEach(item -> channelItemsPosted.get(channelName).add(item));
                 });
             }
             return true;
