@@ -23,11 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ChannelConfigService {
 
     private static final String CHANNEL_OWNER = "system-tests";
-    private ChannelResourceClient channelResourceClient;
-    private HttpUrl hubBaseUrl;
+    private final ChannelResourceClient channelResourceClient;
+    private final DynamoDbService dynamoService;
+    private final HttpUrl hubBaseUrl;
 
     @Inject
-    public ChannelConfigService(HubClientFactory hubClientFactory) {
+    public ChannelConfigService(HubClientFactory hubClientFactory, DynamoDbService dynamoService) {
+        this.dynamoService = dynamoService;
         this.channelResourceClient = hubClientFactory.getHubClient(ChannelResourceClient.class);
         this.hubBaseUrl = hubClientFactory.getHubBaseUrl();
     }
