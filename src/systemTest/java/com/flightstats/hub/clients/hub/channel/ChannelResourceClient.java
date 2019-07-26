@@ -22,6 +22,9 @@ public interface ChannelResourceClient {
     @GET("/channel/{channelName}")
     Call<ContentKey> get(@Path("channelName") String channelName);
 
+    @GET("/channel/{channelName}?cached=false")
+    Call<ChannelConfig> getUncachedConfig(@Path("channelName") String channelName);
+
     @DELETE("/channel/{channelName}")
     Call<Void> delete(@Path("channelName") String channelName);
 }

@@ -32,6 +32,12 @@ public class ChannelItemPathParts {
                 .substring(1);
     }
 
+    public String getZookeeperItemPath() {
+        return getPath()
+                .replace(getChannelName(), "")
+                .substring(1);
+    }
+
     public String getSecondUrl() {
         String overlyGranularPathParts = format("%03d/%s", getMillis(), getHashKey());
         return getItemUrl().substring(0, getItemUrl().indexOf(overlyGranularPathParts) - 1);

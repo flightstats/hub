@@ -92,7 +92,7 @@ class WebhookErrorTest extends TestSuiteClassWrapper {
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
                 .build();
-        String firstUrl = itemCreator.addItem(channelName, item);
+        String firstUrl = itemCreator.addItem(channelName, item).getItemUrl();
 
         verifyHasReceivedErrorForItem(firstUrl);
 
@@ -109,7 +109,7 @@ class WebhookErrorTest extends TestSuiteClassWrapper {
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
 
         // add new item and wait to hear about it
-        String thirdUrl = itemCreator.addItem(channelName, "{ name:\"item3\" }");
+        String thirdUrl = itemCreator.addItem(channelName, "{ name:\"item3\" }").getItemUrl();
         log.info("Adding new item to channel {}", thirdUrl);
         assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, Collections.singletonList(thirdUrl)));
 
@@ -125,12 +125,12 @@ class WebhookErrorTest extends TestSuiteClassWrapper {
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
                 .build();
-        String firstUrl = itemCreator.addItem(channelName, item);
+        String firstUrl = itemCreator.addItem(channelName, item).getItemUrl();
 
         verifyHasReceivedErrorForItem(firstUrl);
 
         // add new item
-        String secondUrl = itemCreator.addItem(channelName, "{ name:\"item2\" }");
+        String secondUrl = itemCreator.addItem(channelName, "{ name:\"item2\" }").getItemUrl();
         log.info("Adding new item to channel {}", secondUrl);
 
         // move cursor to firstUrl so it skips over the error

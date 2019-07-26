@@ -1,9 +1,10 @@
 package com.flightstats.hub.system.config;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.clients.aws.AwsClientFactory;
 import com.flightstats.hub.clients.callback.CallbackClientFactory;
 import com.flightstats.hub.clients.hub.HubClientFactory;
-import com.flightstats.hub.clients.s3.S3ClientFactory;
 import com.flightstats.hub.model.adapters.HubDateTimeTypeAdapter;
 import com.flightstats.hub.model.adapters.HubDateTypeAdapter;
 import com.flightstats.hub.system.service.CallbackService;
@@ -34,7 +35,7 @@ public class GuiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(S3ClientFactory.class).asEagerSingleton();
+        bind(AwsClientFactory.class).asEagerSingleton();
         Names.bindProperties(binder(), properties);
 
         bind(HubClientFactory.class);
@@ -74,7 +75,13 @@ public class GuiceModule extends AbstractModule {
 
     @Singleton
     @Provides
-    public AmazonS3 s3Client(S3ClientFactory s3ClientFactory) {
-        return s3ClientFactory.getS3Client();
+    public AmazonS3 s3Client(AwsClientFactory awsClientFactory) {
+        return awsClientFactory.getS3Client();
+    }
+
+    @Singleton
+    @Provides
+    public AmazonDynamoDB dynamoDbClient(AwsClientFactory awsClientFactory) {
+        return awsClientFactory.getDynamoDbClient();
     }
 }
