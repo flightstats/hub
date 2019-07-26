@@ -7,8 +7,8 @@ import org.joda.time.DateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@Builder
 @Value
+@Builder(builderClassName = "ChannelConfigExpirationSettingsBuilder")
 public class ChannelConfigExpirationSettings {
     String channelName;
 
@@ -21,53 +21,36 @@ public class ChannelConfigExpirationSettings {
         return Optional.ofNullable(mutableTime);
     }
 
-    public static class ChannelConfigExpirationSettingsBuilder {
-        private boolean keepForever;
-        private long ttlDays;
-        private DateTime mutableTime;
-        private long maxItems;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        public ChannelConfigExpirationSettingsBuilder keepForever(boolean keepForever) {
-            this.keepForever = keepForever;
-            validate();
-            return this;
+    public static class Builder extends ChannelConfigExpirationSettingsBuilder {
+        @Override
+        public ChannelConfigExpirationSettings build() {
+            ChannelConfigExpirationSettings settings = super.build();
+            settings.validate();
+            return settings;
         }
+    }
 
-        public ChannelConfigExpirationSettingsBuilder ttlDays(long ttlDays) {
-            this.ttlDays = ttlDays;
-            validate();
-            return this;
+    private void validate() {
+        if (Stream.of(isKeepForever(), hasTtlDays(), isHistoricalChannel(), hasMaxItems())
+                .filter(bool -> bool)
+                .count() > 1) {
+            throw new IllegalStateException("Only one channel expiration type can be set");
         }
+    }
 
-        public ChannelConfigExpirationSettingsBuilder mutableTime(DateTime mutableTime) {
-            this.mutableTime = mutableTime;
-            validate();
-            return this;
-        }
+    private boolean hasTtlDays() {
+        return getTtlDays() > 0;
+    }
 
-        public ChannelConfigExpirationSettingsBuilder maxItems(long maxItems) {
-            this.maxItems = maxItems;
-            validate();
-            return this;
-        }
+    private boolean isHistoricalChannel() {
+        return getMutableTime().isPresent();
+    }
 
-        private void validate() {
-            if (Stream.of(keepForever, hasTtlDays(), isHistoricalChannel(), hasMaxItems())
-                    .filter(bool -> bool).count() > 1) {
-                throw new IllegalStateException("Only one channel expiration type can be set");
-            }
-        }
-
-        private boolean hasTtlDays() {
-            return ttlDays > 0;
-        }
-
-        private boolean isHistoricalChannel() {
-            return Optional.ofNullable(this.mutableTime).isPresent();
-        }
-
-        private boolean hasMaxItems() {
-            return maxItems > 0;
-        }
+    private boolean hasMaxItems() {
+        return getMaxItems() > 0;
     }
 }
