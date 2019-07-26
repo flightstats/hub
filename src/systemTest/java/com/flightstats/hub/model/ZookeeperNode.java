@@ -3,6 +3,7 @@ package com.flightstats.hub.model;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -10,5 +11,7 @@ import java.util.List;
 public class ZookeeperNode {
     Links _links;
     ZookeeperNodeData data;
-    List<ZookeeperChildNode> children;
+
+    @Builder.Default
+    List<ZookeeperChildNode> children = new ArrayList<>();
 }
