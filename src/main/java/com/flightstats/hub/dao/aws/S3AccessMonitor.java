@@ -89,6 +89,7 @@ public class S3AccessMonitor {
             return CompletableFuture.supplyAsync(() -> {
                 try (S3Object s3Object = hubS3Client
                         .getObject(new GetObjectRequest(bucketName, key()))) {
+                    s3Object.getObjectContent().read(new byte[s3Object.getObjectContent().available()]);
                     return s3Object.getObjectMetadata().getVersionId();
                 } catch (IOException e) {
                     log.info("error closing connection to s3", e);

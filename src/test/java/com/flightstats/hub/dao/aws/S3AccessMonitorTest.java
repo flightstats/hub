@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,6 +45,7 @@ class S3AccessMonitorTest {
         metadata.addUserMetadata("versionId", "testVersionId");
 
         s3Object = new S3Object();
+        s3Object.setObjectContent(new ByteArrayInputStream(new byte[]{}));
         s3Object.setObjectMetadata(metadata);
 
         putObjectResult = new PutObjectResult();
