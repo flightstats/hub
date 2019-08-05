@@ -132,7 +132,7 @@ public class InternalWebhookResource {
         ArrayNode uris = root.putArray("webhooks");
         webhookService.getAll().forEach(webhook -> {
             final WebhookStatus status = webhookService.getStatus(webhook);
-            if (status.getErrors().size() > 0) {
+            if (status.getErrors() != null && status.getErrors().size() > 0) {
                 ObjectNode node = uris.addObject();
                 node.put("name", webhook.getName());
                 node.put("href", constructWebhookURI(webhook).toString());
