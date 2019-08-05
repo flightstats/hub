@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Singleton
-public class SpokeDecommissionManager implements DecommissionManager {
+public class SpokeDecommissionManager {
     private final CuratorCluster spokeCuratorCluster;
     private final CuratorCluster hubCuratorCluster;
     private final HubHealthCheck hubHealthCheck;
@@ -43,7 +43,6 @@ public class SpokeDecommissionManager implements DecommissionManager {
         HubServices.register(new SpokeDecommissionManagerService(), HubServices.TYPE.BEFORE_HEALTH_CHECK);
     }
 
-    @Override
     public boolean decommission() throws Exception {
         hubHealthCheck.decommissionWithinSpoke();
 
@@ -53,7 +52,6 @@ public class SpokeDecommissionManager implements DecommissionManager {
         return true;
     }
 
-    @Override
     public void recommission(String server) throws Exception {
         decommissionCluster.recommission(server);
     }
