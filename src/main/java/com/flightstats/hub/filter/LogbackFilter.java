@@ -4,21 +4,19 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.stream.Stream;
 
 
 @Slf4j
 public class LogbackFilter extends Filter<ILoggingEvent> {
 
     private boolean filterAwsGet404(ILoggingEvent event) {
-        try {
-            log.info("&&&&&&&&&&&& {}", event.getMDCPropertyMap());
-            return event.getLevel().toString().contains("WARN") &&
-                    event.getMessage().contains("com.flightstats.hub.dao.aws.AwsConnectorFactory") &&
-                    event.getMessage().contains("Status Code: 404");
-        } catch (Exception e) {
-            return false;
-        }
-
+        String message = event.getMessage();
+        return StringUtils.isNotBlank(message) &&
+                Stream.of("AmazonS3Exception", "GET", "Status Code: 404")
+                .allMatch(message::contains);
     }
 
     @Override
