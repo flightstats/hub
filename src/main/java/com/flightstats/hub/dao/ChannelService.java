@@ -144,7 +144,7 @@ public class ChannelService {
                 checkZeroBytes(content, channelConfig);
                 traces.add("ContentService.insert marshalled");
                 ContentKey key = content.keyAndStart(timeService.getNow());
-                log.trace("writing key {} to channel {}", key, channelName);
+                log.info("writing key {} to channel {}", key, channelName);
                 key = contentService.insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;

@@ -127,7 +127,7 @@ public class S3Verifier {
         log.debug("verifyChannel.starting {}", range);
         MinutePath lastCompleted = range.getEndPath();
         for (ContentKey key : keysToAdd) {
-            log.trace("found missing {} {}", channelName, key);
+            log.info("found missing {} {}", channelName, key);
             incrementMetric(VerifierMetrics.MISSING_ITEM);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {

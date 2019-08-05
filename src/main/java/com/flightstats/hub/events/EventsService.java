@@ -41,7 +41,6 @@ public class EventsService {
     private Map<String, EventWebhook> outputStreamMap = new ConcurrentHashMap<>();
 
     void getAndSendData(String uri, String id) {
-        log.trace("got uri {} {}", uri, id);
         ChannelContentKey key = ChannelContentKey.fromResourcePath(uri);
         ItemRequest itemRequest = ItemRequest.builder()
                 .channel(key.getChannel())
@@ -52,7 +51,7 @@ public class EventsService {
             Content content = optional.get();
             sendData(id, Errors.rethrow().wrap(contentOutput -> {
                 contentOutput.write(content);
-                log.trace("sent content {} to {}", id, content.getContentKey());
+                log.info("sent content {} to {}", id, content.getContentKey());
             }));
         }
     }
