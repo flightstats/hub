@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.cluster.DecommissionManager;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
+import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.rest.Linked;
 
@@ -32,7 +32,7 @@ import static com.flightstats.hub.constant.InternalResourceDescription.CLUSTER_D
 public class InternalClusterResource {
 
     private final Cluster spokeCluster;
-    private final DecommissionManager decommissionManager;
+    private final SpokeDecommissionManager decommissionManager;
     private final SpokeDecommissionCluster decommissionCluster;
     private final LocalHostProperties localHostProperties;
     private final ObjectMapper objectMapper;
@@ -42,7 +42,7 @@ public class InternalClusterResource {
 
     @Inject
     public InternalClusterResource(@Named("SpokeCluster") Cluster spokeCluster,
-                                   DecommissionManager decommissionManager,
+                                   SpokeDecommissionManager decommissionManager,
                                    SpokeDecommissionCluster decommissionCluster,
                                    LocalHostProperties localHostProperties,
                                    ObjectMapper objectMapper) {
