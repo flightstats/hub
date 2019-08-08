@@ -130,7 +130,7 @@ public class InternalReplicationResource {
                     .resource(batchUrl)
                     .accept("multipart/mixed")
                     .get(ClientResponse.class);
-            log.trace("response.getStatus() {}", response.getStatus());
+            log.info("response.getStatus() {}", response.getStatus());
             if (response.getStatus() != 200) {
                 log.warn("unable to get data for {} {}", channel, response);
                 return null;
