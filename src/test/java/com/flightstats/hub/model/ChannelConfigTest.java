@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -37,7 +39,7 @@ class ChannelConfigTest {
         assertEquals("", config.getDescription());
         assertTrue(config.getTags().isEmpty());
         assertEquals("", config.getReplicationSource());
-        assertEquals("SINGLE", config.getStorage());
+        assertEquals("BATCH", config.getStorage());
         assertNull(config.getMutableTime());
         assertTrue(config.isAllowZeroBytes());
     }
@@ -133,7 +135,7 @@ class ChannelConfigTest {
                 .maxItems(5)
                 .tags(Arrays.asList("uno", "dos"))
                 .replicationSource("theSources")
-                .storage("whyNotEnum?")
+                .storage("SINGLE")
                 .protect(false)
                 .mutableTime(TimeUtil.now())
                 .allowZeroBytes(false)
@@ -169,14 +171,47 @@ class ChannelConfigTest {
     }
 
     @Test
-    void testMutableTime() {
-        ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
+    void testWillDefaultMutableChannelToSingle() {
         DateTime mutableTime = TimeUtil.now();
-        ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).build();
+        ChannelConfig historical = ChannelConfig.builder()
+                .mutableTime(mutableTime)
+                .name("historical").build();
+        assertEquals(historical.getMutableTime(), mutableTime);
+        assertEquals(historical.getStorage(), ChannelType.SINGLE.name());
+    }
+
+    @Test
+    void testCanUpdateToMutableTimeIfUpdateStorage() {
+        ChannelConfig defaults = ChannelConfig.builder()
+                .storage(ChannelType.SINGLE.name())
+                .name("defaults").build();
+
+        DateTime mutableTime = TimeUtil.now();
+        ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).storage(ChannelType.SINGLE.name()).build();
+        assertEquals(mutableTime, channelConfig.getMutableTime());
+    }
+
+    @Test
+    void testMutableTimeFailOnUpdateWithoutUpdateStorage() {
+        ChannelConfig single = ChannelConfig.builder()
+                .name("defaults").build();
+        DateTime mutableTime = TimeUtil.now();
+        assertThrows(InvalidRequestException.class, () -> single.toBuilder().mutableTime(mutableTime).build());
+    }
+
+    @Test
+    void testUpdateMutableTime() {
+        ChannelConfig single = ChannelConfig.builder()
+                .name("single").build();
+        DateTime mutableTime = TimeUtil.now();
+        ChannelConfig channelConfig = single.toBuilder()
+                .storage(ChannelType.SINGLE.name())
+                .mutableTime(mutableTime)
+                .build();
         assertEquals(mutableTime, channelConfig.getMutableTime());
 
         String json = channelConfig.toJson();
-        ChannelConfig updated = ChannelConfig.updateFromJson(defaults, json);
+        ChannelConfig updated = ChannelConfig.updateFromJson(single, json);
         assertEquals(mutableTime, updated.getMutableTime());
 
         ChannelConfig createdFromJson = ChannelConfig.createFromJson(updated.toJson());
