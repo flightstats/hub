@@ -40,10 +40,9 @@ describe(__filename, () => {
     });
 
     it('returns a 400 on mutableTime PUT with bad configuration', async () => {
-        const body = { mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS') };
+        const body = { mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'), storage: 'SINGLE' };
         const response = await hubClientPut(channelResource, headers, body);
         expect(getProp('statusCode', response)).toEqual(400);
-        console.log('*****************', response.body);
         expect(fromObjectPath(['body', 'error'], response))
             .toContain('Only one of ttlDays, maxItems and mutableTime can be defined');
     });
