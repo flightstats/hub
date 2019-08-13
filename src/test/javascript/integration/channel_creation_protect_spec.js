@@ -30,7 +30,7 @@ describe(__filename, function () {
         expect(getProp('ttlDays', body)).toEqual(120);
         expect(getProp('description', body)).toEqual('');
         expect((getProp('tags', body) || '').length).toEqual(2);
-        expect(getProp('storage', body)).toEqual('SINGLE');
+        expect(getProp('storage', body)).toEqual('BATCH');
         expect(getProp('protect', body)).toEqual(false);
     });
 

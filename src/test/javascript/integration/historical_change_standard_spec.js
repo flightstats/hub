@@ -22,7 +22,7 @@ const headers = { 'Content-Type': 'application/json' };
  *
  */
 const channelResource = `${channelUrl}/${channel}`;
-describe(__filename, function () {
+describe(__filename, () => {
     it('creates a channel (no mutableTime)', async () => {
         const response = await hubClientPut(channelResource, headers, { ttlDays: 20 });
         expect(getProp('statusCode', response)).toEqual(201);
@@ -33,13 +33,15 @@ describe(__filename, function () {
 
     const channelBody = {
         ttlDays: 0,
-        mutableTime: mutableTime,
-        tags: [tag, "test"],
+        mutableTime,
+        tags: [tag, 'test'],
+        storage: 'SINGLE',
     };
 
-    it('updates the channel to have a mutabelTime', async () => {
+    it('updates the channel to have a mutableTime', async () => {
         const response = await hubClientPut(channelResource, headers, channelBody);
         const body = getProp('body', response);
+        expect(getProp('statusCode', response)).toEqual(201);
         expect(getProp('ttlDays', body)).toBe(0);
         expect(getProp('maxItems', body)).toBe(0);
         expect(getProp('mutableTime', body)).toBe(expected);
@@ -50,7 +52,7 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it('verifies the mutabelTime time change after channel refresh', async () => {
+    it('verifies the mutableTime time change after channel refresh', async () => {
         const response = await hubClientGet(channelResource, headers);
         const body = getProp('body', response);
         expect(getProp('ttlDays', body)).toBe(0);
