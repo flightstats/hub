@@ -171,7 +171,7 @@ class ChannelConfigTest {
     }
 
     @Test
-    void testWillDefaultMutableChannelToSingle() {
+    void defaultMutableTimeChannel_singleStorage_equalAttributes() {
         DateTime mutableTime = TimeUtil.now();
         ChannelConfig historical = ChannelConfig.builder()
                 .mutableTime(mutableTime)
@@ -181,7 +181,7 @@ class ChannelConfigTest {
     }
 
     @Test
-    void testCanUpdateToMutableTimeIfUpdateStorage() {
+    void updateToMutableTime_updateStorage_true() {
         ChannelConfig defaults = ChannelConfig.builder()
                 .storage(ChannelType.SINGLE.name())
                 .name("defaults").build();
@@ -192,7 +192,7 @@ class ChannelConfigTest {
     }
 
     @Test
-    void testMutableTimeFailOnUpdateWithoutUpdateStorage() {
+    void mutableTimeFailOnUpdate_noUpdateDefaultStorage_throws() {
         ChannelConfig single = ChannelConfig.builder()
                 .name("defaults").build();
         DateTime mutableTime = TimeUtil.now();
@@ -200,7 +200,7 @@ class ChannelConfigTest {
     }
 
     @Test
-    void testUpdateMutableTime() {
+    void updateMutableTime_customSingleStorageOnOriginalChannelCreate_equalConfigs() {
         ChannelConfig single = ChannelConfig.builder()
                 .name("single").build();
         DateTime mutableTime = TimeUtil.now();

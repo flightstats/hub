@@ -1,3 +1,4 @@
+const moment = require('moment');
 const {
     getProp,
     hubClientChannelRefresh,
@@ -12,8 +13,7 @@ const {
 
 const channelUrl = getChannelUrl();
 const channel = randomChannelName();
-const moment = require('moment');
-const tag = Math.random().toString().replace(".", "");
+const tag = Math.random().toString().replace('.', '');
 const headers = { 'Content-Type': 'application/json' };
 /**
  * This should:

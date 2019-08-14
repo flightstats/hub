@@ -32,8 +32,7 @@ let liveLocation = null;
 let liveTime = null;
 /**
  * This should:
- * Create a channel
- * change the channel to have a mutableTime
+ * Create a channel with mutableTime
  * insert an item before the mutableTime, verify item with get
  * insert an item into now, verify item with get
  * Query items by time, verify exclusion

@@ -63,9 +63,6 @@ public class ChannelConfigService {
         Call<Object> call = channelResourceClient.update(channel.getName(), configWithOwner(channel));
         Response<Object> response = call.execute();
         log.info("channel update response {}, channelName, {}", response, channel.getName());
-        if (response.errorBody() != null) {
-            log.info("################## {}", new String(response.errorBody().bytes()));
-        }
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 
