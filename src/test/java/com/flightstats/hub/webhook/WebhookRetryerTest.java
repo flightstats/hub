@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class WebhookRetryerTest {
 
     private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();

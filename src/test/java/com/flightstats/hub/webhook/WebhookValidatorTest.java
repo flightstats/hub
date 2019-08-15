@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class WebhookValidatorTest {
 
     private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;

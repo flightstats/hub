@@ -1,11 +1,18 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.mockito.Mock;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,7 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 class ChannelConfigTest {
+    @Mock
+    private Dao<ChannelConfig> channelConfigDao;
 
     @Test
     void testDefaults() {
@@ -189,14 +199,6 @@ class ChannelConfigTest {
         DateTime mutableTime = TimeUtil.now();
         ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).storage(ChannelType.SINGLE.name()).build();
         assertEquals(mutableTime, channelConfig.getMutableTime());
-    }
-
-    @Test
-    void mutableTimeFailOnUpdate_noUpdateDefaultStorage_throws() {
-        ChannelConfig single = ChannelConfig.builder()
-                .name("defaults").build();
-        DateTime mutableTime = TimeUtil.now();
-        assertThrows(InvalidRequestException.class, () -> single.toBuilder().mutableTime(mutableTime).build());
     }
 
     @Test

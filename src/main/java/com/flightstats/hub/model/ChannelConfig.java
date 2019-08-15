@@ -93,25 +93,25 @@ public class ChannelConfig implements Serializable, NamedType {
             this.ttlDays = ttlDays;
             this.maxItems = maxItems;
         }
-        if (isBlank(storage)) {
-            this.storage = BATCH.name();
-        } else {
-            this.storage = StringUtils.upperCase(storage);
-        }
 
-        if (isHistorical()) {
-            tags.add(HISTORICAL.toString());
-            if (StringUtils.isNotBlank(storage) && !storage.equals(SINGLE.name())) {
-                throw new InvalidRequestException(storage + " storage is not supported by the historical channel/mutable time api");
-            }
-            this.storage = SINGLE.name();
-        }
+        this.storage = getStorageOrDefault(storage);
 
+        addTagIf(isHistorical(), HISTORICAL);
         addTagIf(!isBlank(replicationSource), REPLICATED);
     }
 
     public static ChannelConfigBuilder builder() {
         return new ChannelConfigBuilder();
+    }
+
+    private String getStorageOrDefault(String storage) {
+        if (StringUtils.isNotBlank(storage)) {
+            return StringUtils.upperCase(storage);
+        } else if (StringUtils.isBlank(this.storage) && isHistorical()) {
+            return SINGLE.name();
+        } else {
+            return  BATCH.name();
+        }
     }
 
     public static ChannelConfig createFromJson(String json) {

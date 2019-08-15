@@ -5,6 +5,7 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -352,6 +353,14 @@ class ChannelValidatorTest {
         } catch (ForbiddenRequestException | InvalidRequestException e) {
             //this is expected
         }
+    }
+
+    @Test
+    void mutableTimeFailOnUpdate_noUpdateDefaultStorage_throws() {
+        ChannelConfig single = ChannelConfig.builder()
+                .name("defaults").build();
+        DateTime mutableTime = TimeUtil.now();
+        assertThrows(InvalidRequestException.class, () -> validator.validate(single.toBuilder().mutableTime(mutableTime).build(), single, false));
     }
 
 }

@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class InternalWebhookClientTest {
 
     private static final String WEBHOOK_NAME = "w3bh00k";
