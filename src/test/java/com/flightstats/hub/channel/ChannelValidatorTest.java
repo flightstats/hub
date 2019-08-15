@@ -363,4 +363,15 @@ class ChannelValidatorTest {
         assertThrows(InvalidRequestException.class, () -> validator.validate(single.toBuilder().mutableTime(mutableTime).build(), single, false));
     }
 
+    @Test
+    void mutableTimeFailOnUpdate_updateMutableChannelToBatch_throws() {
+        DateTime mutableTime = TimeUtil.now();
+        ChannelConfig historical = ChannelConfig.builder()
+                .name("mutableTime")
+                .mutableTime(mutableTime)
+                .storage(SINGLE.name())
+                .build();
+        assertThrows(InvalidRequestException.class, () -> validator.validate(historical.toBuilder().storage(BATCH.name()).build(), historical, false));
+    }
+
 }
