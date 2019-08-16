@@ -148,7 +148,7 @@ class ChannelLatestUpdatedStateTest extends TestSuiteClassWrapper {
     }
 
     private void assertChannelLatestUrlEquals(String latestUrl, boolean mutable) {
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(90, TimeUnit.SECONDS)
                 .until(() -> channelItemRetriever.getLatestItemUrl(channelName, mutable).orElse(""),
                         is(equalTo(latestUrl)));
     }
