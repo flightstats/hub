@@ -86,16 +86,16 @@ public class SpokeTtlEnforcer {
 
     void cleanup() {
         try {
-            final long start = System.currentTimeMillis();
-            final AtomicLong evictionCounter = new AtomicLong(0);
+            long start = System.currentTimeMillis();
+            AtomicLong evictionCounter = new AtomicLong(0);
 
             log.debug("running ttl cleanup");
             ttlEnforcer.deleteFilteredPaths(storagePath, channelService, handleCleanup(evictionCounter));
             updateOldestItemMetric();
             statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
 
-            final long runtime = (System.currentTimeMillis() - start);
-                log.info("completed ttl cleanup {}", runtime);
+            long runtime = (System.currentTimeMillis() - start);
+            log.info("completed ttl cleanup {}", runtime);
             statsdReporter.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
 
         } catch (Exception e) {
