@@ -23,10 +23,10 @@ public class ActiveWebhookSweeper {
     }
 
     void cleanupEmpty() {
-        log.info("cleaning empty webhook leader nodes...");
+        log.debug("cleaning empty webhook leader nodes...");
 
         Set<String> currentData = webhookLeaderLocks.getWebhooks();
-        log.info("data {}", currentData.size());
+        log.debug("data {}", currentData.size());
 
         List<String> emptyWebhookLeaders = currentData.stream()
                 .filter(this::isEmpty)
@@ -42,9 +42,8 @@ public class ActiveWebhookSweeper {
     }
 
     private void deleteWebhookLeader(String webhookName) {
-        log.info("deleting empty webhook leader {}", webhookName);
+        log.debug("deleting empty webhook leader {}", webhookName);
         webhookLeaderLocks.deleteWebhookLeader(webhookName);
-
     }
 
 }

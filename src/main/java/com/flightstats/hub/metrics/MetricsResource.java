@@ -44,7 +44,7 @@ public class MetricsResource {
     // TODO: Move(?), test, and refactor this
     private String logFilesInfo() {
         String info = "";
-        log.info("logFilesInfo starting");
+        log.debug("logFilesInfo starting");
         info += "lsof -b -cjava : \r\n";
         info += Commander.run(new String[]{"lsof", "-b", "-cjava"}, 60);
         info += "thread dump \r\n";

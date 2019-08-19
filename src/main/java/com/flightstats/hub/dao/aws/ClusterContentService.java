@@ -533,7 +533,7 @@ public class ClusterContentService implements ContentService {
 
     private void setLastToNewlyImmutableContent(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (latestContentCache.isChannelEmpty(newConfig.getDisplayName())) {
-            log.info("handleMutableTimeChange for channel with no current immutable content {}", newConfig.getDisplayName());
+            log.debug("handleMutableTimeChange for channel with no current immutable content {}", newConfig.getDisplayName());
             DirectionQuery query = DirectionQuery.builder()
                     .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusMillis(1)))
                     .earliestTime(newConfig.getMutableTime())
@@ -550,7 +550,7 @@ public class ClusterContentService implements ContentService {
             if (mutableLatest.isPresent()) {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
-                    log.info("handleMutableTimeChange.setIfNewer {}", mutableKey);
+                    log.debug("handleMutableTimeChange.setIfNewer {}", mutableKey);
                     latestContentCache.setIfNewer(newConfig.getDisplayName(), mutableKey);
                 }
             }

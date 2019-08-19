@@ -107,9 +107,9 @@ public class SafeZooKeeperUtils {
         try {
             return curatorAction.apply(path);
         } catch (KeeperException.NodeExistsException ignore) {
-            log.info("node exists " + path);
+            log.debug("node exists for {}", path);
         } catch (KeeperException.NoNodeException ignore) {
-            log.info("no node exists " + path);
+            log.debug("no node exists for {}", path);
         } catch (Exception e) {
             log.warn(failureMessage + " " + path, e);
         }

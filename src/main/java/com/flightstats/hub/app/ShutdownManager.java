@@ -89,7 +89,7 @@ public class ShutdownManager {
 
     public boolean resetLock() throws Exception {
         try {
-            log.info("resetting lock " + PATH);
+            log.debug("resetting lock {}", PATH);
             curatorFramework.delete().forPath(PATH);
             return true;
         } catch (KeeperException.NoNodeException e) {
@@ -105,7 +105,7 @@ public class ShutdownManager {
                 log.info("waiting for shutdown lock {}", lockData);
                 Sleeper.sleep(1000);
             } catch (KeeperException.NoNodeException e) {
-                log.info("creating shutdown lock");
+                log.debug("creating shutdown lock");
                 try {
                     curatorFramework.create().forPath(PATH, hostAddress.getBytes());
                     return;

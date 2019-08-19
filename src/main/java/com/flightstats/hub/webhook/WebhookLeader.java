@@ -91,7 +91,7 @@ class WebhookLeader implements Lockable {
         log.debug("starting webhook: {}", webhook);
         setWebhook(webhook);
         if (webhook.isPaused()) {
-            log.info("not starting paused webhook " + webhook);
+            log.debug("not starting paused webhook {}", webhook);
             leadershipLock = Optional.empty();
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();

@@ -36,7 +36,7 @@ public class WebSocketService {
     void createCallback(Session session, String channel, ContentKey startingKey) {
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
-        log.info("creating callback {} {} {}", channel, id, uri);
+        log.debug("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
         Webhook webhook = Webhook.builder()
                 .channelUrl(getChannelUrl(uri))
@@ -76,7 +76,7 @@ public class WebSocketService {
     public void call(String id, String uri) {
         Session session = sessionMap.get(id);
         if (session == null) {
-            log.info("attempting to send to missing session {} {}", id, uri);
+            log.debug("attempting to send to missing session {} {}", id, uri);
             close(id);
             return;
         }
@@ -97,7 +97,7 @@ public class WebSocketService {
 
     private void close(String id) {
         try {
-            log.info("deleting ws group {}", id);
+            log.debug("deleting ws group {}", id);
             webhookService.delete(id);
             sessionMap.remove(id);
         } catch (Exception e) {

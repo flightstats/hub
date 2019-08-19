@@ -39,7 +39,7 @@ public class ClusterCacheDao {
         try {
             trace(name, "initialize {} {}", defaultPath, basePath);
             curator.create().creatingParentsIfNeeded().forPath(basePath + name, defaultPath.toBytes());
-            log.info("initialized {} {} {}", name, defaultPath, basePath);
+            log.debug("initialized {} {} {}", name, defaultPath, basePath);
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
             trace("initialize exists {} {} {}", name, defaultPath, basePath);
@@ -147,7 +147,7 @@ public class ClusterCacheDao {
     }
 
     public void delete(String name, String basePath) {
-        log.info("delete {} {}", name, basePath);
+        log.debug("delete {} {}", name, basePath);
         String path = basePath + name;
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);

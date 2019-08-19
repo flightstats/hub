@@ -56,7 +56,7 @@ public class AwsConnectorFactory {
     }
 
     public AmazonS3 getS3Client() {
-        log.info("creating for  {} {} {}", protocol, s3Properties.getEndpoint(), signingRegion);
+        log.debug("creating for  {} {} {}", protocol, s3Properties.getEndpoint(), signingRegion);
 
         final ClientConfiguration clientConfiguration = getClientConfiguration(
                 s3Properties.getMaxConnections(),
@@ -76,7 +76,7 @@ public class AwsConnectorFactory {
     }
 
     public AmazonDynamoDB getDynamoClient() {
-        log.info("creating for {} {} {}", protocol, dynamoProperties.getEndpoint(), signingRegion);
+        log.debug("creating for {} {} {}", protocol, dynamoProperties.getEndpoint(), signingRegion);
 
         final ClientConfiguration clientConfiguration = getClientConfiguration(
                 dynamoProperties.getMaxConnections(),

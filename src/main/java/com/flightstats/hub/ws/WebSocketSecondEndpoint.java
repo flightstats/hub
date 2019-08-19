@@ -46,7 +46,7 @@ public class WebSocketSecondEndpoint {
 
     @OnClose
     public void onClose(Session session, @PathParam("channel") String channel) {
-        log.info("OnClose {}", channel);
+        log.debug("OnClose {}", channel);
         webSocketService.close(session);
     }
 }

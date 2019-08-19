@@ -66,7 +66,7 @@ public class S3Config {
     }
 
     private void doWork() {
-        log.info("starting work");
+        log.debug("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
         distributedLockRunner.setLockPath("/S3ConfigLock");
@@ -104,7 +104,7 @@ public class S3Config {
         }
 
         private void updateTtlDays() {
-            log.info("updateTtlDays");
+            log.debug("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
             int maxRules = s3Properties.getBucketPolicyMaxRules(S3_LIFECYCLE_RULES_AVAILABLE);
 
@@ -114,13 +114,13 @@ public class S3Config {
                 rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
             }
 
-            log.info("updating {} rules with ttl life cycle ", rules.size());
             log.trace("updating {} ", rules);
 
             if (!rules.isEmpty()) {
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
                 SetBucketLifecycleConfigurationRequest request = new SetBucketLifecycleConfigurationRequest(s3Properties.getBucketName(), lifecycleConfig);
                 s3Client.setBucketLifecycleConfiguration(request);
+                log.info("updated {} rules with ttl life cycle ", rules.size());
             }
             ActiveTraces.end();
         }

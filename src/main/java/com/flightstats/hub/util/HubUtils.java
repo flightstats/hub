@@ -103,14 +103,14 @@ public class HubUtils {
     public void startWebhook(Webhook webhook) {
         String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
         String json = webhook.toJson();
-        log.info("starting {} with {}", groupUrl, json);
+        log.debug("starting {} with {}", groupUrl, json);
         ClientResponse response = null;
         try {
             response = followClient.resource(groupUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, json);
-            log.info("start group response {}", response);
+            log.debug("start group response {}", response);
         } finally {
             HubUtils.close(response);
         }
@@ -118,17 +118,17 @@ public class HubUtils {
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
         String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
-        log.info("stopping {} ", groupUrl);
+        log.debug("stopping {} ", groupUrl);
         ClientResponse response = null;
         try {
             response = followClient.resource(groupUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .delete(ClientResponse.class);
+            log.debug("stop group response {}", response);
         } finally {
             HubUtils.close(response);
         }
-        log.debug("stop group response {}", response);
 
     }
 
@@ -144,7 +144,7 @@ public class HubUtils {
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, channelConfig.toJson());
-            log.info("put channel response {} {}", channelConfig, response);
+            log.trace("put channel response {} {}", channelConfig, response);
         } finally {
             HubUtils.close(response);
         }
@@ -203,7 +203,7 @@ public class HubUtils {
             if (response.getStatus() == 200) {
                 return handler.apply(response);
             } else {
-                log.info("unable to get {} {}", uri, response);
+                log.debug("unable to get {} {}", uri, response);
                 return null;
             }
         } finally {
@@ -289,7 +289,7 @@ public class HubUtils {
     public boolean delete(String channelUrl) {
         ClientResponse response = null;
         try {
-            log.info("deleting {}", channelUrl);
+            log.debug("deleting {}", channelUrl);
             response = followClient.resource(channelUrl).delete(ClientResponse.class);
             log.trace("got response {}", response);
             if (response.getStatus() == 202) {

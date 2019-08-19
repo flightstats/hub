@@ -264,9 +264,10 @@ public class InternalSpokeResource {
     @Path("/test/{server}")
     @GET
     public Response test(@PathParam("server") String server) {
-        log.info("testing server {}", server);
+        log.debug("testing server {}", server);
         try {
             healthCheck.testOne(Collections.singletonList(server));
+            log.info("health check successful for {}", server);
             return Response.ok().build();
         } catch (Exception e) {
             log.warn("unable to complete calls " + server, e);

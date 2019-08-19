@@ -71,7 +71,7 @@ public class InternalWebhookClient {
         String hubUrl = uriScheme + url;
         ClientResponse response = null;
         try {
-            log.info("calling {}", hubUrl);
+            log.debug("calling {}", hubUrl);
             response = client.resource(hubUrl).put(ClientResponse.class);
             if (response.getStatus() == 200) {
                 log.debug("success {}", response);
@@ -91,7 +91,7 @@ public class InternalWebhookClient {
         ClientResponse response = null;
         String hubUrl = uriScheme + url;
         try {
-            log.info("calling {}", hubUrl);
+            log.debug("calling {}", hubUrl);
             response = client.resource(hubUrl).get(ClientResponse.class);
             if (response.getStatus() == 200) {
                 log.debug("success {}", response);

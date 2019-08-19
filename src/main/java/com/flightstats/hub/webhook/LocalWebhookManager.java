@@ -44,7 +44,7 @@ public class LocalWebhookManager {
     public void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
         final ExecutorService pool = Executors.newFixedThreadPool(shutdownThreadCount,
                 new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
-        log.info("{}", keys);
+        log.debug("processing {}", keys);
         for (String key : keys) {
             pool.submit(() -> {
                 consumer.accept(key);
@@ -54,7 +54,7 @@ public class LocalWebhookManager {
         pool.shutdown();
         try {
             final boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
-            log.info("awaitTermination", awaitTermination);
+            log.debug("awaitTermination", awaitTermination);
         } catch (InterruptedException e) {
             log.warn("interuppted", e);
             throw new RuntimeInterruptedException(e);
@@ -67,9 +67,9 @@ public class LocalWebhookManager {
 
     private boolean ensureRunningWithLock(String name) {
         final Webhook daoWebhook = webhookDao.get(name);
-        log.info("ensureRunning {}", daoWebhook);
+        log.debug("ensureRunning {}", daoWebhook);
         if (localLeaders.containsKey(name)) {
-            log.info("checking for change {}", name);
+            log.debug("checking for change {}", name);
             final WebhookLeader webhookLeader = localLeaders.get(name);
             final Webhook runningWebhook = webhookLeader.getWebhook();
             if (webhookLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {

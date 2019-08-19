@@ -43,7 +43,7 @@ public class AppUrlCheck extends AbstractIdleService {
         if (hasHealthyServers()) {
             String appUrl = appProperties.getAppUrl();
             ClientResponse response = client.resource(appUrl).get(ClientResponse.class);
-            log.info("got response {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() != 200) {
                 String msg = "unable to connect to app.url " + appUrl + " status=" + response.getStatus();
                 log.error(msg);
@@ -59,7 +59,7 @@ public class AppUrlCheck extends AbstractIdleService {
             String serverUri = localHostProperties.getUriScheme() + server;
             if (!serverUri.equals(localHostProperties.getUriWithHostName())) {
                 ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
-                log.info("got response {}", response);
+                log.trace("got response {}", response);
                 if (response.getStatus() == 200) {
                     return true;
                 }

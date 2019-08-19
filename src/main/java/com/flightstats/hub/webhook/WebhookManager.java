@@ -70,7 +70,6 @@ public class WebhookManager {
     }
 
     private void start() {
-        log.info("starting");
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {

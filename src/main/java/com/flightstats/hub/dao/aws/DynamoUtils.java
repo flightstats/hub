@@ -28,7 +28,7 @@ public class DynamoUtils {
         try {
             TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
             if (status == TableStatus.fromValue(tableDescription.getTableStatus())) {
-                log.info("table " + tableName + " is " + status.toString());
+                log.debug("table {} is {}", tableName, status.toString());
                 return Optional.of(tableDescription);
             }
         } catch (AmazonServiceException ase) {

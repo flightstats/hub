@@ -45,9 +45,9 @@ class S3ConfigStrategy {
         }
         int days = 2;
         int activeShard = timeForSharding.getDayOfYear() / days % buckets;
-        log.info("getDayOfYear {} buckets {} activeShard {}", timeForSharding.getDayOfYear(), buckets, activeShard);
+        log.debug("getDayOfYear {} buckets {} activeShard {}", timeForSharding.getDayOfYear(), buckets, activeShard);
         List<BucketLifecycleConfiguration.Rule> rules = shardedRules.get(activeShard);
-        log.info("base rules  {}", rules.size());
+        log.debug("base rules  {}", rules.size());
         if (rules.size() < max) {
             activeShard++;
             if (activeShard == buckets) {

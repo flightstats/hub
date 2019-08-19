@@ -76,7 +76,7 @@ class S3Util {
         multiObjectDeleteRequest.setKeys(keys);
         try {
             s3Client.deleteObjects(multiObjectDeleteRequest);
-            log.info("deleting more from " + channelPath + " deleted " + keys.size());
+            log.debug("deleted more from {}; {} keys deleted", channelPath, keys.size());
             ActiveTraces.getLocal().add("S3Util.internalDelete", channelPath, keys.size());
         } catch (MultiObjectDeleteException e) {
             log.info("what happened? " + channelPath, e);

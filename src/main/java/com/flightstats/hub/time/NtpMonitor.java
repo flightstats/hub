@@ -55,7 +55,7 @@ public class NtpMonitor {
             String line = lines.get(i);
             if (line.startsWith("*") || line.startsWith("+")) {
                 double primary = parseLine(line);
-                log.info("primary {}", primary);
+                log.debug("primary {}", primary);
                 servers.add(primary);
             }
         }
@@ -75,7 +75,7 @@ public class NtpMonitor {
             double primary = parsePrimary(lines);
             primaryOffset = Math.abs(primary);
             statsdReporter.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
-            log.info("ntp cluster {} primary {}", delta, primary);
+            log.debug("ntp cluster {} primary {}", delta, primary);
         } catch (Exception e) {
             log.info("unable to exec", e);
         }

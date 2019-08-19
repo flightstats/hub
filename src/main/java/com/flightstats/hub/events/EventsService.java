@@ -51,7 +51,7 @@ public class EventsService {
             Content content = optional.get();
             sendData(id, Errors.rethrow().wrap(contentOutput -> {
                 contentOutput.write(content);
-                log.info("sent content {} to {}", id, content.getContentKey());
+                log.debug("sent content {} to {}", id, content.getContentKey());
             }));
         }
     }
@@ -93,13 +93,13 @@ public class EventsService {
                 localHostProperties,
                 appProperties.getAppUrl(),
                 appProperties.getAppEnv());
-        log.info("registering events {}", eventWebhook.getGroupName());
+        log.debug("registering events {}", eventWebhook.getGroupName());
         outputStreamMap.put(eventWebhook.getGroupName(), eventWebhook);
         eventWebhook.start();
     }
 
     private void unregister(String id) {
-        log.info("unregistering events {}", id);
+        log.debug("unregistering events {}", id);
         EventWebhook remove = outputStreamMap.remove(id);
         if (null != remove) {
             remove.stop();

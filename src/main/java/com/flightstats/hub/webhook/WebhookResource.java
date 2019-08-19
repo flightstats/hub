@@ -164,7 +164,7 @@ public class WebhookResource {
     }
 
     Response upsert(String name, String body, UriInfo uriInfo) {
-        log.info("upsert webhook {} {}", name, body);
+        log.debug("upsert webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name), contentRetriever).withName(name);
         Optional<Webhook> upsert = webhookService.upsert(webhook);
         if (upsert.isPresent()) {
@@ -176,7 +176,7 @@ public class WebhookResource {
 
     Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
-        log.info("delete webhook {}", name);
+        log.debug("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
             log.info("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -186,7 +186,7 @@ public class WebhookResource {
     }
 
     private Response cursorUpdater(String name, String body) {
-        log.info("update cursor webhook {} {}", name, body);
+        log.debug("update cursor webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson("{}", webhookService.get(name), contentRetriever).withName(name);
         try {
             if (RequestUtils.isValidChannelUrl(body)) {

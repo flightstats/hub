@@ -96,7 +96,7 @@ public class S3LargeContentDao implements ContentDao {
             ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), maxChunkInMB, chunk -> {
                 try {
                     byte[] bytes = chunk.getBytes();
-                    log.info("got bytes {} {}", s3Key, bytes.length);
+                    log.debug("got bytes {} {}", s3Key, bytes.length);
                     ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                     UploadPartRequest uploadRequest = new UploadPartRequest()
                             .withBucketName(bucketName)
@@ -107,7 +107,7 @@ public class S3LargeContentDao implements ContentDao {
                             .withPartSize(bytes.length);
                     UploadPartResult uploadPart = s3Client.uploadPart(uploadRequest);
                     partETags.add(uploadPart.getPartETag());
-                    log.info("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
+                    log.debug("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
                     return "ok";
                 } catch (Exception e) {
                     log.warn("what happened POST to " + channelName + " for chunk " + chunk.getCount(), e);
@@ -118,12 +118,12 @@ public class S3LargeContentDao implements ContentDao {
             InputStream stream = content.getStream();
             long copied = IOUtils.copyLarge(stream, outputStream);
             ActiveTraces.getLocal().add("S3LargeContentDao.write processed", copied);
-            log.info("before complete key {} with {} parts", s3Key, partETags.size());
+            log.debug("before complete key {} with {} parts", s3Key, partETags.size());
             outputStream.close();
             CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(bucketName, s3Key, uploadId, partETags);
             s3Client.completeMultipartUpload(compRequest);
             S3ResponseMetadata completedMetaData = s3Client.getCachedResponseMetadata(compRequest);
-            log.info("completed key {} request id {} with {} parts", s3Key, completedMetaData.getRequestId(), partETags.size());
+            log.debug("completed key {} request id {} with {} parts", s3Key, completedMetaData.getRequestId(), partETags.size());
             completed = true;
             content.setSize(copied);
             long s3Length = getLength(s3Key, bucketName);
@@ -158,7 +158,7 @@ public class S3LargeContentDao implements ContentDao {
             ObjectMetadata metadata = object.getObjectMetadata();
             long contentLength = metadata.getContentLength();
             S3ResponseMetadata responseMetadata = s3Client.getCachedResponseMetadata(request);
-            log.info("{} {} get content length {} {}", name, s3Key, contentLength, responseMetadata.getRequestId());
+            log.debug("{} {} get content length {} {}", name, s3Key, contentLength, responseMetadata.getRequestId());
             ActiveTraces.getLocal().add("S3LargeContentDao.write completed length ", contentLength);
             return contentLength;
         } catch (Exception e) {

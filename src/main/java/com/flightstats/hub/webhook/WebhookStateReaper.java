@@ -35,11 +35,11 @@ class WebhookStateReaper {
         if (!webhookProperties.isWebhookLeadershipEnabled()) {
             return;
         }
-        log.info("deleting " + webhook);
+        log.debug("deleting {}", webhook);
         webhookInProcess.delete(webhook);
         clusterCacheDao.delete(webhook, WEBHOOK_LAST_COMPLETED);
         webhookErrorService.delete(webhook);
         webhookLeaderLocks.deleteWebhookLeader(webhook);
-        log.info("deleted " + webhook);
+        log.info("deleted {}", webhook);
     }
 }

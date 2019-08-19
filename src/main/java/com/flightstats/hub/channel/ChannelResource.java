@@ -131,11 +131,11 @@ public class ChannelResource {
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (oldConfig.isPresent()) {
             ChannelConfig config = oldConfig.get();
-            log.info("using old channel {} {}", config, config.getCreationDate().getTime());
+            log.trace("using old channel {} {}", config, config.getCreationDate().getTime());
             channelConfig = ChannelConfig.updateFromJson(config, StringUtils.defaultIfBlank(json, "{}"));
         }
-        log.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig.orElse(null), LocalHostOnly.isLocalhost(uriInfo));
+        log.debug("created channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
 
         URI channelUri = linkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
         ObjectNode output = linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelName);
@@ -308,7 +308,7 @@ public class ChannelResource {
             log.info("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
-        log.info("using normal delete {}", channelName);
+        log.debug("using normal delete {}", channelName);
         return deletion(channelName);
     }
 

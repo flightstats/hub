@@ -33,7 +33,7 @@ public class HubServices {
 
     public static void register(Service service, TYPE... types) {
         for (TYPE type : types) {
-            log.info("registering " + service.getClass().getName() + " for " + type);
+            log.debug("registering " + service.getClass().getName() + " for " + type);
             serviceMap.get(type).add(service);
         }
     }

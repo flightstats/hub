@@ -37,12 +37,12 @@ public class InFlightService {
     private void waitForInFlight() {
         final Integer shutdownWaitTimeInMillis = appProperties.getShutdownWaitTimeInMillis();
 
-        log.info("waiting for {} in-flight to complete in {} milliseconds",
+        log.debug("waiting for {} in-flight to complete in {} milliseconds",
                 inFlight.get(), shutdownWaitTimeInMillis);
         long start = System.currentTimeMillis();
 
         while (inFlight.get() > 0) {
-            log.info("still waiting for in-flight to complete " + inFlight.get());
+            log.trace("still waiting for in-flight to complete " + inFlight.get());
             Sleeper.sleep(1000);
             if (System.currentTimeMillis() > (start + shutdownWaitTimeInMillis)) {
                 break;

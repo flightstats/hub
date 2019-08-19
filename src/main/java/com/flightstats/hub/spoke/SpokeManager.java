@@ -118,7 +118,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                 String url = uriScheme + server + "/internal/spoke/test/" + path;
                 ClientResponse response = query_client.resource(url).get(ClientResponse.class);
                 if (response.getStatus() == 200) {
-                    log.info("success calling {}", response);
+                    log.debug("success calling {}", response);
                 } else if (response.getStatus() == 404) {
                     log.warn("test not yet implemented {}", response);
                 } else {

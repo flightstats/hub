@@ -62,7 +62,7 @@ public class SingleContentService implements ContentService {
         Collection<ContentKey> keys = new ArrayList<>();
         log.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
-            log.info("inserting item key {}", content.getContentKey().get());
+            log.debug("inserting item key {}", content.getContentKey().get());
             content.packageStream();
             keys.add(insert(bulkContent.getChannel(), content));
         }

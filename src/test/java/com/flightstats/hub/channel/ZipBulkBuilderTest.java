@@ -29,7 +29,7 @@ public class ZipBulkBuilderTest {
         zipBulkBuilder.createZipEntry(output, content);
         output.close();
         byte[] bytes = baos.toByteArray();
-        log.info("wrote bytes {}", bytes.length);
+        log.debug("wrote bytes {}", bytes.length);
         ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
         ZipEntry entry = zipInputStream.getNextEntry();
         while (entry != null) {

@@ -66,7 +66,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             startingKey = new ContentKey();
         }
         ContentPath contentPath = clusterCacheDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
-        log.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
+        log.debug("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
         return contentPath;
     }
 

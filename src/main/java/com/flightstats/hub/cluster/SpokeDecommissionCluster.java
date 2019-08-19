@@ -51,12 +51,13 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     void decommission() throws Exception {
         String server = getLocalhost();
-        log.info("decommissioning" + withinSpokeKey(server));
+        String withinSpokeKey = withinSpokeKey(server);
+        log.debug("decommissioning {}", withinSpokeKey);
         if (!withinSpokeExists(server) && !doNotRestartExists(server)) {
-            log.info("creating " + withinSpokeKey(server));
-            curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey(server), server.getBytes());
+            log.trace("creating {}" + withinSpokeKey);
+            curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey, server.getBytes());
         }
-        log.info("decommission started " + withinSpokeKey(server));
+        log.info("decommission started {}", withinSpokeKey);
     }
 
     boolean withinSpokeExists() throws Exception {
@@ -135,7 +136,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         try {
             String localhost = getLocalhost();
             createQuietly(doNotRestartKey(localhost), localhost.getBytes());
-            log.info("deleting key " + withinSpokeKey(localhost));
+            log.debug("deleting key {}", withinSpokeKey(localhost));
             deleteQuietly(withinSpokeKey(localhost));
             log.info("doNotRestart complete");
         } catch (Exception e) {
@@ -145,19 +146,19 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     private void createQuietly(String key, byte[] bytes) throws Exception {
         try {
-            log.info("creating key " + key);
+            log.debug("creating key {}", key);
             curator.create().creatingParentsIfNeeded().forPath(key, bytes);
         } catch (KeeperException.NodeExistsException e) {
-            log.info(" key already exists " + key);
+            log.trace("key already exists {}");
         }
     }
 
     private void deleteQuietly(String key) {
         try {
-            log.info("deleting key " + key);
+            log.debug("deleting key {}", key);
             curator.delete().forPath(key);
         } catch (Exception e) {
-            log.info(" issue trying to delete " + key, e);
+            log.warn("issue trying to delete {}", key, e);
         }
     }
 }

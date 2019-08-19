@@ -80,7 +80,7 @@ public class MissingContentFinder {
         missingKeys.removeAll(s3QueryResult.getContentKeys());
         if (missingKeys.size() > 0) {
             log.info("{} missing items found for {}!", missingKeys.size(), channelName);
-            missingKeys.forEach(key -> log.info("missing item {}", key));
+            missingKeys.forEach(key -> log.trace("missing item {}", key));
         }
         return missingKeys;
     }

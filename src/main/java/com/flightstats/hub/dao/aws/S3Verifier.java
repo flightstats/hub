@@ -86,7 +86,7 @@ public class S3Verifier {
 
     private void verifySingleChannels() {
         try {
-            log.info("Verifying Single S3 data");
+            log.debug("Verifying Single S3 data");
             Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
@@ -127,7 +127,7 @@ public class S3Verifier {
         log.debug("verifyChannel.starting {}", range);
         MinutePath lastCompleted = range.getEndPath();
         for (ContentKey key : keysToAdd) {
-            log.info("found missing {} {}", channelName, key);
+            log.debug("found missing {} {}", channelName, key);
             incrementMetric(VerifierMetrics.MISSING_ITEM);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {

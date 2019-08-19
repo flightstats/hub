@@ -85,7 +85,7 @@ public class ChannelService {
     }
 
     public ChannelConfig createChannel(ChannelConfig configuration) {
-        log.info("create channel {}", configuration);
+        log.debug("create channel {}", configuration);
         channelValidator.get().validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
@@ -112,13 +112,13 @@ public class ChannelService {
 
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost) {
         if (!configuration.equals(oldConfig)) {
-            log.info("updating channel {} from {}", configuration, oldConfig);
+            log.debug("updating channel {} from {}", configuration, oldConfig);
             channelValidator.get().validate(configuration, oldConfig, isLocalHost);
             channelConfigDao.upsert(configuration);
             tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
             notify(configuration, oldConfig);
         } else {
-            log.info("update with no changes {}", configuration);
+            log.debug("update with no changes {}", configuration);
         }
         return configuration;
     }
@@ -144,7 +144,7 @@ public class ChannelService {
                 checkZeroBytes(content, channelConfig);
                 traces.add("ContentService.insert marshalled");
                 ContentKey key = content.keyAndStart(timeService.getNow());
-                log.info("writing key {} to channel {}", key, channelName);
+                log.debug("writing key {} to channel {}", key, channelName);
                 key = contentService.insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;

@@ -23,7 +23,7 @@ class DataDogHandler {
     }
 
     void mute() {
-        log.info("Attempting to mute datadog");
+        log.debug("Attempting to mute datadog");
         String datadogUrl = datadogMetricsProperties.getApiUrl() + "/downtime";
         String apiKey = datadogMetricsProperties.getApiKey();
         String appKey = datadogMetricsProperties.getAppKey();

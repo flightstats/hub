@@ -51,9 +51,9 @@ public class HubS3Client {
     }
 
     public void initialize() {
-        log.info("checking if bucket exists " + bucketName);
+        log.debug("checking if bucket exists {}", bucketName);
         if (s3Client.doesBucketExistV2(bucketName)) {
-            log.info("bucket exists " + bucketName);
+            log.debug("bucket exists {}", bucketName);
             return;
         }
         log.error("EXITING! unable to find bucket " + bucketName);

@@ -111,7 +111,7 @@ public class TimeService {
 
     public void setRemote(boolean remote) {
         isRemote = remote;
-        log.info("remote {}", remote);
+        log.debug("remote {}", remote);
         if (isRemote) {
             createFile();
         } else {

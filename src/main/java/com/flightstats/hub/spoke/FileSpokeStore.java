@@ -280,13 +280,13 @@ public class FileSpokeStore {
             limitCompare += limitPath[i] + "/";
         }
         for (String item : items) {
-            log.info("looking at {} {}", item, limitCompare);
+            log.debug("looking at {} {}", item, limitCompare);
             String current = path + "/" + item + "/";
             if (current.compareTo(limitCompare) <= 0) {
                 if (count < 4) {
                     recurseDelete(path + "/" + item, limitPath, count + 1, channel);
                 } else {
-                    log.info("deleting {}", spokePath + "/" + current);
+                    log.debug("deleting {}", spokePath + "/" + current);
                     FileUtils.deleteQuietly(new File(spokePath + "/" + current));
                 }
             }
