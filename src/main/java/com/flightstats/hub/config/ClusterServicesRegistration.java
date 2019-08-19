@@ -1,6 +1,5 @@
 package com.flightstats.hub.config;
 
-import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
@@ -8,7 +7,6 @@ import com.flightstats.hub.dao.aws.DynamoChannelExistenceCheck;
 import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheck;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
