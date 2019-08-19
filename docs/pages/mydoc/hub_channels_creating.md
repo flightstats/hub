@@ -29,9 +29,12 @@ A channel may have at most 20 tags.
 * `replicationSource` is the optional fully qualified path to channel in a another hub.  The data from the other channel
 will be duplicated into this channel.  Please see [replication](hub_channels_replication.html) for more details.
 
-* `storage` is the optional specification of how to store long term data.  The default is `SINGLE`.  
-High volume channels can see significant reductions in S3 costs by using `BATCH`.  
-`BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](hub_other_channel_storage.html)
+* `storage` is the optional specification of how to store long term data.  The default is `BATCH`.  
+High volume channels can see significant reductions in S3 costs by using `BATCH`.
+`SINGLE` is primarily for mutableTime/historical channels and will be deprecated in the near future.
+`BOTH` is a way to transition between the two states, and perform comparisons, 
+it should not be used except for this and adds significant cost to your storage strategy, 
+it will also be deprecated in the near future.  More information in [storage](hub_other_channel_storage.html)
 
 * `protect` is the optional setting to prevent changes which might cause some data loss.
 Please see [protected channels](hub_channels_protect.html) for more details.
