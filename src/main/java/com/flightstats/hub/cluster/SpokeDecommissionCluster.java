@@ -139,7 +139,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
             deleteQuietly(withinSpokeKey(localhost));
             log.info("doNotRestart complete");
         } catch (Exception e) {
-            log.warn("unable to complete ", e);
+            log.warn("unable to complete", e);
         }
     }
 

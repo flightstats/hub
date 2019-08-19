@@ -383,7 +383,7 @@ public class S3BatchContentDao implements ContentDao {
         try {
             s3Util.delete(channel + BATCH_ITEMS, limitKey, bucketName, s3Client);
             s3Util.delete(channel + BATCH_INDEX, limitKey, bucketName, s3Client);
-            log.info("completed deleteBefore of " + channel);
+            log.info("completed deleteBefore of {}", channel);
         } catch (Exception e) {
             log.warn("unable to delete {} in {}", channel, bucketName, e);
         }

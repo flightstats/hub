@@ -42,7 +42,7 @@ public class ActiveWebhookSweeper {
     }
 
     private void deleteWebhookLeader(String webhookName) {
-        log.info("deleting empty {}", webhookName);
+        log.info("deleting empty webhook leader {}", webhookName);
         webhookLeaderLocks.deleteWebhookLeader(webhookName);
 
     }

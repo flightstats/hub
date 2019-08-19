@@ -108,7 +108,7 @@ public class WebhookManager {
         }
         final String name = daoWebhook.getName();
         if (activeWebhooks.isActiveWebhook(name)) {
-            log.debug("found existing v2 webhook {}", name);
+            log.debug("found existing webhook {}", name);
             final List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
             if (servers.size() >= 2) {
                 log.warn("found multiple servers! {}", servers);
@@ -123,7 +123,7 @@ public class WebhookManager {
                 webhookClient.runOnOneServer(name, servers);
             }
         } else {
-            log.debug("found new v2 webhook {}", name);
+            log.debug("found v2 webhook {}", name);
             webhookClient.runOnServerWithFewestWebhooks(name);
         }
     }
@@ -144,7 +144,7 @@ public class WebhookManager {
             final ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookContentPathSet.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {
-            log.warn("unable to get status " + webhook.getName(), e);
+            log.warn("unable to get status {}", webhook.getName(), e);
             statusBuilder.errors(Collections.emptyList());
             statusBuilder.inFlight(Collections.emptyList());
         }

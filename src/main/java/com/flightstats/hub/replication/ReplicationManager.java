@@ -147,12 +147,13 @@ public class ReplicationManager {
     }
 
     private void startReplication(ChannelReplicator replicator) {
+        String channelName = replicator.getChannel().getDisplayName();
         try {
-            log.debug("starting replication of " + replicator.getChannel().getDisplayName());
+            log.debug("starting replication of {}", channelName);
             replicator.start();
         } catch (Exception e) {
-            channelReplicatorMap.remove(replicator.getChannel().getDisplayName());
-            log.warn("unexpected replication issue " + replicator.getChannel().getDisplayName(), e);
+            channelReplicatorMap.remove(channelName);
+            log.warn("unexpected replication issue {}", channelName, e);
         }
     }
 

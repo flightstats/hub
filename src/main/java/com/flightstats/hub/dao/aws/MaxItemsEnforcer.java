@@ -62,7 +62,7 @@ public class MaxItemsEnforcer {
             }
         }
         ActiveTraces.end();
-        log.info("completed max items for channel {}", name);
+        log.info("completed max items update for channel {}. updated: {}", name, optional.map(ContentKey::toUrl).orElse("none"));
 
     }
 

@@ -90,7 +90,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                             traces.log(log);
                         }
                     } catch (Exception e) {
-                        log.warn("unexpected exception " + servers, e);
+                        log.warn("unexpected exception {}", servers, e);
                     }
                 }
             });
@@ -130,7 +130,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                 return false;
             }
         }
-        log.info("all startup tests succeeded  " + path);
+        log.info("all startup tests succeeded {}", path);
         return true;
     }
 
@@ -171,7 +171,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                         }
                     } catch (Exception e) {
                         traces.add(server, e.getMessage());
-                        log.warn("write failed: " + server + " " + path, e);
+                        log.warn("write failed: {} {}", server, path, e);
                     } finally {
                         HubUtils.close(response);
                         resetThread();

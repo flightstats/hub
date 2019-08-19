@@ -134,11 +134,11 @@ public class S3LargeContentDao implements ContentDao {
             }
             return key;
         } catch (Exception e) {
-            log.warn("unable to write large item to S3 " + channelName + " " + key, e);
+            log.warn("unable to write large item to S3 {} {}", channelName, key, e);
             ActiveTraces.getLocal().add("S3LargeContentDao.error ", e.getMessage());
             if (StringUtils.isNotBlank(uploadId)) {
                 if (completed) {
-                    log.warn("deleting multipart " + channelName + " " + key, e);
+                    log.warn("deleting multipart {} {}", channelName, key, e);
                     delete(channelName, key);
                 } else {
                     log.warn("aborting multipart " + channelName + " " + key, e);
@@ -180,7 +180,7 @@ public class S3LargeContentDao implements ContentDao {
         try {
             return getS3Object(channelName, key);
         } catch (SocketTimeoutException e) {
-            log.warn("SocketTimeoutException : unable to read " + channelName + " " + key);
+            log.warn("SocketTimeoutException : unable to read {} {}", channelName, key);
             try {
                 return getS3Object(channelName, key);
             } catch (Exception e2) {

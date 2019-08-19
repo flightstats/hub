@@ -296,7 +296,7 @@ public class HubUtils {
                 return true;
             }
         } catch (Exception e) {
-            log.warn("unable to delete " + channelUrl, e);
+            log.warn("unable to delete {}", channelUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -322,7 +322,7 @@ public class HubUtils {
                 root.put(response.getEntity(String.class), "failure");
             }
         } catch (Exception e) {
-            log.warn("unable to refresh " + server, e);
+            log.warn("unable to refresh {}", server, e);
         }
     }
 

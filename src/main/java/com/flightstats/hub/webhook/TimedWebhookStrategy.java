@@ -238,7 +238,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     public Optional<ContentPath> next() throws Exception {
         Exception e = exceptionReference.get();
         if (e != null) {
-            log.error("unable to determine next " + webhook.getName(), e);
+            log.error("unable to determine next {}", webhook.getName(), e);
             throw e;
         }
         return Optional.ofNullable(queue.poll(10, TimeUnit.MINUTES));

@@ -38,7 +38,7 @@ public class WebSocketHourEndpoint {
 
     @OnError
     public void onError(Session session, Throwable throwable, @PathParam("channel") String channel) {
-        log.warn("error " + channel, throwable);
+        log.warn("error {}", channel, throwable);
         webSocketService.close(session);
     }
 

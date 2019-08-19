@@ -94,7 +94,7 @@ public class WebhookResource {
     private Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
         final Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
-            log.info("webhook not found {} ", name);
+            log.warn("webhook not found {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         log.debug("get webhook {} ", name);

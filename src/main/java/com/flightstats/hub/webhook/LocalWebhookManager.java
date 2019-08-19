@@ -50,7 +50,7 @@ public class LocalWebhookManager {
                 consumer.accept(key);
             });
         }
-        log.info("accepted all ");
+        log.info("accepted all keys");
         pool.shutdown();
         try {
             final boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
@@ -76,7 +76,7 @@ public class LocalWebhookManager {
                 log.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
                 return true;
             }
-            log.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
+            log.info("webhook has changed {} to {}; stopping", runningWebhook, daoWebhook);
             stopLocal(name, false);
         }
         log.info("starting {}", name);

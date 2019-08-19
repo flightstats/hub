@@ -83,10 +83,10 @@ public class WebSocketService {
         try {
             session.getBasicRemote().sendText(uri);
         } catch (IOException e) {
-            log.warn("unable to send to session " + id + " uri " + uri + " " + e.getMessage());
+            log.warn("unable to send to session {}; uri: {}", id, uri, e.getMessage());
             close(id);
         } catch (Exception e) {
-            log.warn("unable to send to session " + id + " uri " + uri, e);
+            log.warn("unable to send to session {}; uri: {}", id, uri, e);
             close(id);
         }
     }

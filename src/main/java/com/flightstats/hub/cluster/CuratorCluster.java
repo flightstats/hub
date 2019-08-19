@@ -116,7 +116,7 @@ public class CuratorCluster implements Cluster {
             servers.add(new String(childData.getData()));
         }
         if (servers.isEmpty()) {
-            log.warn("returning empty collection");
+            log.warn("no servers found in zookeeper cache");
         }
         return servers;
     }

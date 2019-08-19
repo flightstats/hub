@@ -106,9 +106,9 @@ public class S3Verifier {
                     });
                 }
             }
-            log.info("Completed Verifying Single S3 data");
+            log.info("Completed verifying single S3 data");
         } catch (Exception e) {
-            log.error("Error: ", e);
+            log.error("Error verifying single s3 data: ", e);
         }
     }
 
