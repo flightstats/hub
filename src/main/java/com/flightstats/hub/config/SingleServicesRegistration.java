@@ -8,21 +8,19 @@ import com.google.common.util.concurrent.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
 public class SingleServicesRegistration implements ServiceRegistration {
 
-    private final InfluxdbReporterLifecycle influxdbReporterLifecycle;
     private final StatsDReporterLifecycle statsDReporterLifecycle;
     private final CustomMetricsLifecycle customMetricsLifecycle;
 
     @Inject
-    public SingleServicesRegistration(InfluxdbReporterLifecycle influxdbReporterLifecycle,
-                                      StatsDReporterLifecycle statsDReporterLifecycle,
+    public SingleServicesRegistration(StatsDReporterLifecycle statsDReporterLifecycle,
                                       CustomMetricsLifecycle customMetricsLifecycle) {
-        this.influxdbReporterLifecycle = influxdbReporterLifecycle;
         this.statsDReporterLifecycle = statsDReporterLifecycle;
         this.customMetricsLifecycle = customMetricsLifecycle;
     }
@@ -38,7 +36,9 @@ public class SingleServicesRegistration implements ServiceRegistration {
     }
 
     List<Service> getBeforeHealthCheckServices() {
-        return Arrays.asList(influxdbReporterLifecycle, statsDReporterLifecycle);
+        List<Service> services = new ArrayList<>();
+        services.add(statsDReporterLifecycle);
+        return services;
     }
 
     List<Service> getAfterHealthCheckServices() {

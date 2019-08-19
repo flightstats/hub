@@ -7,7 +7,6 @@ import com.flightstats.hub.dao.aws.DynamoChannelExistenceCheck;
 import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheck;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
@@ -27,7 +26,6 @@ import static com.flightstats.hub.constant.NamedBinding.WRITE;
 @Slf4j
 public class ClusterServicesRegistration implements ServiceRegistration {
 
-    private final InfluxdbReporterLifecycle influxdbReporterLifecycle;
     private final StatsDReporterLifecycle statsDReporterLifecycle;
     private final DynamoChannelExistenceCheck dynamoChannelExistenceCheck;
     private final DynamoWebhookExistenceCheck dynamoWebhookExistenceCheck;
@@ -40,7 +38,7 @@ public class ClusterServicesRegistration implements ServiceRegistration {
     private final PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle;
 
     @Inject
-    public ClusterServicesRegistration(InfluxdbReporterLifecycle influxdbReporterLifecycle,
+    public ClusterServicesRegistration(
                                        StatsDReporterLifecycle statsDReporterLifecycle,
                                        DynamoChannelExistenceCheck dynamoChannelExistenceCheck,
                                        DynamoWebhookExistenceCheck dynamoWebhookExistenceCheck,
@@ -51,7 +49,6 @@ public class ClusterServicesRegistration implements ServiceRegistration {
                                        AppProperties appProperties,
                                        SpokeProperties spokeProperties,
                                        PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle) {
-        this.influxdbReporterLifecycle = influxdbReporterLifecycle;
         this.statsDReporterLifecycle = statsDReporterLifecycle;
         this.dynamoChannelExistenceCheck = dynamoChannelExistenceCheck;
         this.dynamoWebhookExistenceCheck = dynamoWebhookExistenceCheck;
@@ -75,7 +72,9 @@ public class ClusterServicesRegistration implements ServiceRegistration {
     }
 
     private List<Service> getBeforeHealthCheckServices() {
-        List<Service> services = new ArrayList<>(Arrays.asList(influxdbReporterLifecycle, statsDReporterLifecycle));
+        List<Service> services = new ArrayList<>();
+        services.add(statsDReporterLifecycle);
+
         if (!appProperties.isReadOnly()) {
             services.add(s3WriteQueueLifecycle);
         }

@@ -329,8 +329,6 @@ public class HubBindings extends AbstractModule {
         bind(PermissionsChecker.class).asEagerSingleton();
 
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
-        bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
-        bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
         bind(StatsDFilter.class).asEagerSingleton();
         bind(StatsdReporter.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();

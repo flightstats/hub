@@ -2,7 +2,6 @@ package com.flightstats.hub.config;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.google.common.util.concurrent.Service;
 import org.junit.jupiter.api.AfterEach;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -32,8 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SingleServicesRegistrationTest {
 
     @Mock
-    private InfluxdbReporterLifecycle influxdbReporterLifecycle;
-    @Mock
     private StatsDReporterLifecycle statsDReporterLifecycle;
     @Mock
     private CustomMetricsLifecycle customMetricsLifecycle;
@@ -42,7 +38,6 @@ class SingleServicesRegistrationTest {
     @BeforeEach
     void setup() {
         singleServicesRegistration = new SingleServicesRegistration(
-                influxdbReporterLifecycle,
                 statsDReporterLifecycle,
                 customMetricsLifecycle);
         HubServices.clear();
@@ -55,9 +50,9 @@ class SingleServicesRegistrationTest {
 
         Map<HubServices.TYPE, List<Service>> serviceMap = HubServices.getServices();
 
-        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 2);
+        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 1);
         assertTrue(serviceMap.get(BEFORE_HEALTH_CHECK)
-                .containsAll(Arrays.asList(influxdbReporterLifecycle, statsDReporterLifecycle)));
+                .contains(statsDReporterLifecycle));
 
         assertEquals(serviceMap.get(AFTER_HEALTHY_START).size(), 1);
         assertTrue(serviceMap.get(AFTER_HEALTHY_START).contains(customMetricsLifecycle));
@@ -85,8 +80,8 @@ class SingleServicesRegistrationTest {
     @Order(4)
     void testGetBeforeHealthCheckServices() {
         List<Service> services = singleServicesRegistration.getBeforeHealthCheckServices();
-        assertEquals(services.size(), 2);
-        assertTrue(services.containsAll(Arrays.asList(influxdbReporterLifecycle, statsDReporterLifecycle)));
+        assertEquals(services.size(), 1);
+        assertTrue(services.contains(statsDReporterLifecycle));
     }
 
     @Test

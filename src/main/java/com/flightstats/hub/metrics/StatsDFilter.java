@@ -58,9 +58,11 @@ public class StatsDFilter {
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
+        StatsDClient primaryClient = datadogMetricsProperties.isPrimary() ? dataDogClient : statsDClient;
+        StatsDClient secondaryClient = primaryClient.equals(dataDogClient) ? statsDClient : dataDogClient;
         return secondaryReporting ?
-                Arrays.asList(statsDClient, dataDogClient) :
-                Collections.singletonList(statsDClient);
+                Arrays.asList(primaryClient, secondaryClient) :
+                Collections.singletonList(primaryClient);
     }
 
     boolean isSecondaryReporting(String name) {

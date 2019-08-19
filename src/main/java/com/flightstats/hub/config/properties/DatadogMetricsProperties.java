@@ -26,4 +26,6 @@ public class DatadogMetricsProperties {
     public int getStatsdPort() {
         return propertiesLoader.getProperty("metrics.dogstatsd.port", 8125);
     }
+
+    public boolean isPrimary() { return propertiesLoader.getProperty("metrics.datadog.primary", true); }
 }
