@@ -133,7 +133,7 @@ public class Content implements Serializable {
                 data = ByteStreams.toByteArray(stream);
                 stream = null;
             } catch (EOFException e) {
-                log.info("file ended early {}", contentKey);
+                log.error("file ended early {}", contentKey);
             } catch (Exception e) {
                 log.warn("no data " + contentKey, e);
             }

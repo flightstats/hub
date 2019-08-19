@@ -53,7 +53,7 @@ public class Commander {
             if (waited) {
                 log.trace("waited " + waited + " for " + time);
             } else {
-                log.info("destroying after " + time + " " + StringUtils.join(" ", command));
+                log.warn("destroying after " + time + " " + StringUtils.join(" ", command));
                 process.destroyForcibly();
             }
         } catch (Exception e) {

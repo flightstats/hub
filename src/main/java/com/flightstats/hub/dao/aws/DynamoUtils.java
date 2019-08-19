@@ -32,7 +32,7 @@ public class DynamoUtils {
                 return Optional.of(tableDescription);
             }
         } catch (AmazonServiceException ase) {
-            log.info("exception creating table " + tableName + " " + ase.getMessage());
+            log.error("exception creating table {}", tableName, ase);
             throw ase;
         }
         return Optional.empty();

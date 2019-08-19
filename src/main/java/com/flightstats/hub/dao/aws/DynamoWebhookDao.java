@@ -76,7 +76,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
             }
             return mapItem(result.getItem());
         } catch (ResourceNotFoundException e) {
-            log.info("group not found " + name + " " + e.getMessage());
+            log.warn("group not found {}", name, e);
             return null;
         }
     }

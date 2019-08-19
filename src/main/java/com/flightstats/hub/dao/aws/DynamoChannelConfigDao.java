@@ -92,7 +92,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             return mapItem(result.getItem())
                     .orElseThrow(() -> new ResourceNotFoundException("Unable to read channel config from dynamo " + name));
         } catch (ResourceNotFoundException e) {
-            log.info("channel not found " + e.getMessage());
+            log.warn("channel not found " + e.getMessage());
             return null;
         }
     }

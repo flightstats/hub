@@ -167,7 +167,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                             quorumLatch.countDown();
                             log.trace("server {} path {} response {}", server, path, response);
                         } else {
-                            log.info("write failed: server {} path {} response {}", server, path, response);
+                            log.warn("write failed: server {} path {} response {}", server, path, response);
                         }
                     } catch (Exception e) {
                         traces.add(server, e.getMessage());
@@ -225,7 +225,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                     }
                 }
             } catch (JsonMappingException e) {
-                log.info("JsonMappingException for " + path);
+                log.error("JsonMappingException for {}", path);
             } catch (ClientHandlerException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                     log.warn("connection exception " + server);

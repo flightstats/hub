@@ -139,7 +139,7 @@ public class S3Service {
         try {
             return !confirmItemInS3(storage, fullPath, channelName);
         } catch (AmazonS3Exception e) {
-            log.info("unexpected error: ", e.getMessage());
+            log.warn("unexpected error: ", e.getMessage());
             return e.getStatusCode() == 404;
         }
 

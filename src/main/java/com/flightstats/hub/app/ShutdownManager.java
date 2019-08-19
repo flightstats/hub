@@ -93,7 +93,7 @@ public class ShutdownManager {
             curatorFramework.delete().forPath(PATH);
             return true;
         } catch (KeeperException.NoNodeException e) {
-            log.info("node not found for ..." + PATH);
+            log.warn("node not found for ... {}", PATH);
             return false;
         }
     }
@@ -110,7 +110,7 @@ public class ShutdownManager {
                     curatorFramework.create().forPath(PATH, hostAddress.getBytes());
                     return;
                 } catch (Exception e1) {
-                    log.info("why did this fail?", e1);
+                    log.warn("why did this fail?", e1);
                 }
             }
         }
@@ -128,7 +128,7 @@ public class ShutdownManager {
                     resetLock();
                 }
             } catch (KeeperException.NoNodeException e) {
-                log.info("node not found for ..." + PATH);
+                log.warn("node not found for ...", PATH);
             }
         }
 

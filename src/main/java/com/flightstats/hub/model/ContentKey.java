@@ -49,7 +49,7 @@ public class ContentKey implements ContentPath {
             substring = StringUtils.substringAfter(substring, "/");
             return fromUrl(substring).get();
         } catch (Exception e) {
-            log.info("unable to parse " + url + " " + e.getMessage());
+            log.warn("unable to parse " + url + " " + e.getMessage());
             return null;
         }
     }

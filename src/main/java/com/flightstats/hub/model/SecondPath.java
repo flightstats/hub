@@ -41,7 +41,7 @@ public class SecondPath implements ContentPathKeys {
         try {
             return Optional.of(new SecondPath(TimeUtil.seconds(key)));
         } catch (Exception e) {
-            log.info("unable to parse " + key + " " + e.getMessage());
+            log.warn("unable to parse {} {}", key, e.getMessage());
             return Optional.empty();
         }
     }

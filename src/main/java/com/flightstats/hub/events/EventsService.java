@@ -68,14 +68,14 @@ public class EventsService {
         try {
             EventWebhook eventWebhook = outputStreamMap.get(id);
             if (eventWebhook == null) {
-                log.info("unable to find id {}", id);
+                log.warn("unable to find id {}", id);
                 unregister(id);
             } else {
                 contentConsumer.accept(eventWebhook.getContentOutput());
             }
         } catch (Errors.WrappedAsRuntimeException e) {
             if (e.getCause() instanceof EofException) {
-                log.info("unable to write, closing " + id);
+                log.error("unable to write, closing " + id);
             } else {
                 log.warn("unable to send to " + id, e);
             }

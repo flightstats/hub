@@ -99,7 +99,7 @@ public class SpokeTtlEnforcer {
             statsdReporter.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
 
         } catch (Exception e) {
-            log.info("issue cleaning up spoke", e);
+            log.error("issue cleaning up spoke", e);
         }
     }
 }

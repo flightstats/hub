@@ -113,7 +113,7 @@ public class ChannelResource {
 
         ChannelConfig channelConfig = channelService.getChannelConfig(channelName, cached)
                 .orElseThrow(() -> {
-                    log.info("unable to get channel " + channelName);
+                    log.error("unable to get channel {}", channelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -151,7 +151,7 @@ public class ChannelResource {
         log.trace("patch channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
-                    log.info("unable to patch channel " + channelName);
+                    log.error("unable to patch channel " + channelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -305,7 +305,7 @@ public class ChannelResource {
             return notFound(channelName);
         }
         if (contentProperties.isChannelProtectionEnabled() || optionalChannelConfig.get().isProtect()) {
-            log.info("using localhost only to delete {}", channelName);
+            log.warn("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
         log.debug("using normal delete {}", channelName);

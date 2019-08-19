@@ -104,7 +104,7 @@ public class AwsConnectorFactory {
         try {
             return new PropertiesCredentials(new File(credentialsPath));
         } catch (Exception e) {
-            log.info("unable to load test credentials " + credentialsPath + " " + e.getMessage());
+            log.warn("unable to load test credentials " + credentialsPath + " " + e.getMessage());
             return new BasicAWSCredentials("noKey", "noSecret");
         }
     }

@@ -57,7 +57,7 @@ public class LargeContentUtils {
             builder.withLarge(true);
             return builder.build();
         } catch (IOException e) {
-            log.info("trying to read " + content.getContentKey(), e);
+            log.error("trying to read {}", content.getContentKey(), e);
             throw new RuntimeException(e);
         }
     }

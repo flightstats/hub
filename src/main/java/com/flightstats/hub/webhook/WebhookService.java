@@ -143,7 +143,7 @@ public class WebhookService {
             Optional<ContentKey> lastKey = contentRetriever.getLatest(channel, true);
             lastKey.ifPresent(builder::channelLatest);
         } catch (NoSuchChannelException e) {
-            log.info("no channel found for " + channel);
+            log.warn("no channel found for " + channel);
         }
         webhookManager.getStatus(webhook, builder);
         return builder.build();

@@ -149,7 +149,7 @@ public class ChannelService {
                 traces.add("ContentService.insert end", key);
                 return key;
             } catch (ContentTooLargeException e) {
-                log.info("content too large for channel " + channelName);
+                log.error("content too large for channel " + channelName);
                 throw e;
             } catch (Exception e) {
                 traces.add("ContentService.insert", "error", e.getMessage());

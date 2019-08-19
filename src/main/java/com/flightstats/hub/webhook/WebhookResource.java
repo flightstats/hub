@@ -178,7 +178,7 @@ public class WebhookResource {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         log.trace("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
-            log.info("webhook not found for delete {} ", name);
+            log.warn("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         webhookService.delete(name);
@@ -193,7 +193,7 @@ public class WebhookResource {
                 ContentPath item = ContentPath.fromFullUrl(body).get();
                 webhookService.updateCursor(webhook, item);
             } else {
-                log.info("cursor update failed.  Bad item: " + body);
+                log.warn("cursor update failed.  Bad item: {}", body);
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
         } catch (Exception e) {

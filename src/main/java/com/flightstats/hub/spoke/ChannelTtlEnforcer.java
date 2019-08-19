@@ -60,7 +60,7 @@ public class ChannelTtlEnforcer {
                 ttlEnforcer.deleteFilteredPaths(spokePath, channelService, handleCleanup());
                 log.info("completed channel cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
-                log.info("issue cleaning up channels in spoke", e);
+                log.error("issue cleaning up channels in spoke", e);
             }
         }
 

@@ -59,7 +59,7 @@ public class FileSpokeStore {
             log.trace("copied {} {} {}", file, copy, setExecutable);
             return true;
         } catch (IOException e) {
-            log.info("unable to write to " + path, e);
+            log.warn("unable to write to " + path, e);
             return false;
         }
     }
@@ -85,7 +85,7 @@ public class FileSpokeStore {
         } catch (FileNotFoundException e) {
             log.error("file not found {}", path);
         } catch (IOException e) {
-            log.info("unable to read from " + path, e);
+            log.error("unable to read from " + path, e);
         }
     }
 
@@ -168,7 +168,7 @@ public class FileSpokeStore {
                 writeKey(output, keyFromPath);
             }
         } catch (Exception e) {
-            log.info("error with " + path, e);
+            log.error("error with " + path, e);
         }
     }
 

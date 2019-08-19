@@ -50,7 +50,7 @@ public class HubMain {
                 ZooKeeperTestServer.start();
             }
         } catch (Exception e) {
-            log.info("Problem starting zookeeper in single mode");
+            log.error("Problem starting zookeeper in single mode");
         }
     }
 

@@ -174,7 +174,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
-                    log.info("InterruptedException with " + webhook.getName());
+                    log.warn("InterruptedException with {}", webhook.getName());
                     Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);

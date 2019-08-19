@@ -84,7 +84,7 @@ public class HubUtils {
                     .accept(MediaType.WILDCARD_TYPE)
                     .head();
             if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-                log.info("latest not found for " + channelUrl + " " + response);
+                log.warn("latest not found for " + channelUrl + " " + response);
                 return Optional.empty();
             }
             return Optional.of(response.getLocation().toString());

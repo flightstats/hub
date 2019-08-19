@@ -79,7 +79,7 @@ public class InternalSpokeResource {
             if (store.insert(path, input)) {
                 long end = System.currentTimeMillis();
                 if ((end - start) > 4000) {
-                    log.info("slow write response {} {}", path, new DateTime(start));
+                    log.warn("slow write response {} {}", path, new DateTime(start));
                 }
                 return Response
                         .created(uriInfo.getRequestUri())
@@ -120,7 +120,7 @@ public class InternalSpokeResource {
             }
             long end = System.currentTimeMillis();
             if ((end - start) > 4000) {
-                log.info("slow bulk write response {} {}", channel, new DateTime(start));
+                log.warn("slow bulk write response {} {}", channel, new DateTime(start));
             }
             return Response
                     .created(uriInfo.getRequestUri())

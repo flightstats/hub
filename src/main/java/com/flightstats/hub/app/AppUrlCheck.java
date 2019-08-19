@@ -50,7 +50,7 @@ public class AppUrlCheck extends AbstractIdleService {
                 throw new RuntimeException(msg);
             }
         } else {
-            log.info("no servers to test");
+            log.warn("no servers to test");
         }
     }
 
@@ -64,7 +64,7 @@ public class AppUrlCheck extends AbstractIdleService {
                     return true;
                 }
             } else {
-                log.info("ignoring {}", serverUri);
+                log.warn("ignoring {}", serverUri);
             }
         }
         return false;

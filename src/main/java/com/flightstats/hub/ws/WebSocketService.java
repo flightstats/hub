@@ -101,7 +101,7 @@ public class WebSocketService {
             webhookService.delete(id);
             sessionMap.remove(id);
         } catch (Exception e) {
-            log.info("unable to close ws group " + id, e);
+            log.error("unable to close ws group {}", id, e);
         }
     }
 }

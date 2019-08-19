@@ -45,6 +45,7 @@ public class InFlightService {
             log.trace("still waiting for in-flight to complete " + inFlight.get());
             Sleeper.sleep(1000);
             if (System.currentTimeMillis() > (start + shutdownWaitTimeInMillis)) {
+                log.warn("waiting for {} in-flight failed to complete after at least {} millis", inFlight.get(), shutdownWaitTimeInMillis);
                 break;
             }
         }

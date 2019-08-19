@@ -77,7 +77,7 @@ public class NtpMonitor {
             statsdReporter.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
             log.debug("ntp cluster {} primary {}", delta, primary);
         } catch (Exception e) {
-            log.info("unable to exec", e);
+            log.error("unable to exec", e);
         }
     }
 
