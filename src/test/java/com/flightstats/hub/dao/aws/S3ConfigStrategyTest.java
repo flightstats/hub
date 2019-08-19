@@ -38,9 +38,9 @@ class S3ConfigStrategyTest {
         List<String> names = new ArrayList<>();
         for (int i = 0; i < channels; i++) {
             String name = StringUtils.randomAlphaNumeric(10);
-            channelConfigs.add(ChannelConfig.builder().name(name).build());
-            String batchedName = name + "Batch";
-            names.add(batchedName);
+            ChannelConfig config = ChannelConfig.builder().name(name).build();
+            channelConfigs.add(config);
+            names.add(S3ConfigStrategy.getChannelTypedName(config, S3ConfigStrategy.BATCH_POSTFIX));
         }
         for (int i = 0; i < iterations; i++) {
             addRuleNames(new DateTime(2016, 1, 2 * i + 1, 1, 1));
