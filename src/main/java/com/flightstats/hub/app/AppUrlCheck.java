@@ -49,6 +49,7 @@ public class AppUrlCheck extends AbstractIdleService {
                 log.error(msg);
                 throw new RuntimeException(msg);
             }
+            log.debug("app check url complete");
         } else {
             log.warn("no servers to test");
         }
