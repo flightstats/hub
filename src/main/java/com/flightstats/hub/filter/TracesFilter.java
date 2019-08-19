@@ -38,7 +38,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         }
         Thread thread = Thread.currentThread();
         if (!ActiveTraces.end(trace, response.getStatus())) {
-            log.debug("unable to end trace for {}", requestUri);
+            log.warn("unable to end trace for {}", requestUri);
         }
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
     }

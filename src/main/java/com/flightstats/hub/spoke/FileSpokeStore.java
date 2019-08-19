@@ -83,7 +83,7 @@ public class FileSpokeStore {
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
-            log.debug("file not found {}", path);
+            log.error("file not found {}", path);
         } catch (IOException e) {
             log.info("unable to read from " + path, e);
         }

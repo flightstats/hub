@@ -127,7 +127,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
-                    log.debug("NoSuchChannelException for " + webhook.getName());
+                    log.warn("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
                     exceptionReference.set(e);
                     log.warn("unexpected issue with " + webhook.getName(), e);
