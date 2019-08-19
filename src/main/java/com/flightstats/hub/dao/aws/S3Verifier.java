@@ -131,7 +131,7 @@ public class S3Verifier {
             incrementMetric(VerifierMetrics.MISSING_ITEM);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {
-                log.error("unable to queue missing item {} {}", channelName, key);
+                log.warn("unable to queue missing item {} {}", channelName, key);
                 incrementMetric(VerifierMetrics.FAILED);
                 lastCompleted = new MinutePath(key.getTime().minusMinutes(1));
                 break;
