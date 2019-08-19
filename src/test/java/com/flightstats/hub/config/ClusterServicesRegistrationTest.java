@@ -7,7 +7,6 @@ import com.flightstats.hub.dao.aws.DynamoChannelExistenceCheck;
 import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheck;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
@@ -42,8 +41,6 @@ import static org.mockito.Mockito.when;
 class ClusterServicesRegistrationTest {
 
     @Mock
-    private InfluxdbReporterLifecycle influxdbReporterLifecycle;
-    @Mock
     private StatsDReporterLifecycle statsDReporterLifecycle;
     @Mock
     private DynamoChannelExistenceCheck dynamoChannelExistenceCheck;
@@ -68,7 +65,6 @@ class ClusterServicesRegistrationTest {
     @BeforeEach
     void setup() {
         clusterServicesRegistration = new ClusterServicesRegistration(
-                influxdbReporterLifecycle,
                 statsDReporterLifecycle,
                 dynamoChannelExistenceCheck,
                 dynamoWebhookExistenceCheck,
@@ -92,10 +88,9 @@ class ClusterServicesRegistrationTest {
 
         Map<HubServices.TYPE, List<Service>> serviceMap = HubServices.getServices();
 
-        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 7);
+        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 6);
         assertTrue(serviceMap.get(BEFORE_HEALTH_CHECK)
-                .containsAll(Arrays.asList(influxdbReporterLifecycle,
-                        statsDReporterLifecycle,
+                .containsAll(Arrays.asList(statsDReporterLifecycle,
                         s3WriteQueueLifecycle,
                         dynamoChannelExistenceCheck,
                         dynamoWebhookExistenceCheck)));
@@ -117,10 +112,9 @@ class ClusterServicesRegistrationTest {
 
         Map<HubServices.TYPE, List<Service>> serviceMap = HubServices.getServices();
 
-        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 6);
+        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 5);
         assertTrue(serviceMap.get(BEFORE_HEALTH_CHECK)
-                .containsAll(Arrays.asList(influxdbReporterLifecycle,
-                        statsDReporterLifecycle,
+                .containsAll(Arrays.asList(statsDReporterLifecycle,
                         dynamoChannelExistenceCheck,
                         dynamoWebhookExistenceCheck)));
 
@@ -140,10 +134,9 @@ class ClusterServicesRegistrationTest {
 
         Map<HubServices.TYPE, List<Service>> serviceMap = HubServices.getServices();
 
-        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 5);
+        assertEquals(serviceMap.get(BEFORE_HEALTH_CHECK).size(), 4);
         assertTrue(serviceMap.get(BEFORE_HEALTH_CHECK)
-                .containsAll(Arrays.asList(influxdbReporterLifecycle,
-                        statsDReporterLifecycle,
+                .containsAll(Arrays.asList(statsDReporterLifecycle,
                         s3WriteQueueLifecycle,
                         dynamoChannelExistenceCheck,
                         dynamoWebhookExistenceCheck)));

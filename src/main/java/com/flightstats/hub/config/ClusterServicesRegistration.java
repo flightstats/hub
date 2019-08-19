@@ -1,5 +1,6 @@
 package com.flightstats.hub.config;
 
+import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
@@ -27,7 +28,6 @@ import static com.flightstats.hub.constant.NamedBinding.WRITE;
 @Slf4j
 public class ClusterServicesRegistration implements ServiceRegistration {
 
-    private final InfluxdbReporterLifecycle influxdbReporterLifecycle;
     private final StatsDReporterLifecycle statsDReporterLifecycle;
     private final DynamoChannelExistenceCheck dynamoChannelExistenceCheck;
     private final DynamoWebhookExistenceCheck dynamoWebhookExistenceCheck;
@@ -40,7 +40,7 @@ public class ClusterServicesRegistration implements ServiceRegistration {
     private final PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle;
 
     @Inject
-    public ClusterServicesRegistration(InfluxdbReporterLifecycle influxdbReporterLifecycle,
+    public ClusterServicesRegistration(
                                        StatsDReporterLifecycle statsDReporterLifecycle,
                                        DynamoChannelExistenceCheck dynamoChannelExistenceCheck,
                                        DynamoWebhookExistenceCheck dynamoWebhookExistenceCheck,
@@ -51,7 +51,6 @@ public class ClusterServicesRegistration implements ServiceRegistration {
                                        AppProperties appProperties,
                                        SpokeProperties spokeProperties,
                                        PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle) {
-        this.influxdbReporterLifecycle = influxdbReporterLifecycle;
         this.statsDReporterLifecycle = statsDReporterLifecycle;
         this.dynamoChannelExistenceCheck = dynamoChannelExistenceCheck;
         this.dynamoWebhookExistenceCheck = dynamoWebhookExistenceCheck;
@@ -75,7 +74,9 @@ public class ClusterServicesRegistration implements ServiceRegistration {
     }
 
     private List<Service> getBeforeHealthCheckServices() {
-        List<Service> services = new ArrayList<>(Arrays.asList(influxdbReporterLifecycle, statsDReporterLifecycle));
+        List<Service> services = new ArrayList<>();
+        services.add(statsDReporterLifecycle);
+
         if (!appProperties.isReadOnly()) {
             services.add(s3WriteQueueLifecycle);
         }
