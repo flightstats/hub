@@ -158,7 +158,7 @@ public class HubUtils {
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .get(ClientResponse.class);
-            log.debug("get channel response {} {}", response);
+            log.trace("get channel response {} {}", response);
             if (response.getStatus() >= 400) {
                 return null;
             } else {

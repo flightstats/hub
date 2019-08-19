@@ -60,7 +60,7 @@ public class WebhookService {
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
-        log.debug("incoming webhook {} ", webhook);
+        log.trace("incoming webhook {} ", webhook);
         webhook = webhook.withDefaults(webhookProperties.getCallbackTimeoutDefaultInSec());
         webhookValidator.validate(webhook);
         final Optional<Webhook> preExisting = get(webhook.getName());

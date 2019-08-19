@@ -74,7 +74,7 @@ public class InternalWebhookClient {
             log.debug("calling {}", hubUrl);
             response = client.resource(hubUrl).put(ClientResponse.class);
             if (response.getStatus() == 200) {
-                log.debug("success {}", response);
+                log.trace("success putting {}: {}", hubUrl, response);
                 return true;
             } else {
                 log.warn("unexpected response {}", response);
@@ -94,7 +94,7 @@ public class InternalWebhookClient {
             log.debug("calling {}", hubUrl);
             response = client.resource(hubUrl).get(ClientResponse.class);
             if (response.getStatus() == 200) {
-                log.debug("success {}", response);
+                log.trace("success {}", response);
                 return Integer.parseInt(response.getEntity(String.class));
             } else {
                 log.warn("unexpected response {}", response);

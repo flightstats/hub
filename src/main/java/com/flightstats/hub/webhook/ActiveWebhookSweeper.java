@@ -26,7 +26,7 @@ public class ActiveWebhookSweeper {
         log.debug("cleaning empty webhook leader nodes...");
 
         Set<String> currentData = webhookLeaderLocks.getWebhooks();
-        log.debug("data {}", currentData.size());
+        log.trace("webhook lock count {}", currentData.size());
 
         List<String> emptyWebhookLeaders = currentData.stream()
                 .filter(this::isEmpty)
