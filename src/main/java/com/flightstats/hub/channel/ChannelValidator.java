@@ -21,7 +21,7 @@ public class ChannelValidator {
     private final Dao<ChannelConfig> channelConfigDao;
 
     @Inject
-    ChannelValidator(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao) {
+    public ChannelValidator(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao) {
         this.channelConfigDao = channelConfigDao;
     }
 

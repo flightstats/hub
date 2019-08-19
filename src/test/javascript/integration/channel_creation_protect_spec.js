@@ -21,7 +21,7 @@ const headers = { 'Content-Type': 'application/json' };
  *
  */
 const url = `${channelUrl}/${channelName}`;
-describe(__filename, function () {
+describe(__filename, () => {
     it('creates an unprotected channel', async () => {
         const response = await hubClientPut(url, headers, { tags: ['one', 'two'] });
         const body = getProp('body', response);
@@ -30,7 +30,7 @@ describe(__filename, function () {
         expect(getProp('ttlDays', body)).toEqual(120);
         expect(getProp('description', body)).toEqual('');
         expect((getProp('tags', body) || '').length).toEqual(2);
-        expect(getProp('storage', body)).toEqual('SINGLE');
+        expect(getProp('storage', body)).toEqual('BATCH');
         expect(getProp('protect', body)).toEqual(false);
     });
 
@@ -48,7 +48,7 @@ describe(__filename, function () {
     });
 
     it('returns 403 failure on attempt to remove original storage source on protected channel', async () => {
-        const response = await hubClientPut(url, headers, { storage: 'BATCH' });
+        const response = await hubClientPut(url, headers, { storage: 'SINGLE' });
         expect(getProp('statusCode', response)).toEqual(403);
     });
 

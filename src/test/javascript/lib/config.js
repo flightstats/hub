@@ -2,6 +2,7 @@ const ip = require('ip');
 
 const timeoutInterval = 60 * 1000;
 const {
+    callbackDomain,
     callbackPort,
     hubDomain,
     hubUrl,
@@ -28,7 +29,7 @@ const getHubUrlBase = () => {
 
 const getChannelUrl = () => `${getHubUrlBase()}/channel`;
 
-const getCallBackDomain = () => `http://${getIp()}`;
+const getCallBackDomain = () => `http://${callbackDomain || getIp()}`;
 
 console.log(`hubDomain:: ${getHubDomain()}`);
 // console.log(`runEncrypted:: ${getRunEncrypted()}`);

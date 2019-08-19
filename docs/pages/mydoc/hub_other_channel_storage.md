@@ -32,9 +32,8 @@ We use this [Docker image](https://hub.docker.com/r/flightstats/hub/) for repeat
 We want to make the Where and How of data storage configurable per channel.
 Each Hub installation can configure the default values, and may disallow some options.
 
-### Storage -> Strategy
-
-The existing `storage` channel option will be renamed to `strategy` (`storage` will still be supported).   
+### Storage
+ 
 Currently, this option only effects behavior with S3.     
 Spoke ignores this option.
 
@@ -50,18 +49,16 @@ The available options are:
     * indexed items are batched into S3 every minute
     * cost effective for channels with volumes of more than 2 items per minute
     * once outside of Spoke, extremely efficient performance when combined with bulk reads
-    * only works with backend `LOCAL-REMOTE`
     
-* SINGLE-AND-BATCH
+* BOTH
     * Uses both single and batch
     * Useful for transitioning between strategies
-    * only works with backend `LOCAL-REMOTE`
 
 ### Backend
 
 We will allow users to specify `backend` options:
 
-* LOCAL
+* file system
 
     * Only uses Spoke
     * extremely efficient when sized to fit entirely within the Operation System's File Cache
@@ -69,11 +66,7 @@ We will allow users to specify `backend` options:
     * default option for ruuning tests using Docker 
     * max item default of 40 MB
     
-* REMOTE
-
-    * Only uses S3
-    * Allows items up to 5 TB
-* LOCAL-REMOTE
+* aws s3
 
     * default for clustered installations
     * max item default of 40 MB

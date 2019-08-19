@@ -16,6 +16,9 @@ import java.util.Map;
 @Slf4j
 class S3ConfigStrategy {
 
+    public final static String BATCH_POSTFIX = "Batch";
+    public final static String SINGLE_POSTFIX = "";
+
     static List<BucketLifecycleConfiguration.Rule> apportion(Iterable<ChannelConfig> channelConfigs, DateTime timeForSharding, int max) {
         List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
         for (ChannelConfig config : channelConfigs) {
@@ -64,16 +67,19 @@ class S3ConfigStrategy {
     private static void addRule(List<BucketLifecycleConfiguration.Rule> rules, ChannelConfig config) {
         if (config.getTtlDays() > 0) {
             if (config.isSingle() || config.isBoth()) {
-                rules.add(createRule(config, ""));
+                rules.add(createRule(config, getChannelTypedName(config, SINGLE_POSTFIX)));
             }
             if (config.isBatch() || config.isBoth()) {
-                rules.add(createRule(config, "Batch"));
+                rules.add(createRule(config, getChannelTypedName(config, BATCH_POSTFIX)));
             }
         }
     }
 
-    private static BucketLifecycleConfiguration.Rule createRule(ChannelConfig config, String postfix) {
-        String id = config.getDisplayName() + postfix;
+    static String getChannelTypedName(ChannelConfig config, String postfix) {
+        return config.getDisplayName() + postfix;
+    }
+
+    private static BucketLifecycleConfiguration.Rule createRule(ChannelConfig config, String id) {
         return new BucketLifecycleConfiguration.Rule()
                 .withFilter(new LifecycleFilter(new LifecyclePrefixPredicate(id + "/")))
                 .withId(id)

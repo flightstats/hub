@@ -46,7 +46,7 @@ describe(__filename, function () {
         expect(ttlDays).toEqual(120);
         expect(description).toEqual('');
         expect(replicationSource).toEqual('');
-        expect(storage).toEqual('SINGLE');
+        expect(storage).toEqual('BATCH');
     });
 
     it('verifies the channel does exist', async () => {

@@ -12,6 +12,7 @@ import retrofit2.Response;
 
 import javax.inject.Inject;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -76,7 +77,7 @@ public class ChannelConfigService {
 
         dynamoService.updateChannelConfig(expirationSettings);
         ChannelConfig updatedConfig = getUncached(channel.getName()).toBuilder()
-                .tags(Collections.singletonList("updated-expiration-settings"))
+                .tags(Arrays.asList("updated-expiration-settings", "historical"))
                 .build();
         update(updatedConfig);
     }

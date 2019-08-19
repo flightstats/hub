@@ -35,10 +35,6 @@ class HubS3ClientTest {
     @Mock
     private S3ResponseMetadata s3ResponseMetadata;
 
-    @BeforeEach
-    void setup(){
-        when(s3Properties.getBucketName()).thenReturn("hub-local");
-    }
     @Test
     void countError() {
         String requestId = "numbers-and-letters-go-here";

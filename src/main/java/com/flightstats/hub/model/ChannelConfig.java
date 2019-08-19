@@ -94,18 +94,24 @@ public class ChannelConfig implements Serializable, NamedType {
             this.maxItems = maxItems;
         }
 
-        if (isBlank(storage)) {
-            this.storage = SINGLE.name();
-        } else {
-            this.storage = StringUtils.upperCase(storage);
-        }
+        this.storage = getStorageOrDefault(storage);
 
-        addTagIf(!isBlank(replicationSource), REPLICATED);
         addTagIf(isHistorical(), HISTORICAL);
+        addTagIf(!isBlank(replicationSource), REPLICATED);
     }
 
     public static ChannelConfigBuilder builder() {
         return new ChannelConfigBuilder();
+    }
+
+    private String getStorageOrDefault(String storage) {
+        if (StringUtils.isNotBlank(storage)) {
+            return StringUtils.upperCase(storage);
+        } else if (StringUtils.isBlank(this.storage) && isHistorical()) {
+            return SINGLE.name();
+        } else {
+            return  BATCH.name();
+        }
     }
 
     public static ChannelConfig createFromJson(String json) {
