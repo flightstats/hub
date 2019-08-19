@@ -153,7 +153,7 @@ public class ChannelService {
                 throw e;
             } catch (Exception e) {
                 traces.add("ContentService.insert", "error", e.getMessage());
-                log.warn("insertion error " + channelName, e);
+                log.error("insertion error " + channelName, e);
                 throw e;
             }
         });

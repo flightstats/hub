@@ -100,7 +100,7 @@ public class TimeService {
             FileUtils.write(file, "true", StandardCharsets.UTF_8);
             log.info("wrote remote file {}", remoteFile);
         } catch (IOException e) {
-            log.warn("unable to write file", e);
+            log.error("unable to write remote file", e);
             throw new RuntimeException("unable to write remoteFile " + remoteFile);
         }
     }

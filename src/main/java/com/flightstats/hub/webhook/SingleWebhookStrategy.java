@@ -130,7 +130,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     log.warn("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
                     exceptionReference.set(e);
-                    log.warn("unexpected issue with " + webhook.getName(), e);
+                    log.error("unexpected issue with " + webhook.getName(), e);
                 }
             }
 

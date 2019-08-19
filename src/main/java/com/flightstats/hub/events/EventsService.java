@@ -77,11 +77,11 @@ public class EventsService {
             if (e.getCause() instanceof EofException) {
                 log.error("unable to write, closing " + id);
             } else {
-                log.warn("unable to send to " + id, e);
+                log.error("unable to send to " + id, e);
             }
             unregister(id);
         } catch (Exception e) {
-            log.warn("unable to send to " + id, e);
+            log.error("unable to send to " + id, e);
             unregister(id);
         }
     }

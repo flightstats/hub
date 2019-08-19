@@ -124,7 +124,7 @@ public class HubBindings extends AbstractModule {
         try {
             curatorFramework.checkExists().forPath("/startup");
         } catch (Exception e) {
-            log.warn("unable to access zookeeper");
+            log.error("unable to access zookeeper");
             throw new RuntimeException("unable to access zookeeper");
         }
         return curatorFramework;

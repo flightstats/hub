@@ -209,7 +209,7 @@ public class ChannelResource {
             if (content.getContentKey().isPresent()) {
                 key = content.getContentKey().get().toString();
             }
-            log.warn("unable to POST to " + channelName + " key " + key, e);
+            log.error("unable to POST to {} key {}", channelName, key, e);
             throw e;
         }
     }

@@ -135,7 +135,7 @@ public class Content implements Serializable {
             } catch (EOFException e) {
                 log.error("file ended early {}", contentKey);
             } catch (Exception e) {
-                log.warn("no data " + contentKey, e);
+                log.error("no data " + contentKey, e);
             }
         }
         return data;

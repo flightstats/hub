@@ -91,7 +91,7 @@ public class InternalSpokeResource {
                     .entity(new SingleTrace("failed", start).toString())
                     .build();
         } catch (Exception e) {
-            log.warn("unable to write " + path, e);
+            log.error("unable to write " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -111,7 +111,7 @@ public class InternalSpokeResource {
                 byte[] data = readByesFully(stream);
                 String itemPath = channel + "/" + keyPath;
                 if (!store.insert(itemPath, new ByteArrayInputStream(data))) {
-                    log.warn("what happened?!?! {}", channel);
+                    log.error("what happened?!?! {}", channel);
                     return Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new SingleTrace("failed", start).toString())
@@ -127,7 +127,7 @@ public class InternalSpokeResource {
                     .entity(new SingleTrace("success", start).toString())
                     .build();
         } catch (Exception e) {
-            log.warn("unable to write " + channel, e);
+            log.error("unable to write " + channel, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -149,7 +149,7 @@ public class InternalSpokeResource {
             });
             return builder.build();
         } catch (Exception e) {
-            log.warn("unable to get " + path, e);
+            log.error("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -270,7 +270,7 @@ public class InternalSpokeResource {
             log.info("health check successful for {}", server);
             return Response.ok().build();
         } catch (Exception e) {
-            log.warn("unable to complete calls " + server, e);
+            log.error("unable to complete calls " + server, e);
         }
         return Response.status(417).build();
     }

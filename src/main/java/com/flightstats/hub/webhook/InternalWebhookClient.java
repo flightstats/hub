@@ -77,10 +77,10 @@ public class InternalWebhookClient {
                 log.trace("success putting {}: {}", hubUrl, response);
                 return true;
             } else {
-                log.warn("unexpected response {}", response);
+                log.error("unexpected response putting {}: {}", hubUrl, response);
             }
         } catch (Exception e) {
-            log.warn("unable to put " + hubUrl, e);
+            log.error("unable to put {}", hubUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -97,10 +97,10 @@ public class InternalWebhookClient {
                 log.trace("success {}", response);
                 return Integer.parseInt(response.getEntity(String.class));
             } else {
-                log.warn("unexpected response {}", response);
+                log.error("unexpected response {}", response);
             }
         } catch (Exception e) {
-            log.warn("unable to get " + hubUrl, e);
+            log.error("unable to get " + hubUrl, e);
         } finally {
             HubUtils.close(response);
         }

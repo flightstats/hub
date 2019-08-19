@@ -327,7 +327,7 @@ class WebhookLeader implements Lockable {
                 webhookStrategy.close();
             }
         } catch (Exception e) {
-            log.warn("unable to close strategy", e);
+            log.error("unable to close strategy", e);
         }
     }
 

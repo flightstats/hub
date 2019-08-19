@@ -110,7 +110,7 @@ public class S3LargeContentDao implements ContentDao {
                     log.debug("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
                     return "ok";
                 } catch (Exception e) {
-                    log.warn("what happened POST to " + channelName + " for chunk " + chunk.getCount(), e);
+                    log.error("what happened POST to " + channelName + " for chunk " + chunk.getCount(), e);
                     throw e;
                 }
             });
@@ -129,7 +129,7 @@ public class S3LargeContentDao implements ContentDao {
             long s3Length = getLength(s3Key, bucketName);
             if (s3Length != copied) {
                 String message = "object is not the correct size. expected " + copied + ", found " + s3Length;
-                log.warn(message);
+                log.error(message);
                 throw new RuntimeException(message);
             }
             return key;
@@ -141,7 +141,7 @@ public class S3LargeContentDao implements ContentDao {
                     log.warn("deleting multipart {} {}", channelName, key, e);
                     delete(channelName, key);
                 } else {
-                    log.warn("aborting multipart " + channelName + " " + key, e);
+                    log.error("aborting multipart {} {}" + channelName + " " + key, e);
                     AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, s3Key, uploadId);
                     s3Client.abortMultipartUpload(request);
                 }
@@ -184,11 +184,11 @@ public class S3LargeContentDao implements ContentDao {
             try {
                 return getS3Object(channelName, key);
             } catch (Exception e2) {
-                log.warn("unable to read second time " + channelName + " " + key + " " + e.getMessage(), e2);
+                log.error("unable to read second time {} {} {}", channelName, key, e.getMessage(), e2);
                 return null;
             }
         } catch (Exception e) {
-            log.warn("unable to read " + channelName + " " + key, e);
+            log.error("unable to read {} {}", channelName, key, e);
             return null;
         } finally {
             ActiveTraces.getLocal().add("S3LargeContentDao.read completed");
@@ -243,7 +243,7 @@ public class S3LargeContentDao implements ContentDao {
             s3Util.delete(channel + "/large/", limitKey, bucketName, s3Client);
             log.info("completed deletion of " + channel);
         } catch (Exception e) {
-            log.warn("unable to delete  {} in {}", channel, bucketName, e);
+            log.error("unable to delete  {} in {}", channel, bucketName, e);
         }
     }
 

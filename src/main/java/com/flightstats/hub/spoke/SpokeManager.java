@@ -122,11 +122,11 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                 } else if (response.getStatus() == 404) {
                     log.warn("test not yet implemented {}", response);
                 } else {
-                    log.warn("failed response {}", response);
+                    log.error("failed response {}", response);
                     return false;
                 }
             } catch (Exception e) {
-                log.warn("unable to test " + path + " with " + server, e);
+                log.error("unable to test {} with {}", path, server, e);
                 return false;
             }
         }
@@ -228,12 +228,12 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                 log.error("JsonMappingException for {}", path);
             } catch (ClientHandlerException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    log.warn("connection exception " + server);
+                    log.error("connection exception on {}", server);
                 } else {
-                    log.warn("unable to get content " + server + " " + path, e);
+                    log.error("unable to get content {} {}", server, path, e);
                 }
             } catch (Exception e) {
-                log.warn("unable to get content " + path, e);
+                log.error("unable to get content {}", path, e);
             } finally {
                 HubUtils.close(response);
                 resetThread();

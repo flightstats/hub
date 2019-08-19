@@ -61,7 +61,7 @@ public class S3Config {
         try {
             doWork();
         } catch (Exception e) {
-            log.warn("unable to update config", e);
+            log.error("unable to update config", e);
         }
     }
 

@@ -57,7 +57,7 @@ public class Commander {
                 process.destroyForcibly();
             }
         } catch (Exception e) {
-            log.warn("unable to run command " + StringUtils.join(" ", command), e);
+            log.error("unable to run command " + StringUtils.join(" ", command), e);
         }
         return output;
     }
