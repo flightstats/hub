@@ -138,9 +138,9 @@ public class CuratorCluster implements Cluster {
             curator.delete().forPath(fullPath);
             log.info("deleted host from cluster {} {}", getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
-            log.trace("no node for" + fullPath);
+            log.trace("no node for {}", fullPath);
         } catch (Exception e) {
-            log.warn("unable to delete " + fullPath, e);
+            log.warn("unable to delete {}", fullPath, e);
         }
     }
 

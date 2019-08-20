@@ -54,9 +54,9 @@ public class LocalWebhookManager {
         pool.shutdown();
         try {
             final boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
-            log.debug("awaitTermination", awaitTermination);
+            log.debug("awaitTermination {}", awaitTermination);
         } catch (InterruptedException e) {
-            log.warn("interuppted", e);
+            log.warn("interrupted", e);
             throw new RuntimeInterruptedException(e);
         }
     }

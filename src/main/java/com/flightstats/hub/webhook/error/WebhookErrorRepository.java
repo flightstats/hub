@@ -33,7 +33,7 @@ public class WebhookErrorRepository {
     }
 
     public void deleteWebhook(String webhook) {
-        log.debug("deleting webhook errors for " + webhook);
+        log.debug("deleting webhook errors for {}", webhook);
         zooKeeperUtils.deletePathAndChildren(BASE_PATH, webhook);
     }
 

@@ -150,7 +150,7 @@ public class WebhookService {
     }
 
     public void delete(String name) {
-        log.debug("deleting webhook " + name);
+        log.debug("deleting webhook {}", name);
         deleteInstancesIfTagWebhook(name);
         this.webhookDao.delete(name);
         this.webhookManager.delete(name);
@@ -166,7 +166,7 @@ public class WebhookService {
         if (!webhookOptional.isPresent()) return;
         final Webhook webhook = webhookOptional.get();
         if (!webhook.isTagPrototype()) return;
-        log.debug("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
+        log.debug("TagWebHook: Deleting tag webhook instances for tag {}", webhookName);
 
         final Set<String> names = webhookInstancesWithTag(webhook.getTagFromTagUrl()).stream()
                 .map((Webhook::getName))
