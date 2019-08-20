@@ -151,14 +151,14 @@ public class HubUtils {
     }
 
     public ChannelConfig getChannel(String channelUrl) {
-        log.debug("getting {} {}", channelUrl);
+        log.debug("getting {}", channelUrl);
         ClientResponse response = null;
         try {
             response = followClient.resource(channelUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .get(ClientResponse.class);
-            log.trace("get channel response {} {}", response);
+            log.trace("get channel response {}", response);
             if (response.getStatus() >= 400) {
                 return null;
             } else {
@@ -177,7 +177,7 @@ public class HubUtils {
         ClientResponse response = null;
         try {
             response = resource.post(ClientResponse.class, content.getData());
-            log.trace("got repsonse {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() == 201) {
                 return ContentKey.fromFullUrl(response.getLocation().toString());
             } else {
