@@ -59,7 +59,7 @@ public class FileSpokeStore {
             log.trace("copied {} {} {}", file, copy, setExecutable);
             return true;
         } catch (IOException e) {
-            log.warn("unable to write to " + path, e);
+            log.error("unable to write to {}", path, e);
             return false;
         }
     }
