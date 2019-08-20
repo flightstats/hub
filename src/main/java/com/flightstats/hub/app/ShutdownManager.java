@@ -128,7 +128,7 @@ public class ShutdownManager {
                     resetLock();
                 }
             } catch (KeeperException.NoNodeException e) {
-                log.warn("node not found for ...", PATH);
+                log.warn("node not found for ...{}", PATH);
             }
         }
 
