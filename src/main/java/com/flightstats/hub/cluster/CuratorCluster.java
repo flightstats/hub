@@ -116,7 +116,7 @@ public class CuratorCluster implements Cluster {
             servers.add(new String(childData.getData()));
         }
         if (servers.isEmpty()) {
-            log.warn("returning empty collection");
+            log.warn("no servers found in zookeeper cache");
         }
         return servers;
     }
@@ -134,13 +134,13 @@ public class CuratorCluster implements Cluster {
 
     public void delete() {
         try {
-            log.info("removing host from cluster {} {}", getHost(useName), fullPath);
+            log.debug("removing host from cluster {} {}", getHost(useName), fullPath);
             curator.delete().forPath(fullPath);
             log.info("deleted host from cluster {} {}", getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
-            log.info("no node for" + fullPath);
+            log.trace("no node for {}", fullPath);
         } catch (Exception e) {
-            log.warn("unable to delete " + fullPath, e);
+            log.warn("unable to delete {}", fullPath, e);
         }
     }
 

@@ -174,14 +174,14 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
-                    log.info("InterruptedException with " + webhook.getName());
+                    log.warn("InterruptedException with {}", webhook.getName());
                     Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
-                    log.debug("NoSuchChannelException for " + webhook.getName());
+                    log.error("NoSuchChannelException for {}", webhook.getName());
                 } catch (Exception e) {
                     exceptionReference.set(e);
-                    log.warn("unexpected issue with " + webhook.getName(), e);
+                    log.error("unexpected issue with {}", webhook.getName(), e);
                 }
             }
 
@@ -238,7 +238,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     public Optional<ContentPath> next() throws Exception {
         Exception e = exceptionReference.get();
         if (e != null) {
-            log.error("unable to determine next " + webhook.getName(), e);
+            log.error("unable to determine next {}", webhook.getName(), e);
             throw e;
         }
         return Optional.ofNullable(queue.poll(10, TimeUnit.MINUTES));

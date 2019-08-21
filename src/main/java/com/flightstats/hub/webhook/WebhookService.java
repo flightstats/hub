@@ -60,7 +60,7 @@ public class WebhookService {
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
-        log.info("incoming webhook {} ", webhook);
+        log.trace("incoming webhook {} ", webhook);
         webhook = webhook.withDefaults(webhookProperties.getCallbackTimeoutDefaultInSec());
         webhookValidator.validate(webhook);
         final Optional<Webhook> preExisting = get(webhook.getName());
@@ -85,11 +85,11 @@ public class WebhookService {
                 webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
             }
         }
-        log.info("upsert webhook {} ", webhook);
+        log.debug("upsert webhook {} ", webhook);
         ContentPath existingContentPath = clusterCacheDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
         log.info("webhook {} existing {} startingKey {}", webhook.getName(), existingContentPath, webhook.getStartingKey());
         if (existingContentPath == null || webhook.getStartingKey() != null) {
-            log.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
+            log.debug("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
             clusterCacheDao.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
 
@@ -143,14 +143,14 @@ public class WebhookService {
             Optional<ContentKey> lastKey = contentRetriever.getLatest(channel, true);
             lastKey.ifPresent(builder::channelLatest);
         } catch (NoSuchChannelException e) {
-            log.info("no channel found for " + channel);
+            log.warn("no channel found for " + channel);
         }
         webhookManager.getStatus(webhook, builder);
         return builder.build();
     }
 
     public void delete(String name) {
-        log.info("deleting webhook " + name);
+        log.debug("deleting webhook {}", name);
         deleteInstancesIfTagWebhook(name);
         this.webhookDao.delete(name);
         this.webhookManager.delete(name);
@@ -166,7 +166,7 @@ public class WebhookService {
         if (!webhookOptional.isPresent()) return;
         final Webhook webhook = webhookOptional.get();
         if (!webhook.isTagPrototype()) return;
-        log.info("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
+        log.debug("TagWebHook: Deleting tag webhook instances for tag {}", webhookName);
 
         final Set<String> names = webhookInstancesWithTag(webhook.getTagFromTagUrl()).stream()
                 .map((Webhook::getName))
@@ -179,7 +179,7 @@ public class WebhookService {
     private void upsertTagWebhookInstances(Webhook webhookPrototype) {
         final Collection<ChannelConfig> channels = channelService.getChannels(webhookPrototype.getTagFromTagUrl(), false);
         for (ChannelConfig channel : channels) {
-            log.info("TagWebHook: Adding TagWebhook instance for " + channel.getName());
+            log.debug("TagWebHook: Adding TagWebhook instance for " + channel.getName());
             upsert(Webhook.instanceFromTagPrototype(webhookPrototype, channel));
         }
     }

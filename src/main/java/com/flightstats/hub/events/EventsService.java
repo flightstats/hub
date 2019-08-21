@@ -51,7 +51,7 @@ public class EventsService {
             Content content = optional.get();
             sendData(id, Errors.rethrow().wrap(contentOutput -> {
                 contentOutput.write(content);
-                log.info("sent content {} to {}", id, content.getContentKey());
+                log.debug("sent content {} to {}", id, content.getContentKey());
             }));
         }
     }
@@ -68,20 +68,20 @@ public class EventsService {
         try {
             EventWebhook eventWebhook = outputStreamMap.get(id);
             if (eventWebhook == null) {
-                log.info("unable to find id {}", id);
+                log.warn("unable to find id {}", id);
                 unregister(id);
             } else {
                 contentConsumer.accept(eventWebhook.getContentOutput());
             }
         } catch (Errors.WrappedAsRuntimeException e) {
             if (e.getCause() instanceof EofException) {
-                log.info("unable to write, closing " + id);
+                log.error("unable to write, closing " + id);
             } else {
-                log.warn("unable to send to " + id, e);
+                log.error("unable to send to " + id, e);
             }
             unregister(id);
         } catch (Exception e) {
-            log.warn("unable to send to " + id, e);
+            log.error("unable to send to " + id, e);
             unregister(id);
         }
     }
@@ -93,13 +93,13 @@ public class EventsService {
                 localHostProperties,
                 appProperties.getAppUrl(),
                 appProperties.getAppEnv());
-        log.info("registering events {}", eventWebhook.getGroupName());
+        log.debug("registering events {}", eventWebhook.getGroupName());
         outputStreamMap.put(eventWebhook.getGroupName(), eventWebhook);
         eventWebhook.start();
     }
 
     private void unregister(String id) {
-        log.info("unregistering events {}", id);
+        log.debug("unregistering events {}", id);
         EventWebhook remove = outputStreamMap.remove(id);
         if (null != remove) {
             remove.stop();

@@ -94,10 +94,10 @@ public class WebhookResource {
     private Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
         final Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
-            log.info("webhook not found {} ", name);
+            log.warn("webhook not found {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        log.debug("get webhook {} ", name);
+        log.trace("get webhook {} ", name);
         Webhook webhook = webhookOptional.get();
         WebhookStatus status = webhookService.getStatus(webhook);
         ObjectNode root = objectMapper.createObjectNode();
@@ -164,7 +164,7 @@ public class WebhookResource {
     }
 
     Response upsert(String name, String body, UriInfo uriInfo) {
-        log.info("upsert webhook {} {}", name, body);
+        log.trace("upsert webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name), contentRetriever).withName(name);
         Optional<Webhook> upsert = webhookService.upsert(webhook);
         if (upsert.isPresent()) {
@@ -176,9 +176,9 @@ public class WebhookResource {
 
     Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
-        log.info("delete webhook {}", name);
+        log.trace("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
-            log.info("webhook not found for delete {} ", name);
+            log.warn("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         webhookService.delete(name);
@@ -186,14 +186,14 @@ public class WebhookResource {
     }
 
     private Response cursorUpdater(String name, String body) {
-        log.info("update cursor webhook {} {}", name, body);
+        log.trace("update cursor webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson("{}", webhookService.get(name), contentRetriever).withName(name);
         try {
             if (RequestUtils.isValidChannelUrl(body)) {
                 ContentPath item = ContentPath.fromFullUrl(body).get();
                 webhookService.updateCursor(webhook, item);
             } else {
-                log.info("cursor update failed.  Bad item: " + body);
+                log.warn("cursor update failed.  Bad item: {}", body);
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
         } catch (Exception e) {

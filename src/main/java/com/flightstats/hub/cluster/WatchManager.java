@@ -34,7 +34,7 @@ public class WatchManager {
     @VisibleForTesting
     void addCuratorListener() {
         curator.getCuratorListenable().addListener((client, event) -> {
-            log.info("event {}", event);
+            log.debug("event {}", event);
             final Watcher watcher = watcherMap.get(event.getPath());
             if (watcher != null) {
                 addWatch(watcher);

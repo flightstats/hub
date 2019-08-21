@@ -70,7 +70,7 @@ public class SpokeContentDao {
             traces.add("writeBulk completed", keys);
             return keys;
         } catch (ContentTooLargeException e) {
-            log.info("content too large for channel " + channelName);
+            log.error("content too large for channel " + channelName);
             throw e;
         } catch (Exception e) {
             traces.add("SpokeContentDao", "error", e.getMessage());

@@ -88,10 +88,10 @@ class WebhookLeader implements Lockable {
     }
 
     boolean tryLeadership(Webhook webhook) {
-        log.debug("starting webhook: " + webhook);
+        log.debug("starting webhook: {}", webhook);
         setWebhook(webhook);
         if (webhook.isPaused()) {
-            log.info("not starting paused webhook " + webhook);
+            log.debug("not starting paused webhook {}", webhook);
             leadershipLock = Optional.empty();
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
@@ -112,10 +112,10 @@ class WebhookLeader implements Lockable {
         }
         this.webhook = foundWebhook.get();
         if (webhook.isPaused()) {
-            log.info("webhook is paused " + webhook.getName());
+            log.info("webhook {} is paused", webhook.getName());
             return;
         }
-        log.info("taking leadership {} {}", webhook, leadership.hasLeadership());
+        log.info("taking leadership {} {}", webhook.getName(), leadership.hasLeadership());
         statsdReporter.incrementEventStart(LEADERSHIP_METRIC, "name:" + webhook.getName());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
@@ -148,7 +148,7 @@ class WebhookLeader implements Lockable {
                 }
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {
-            log.warn("saw InterruptedException for " + webhook.getName());
+            log.warn("saw InterruptedException for {}", webhook.getName());
         } catch (Exception e) {
             log.error("Execption for " + webhook.getName(), e);
         } finally {
@@ -180,7 +180,7 @@ class WebhookLeader implements Lockable {
             final DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
             if (attempt.getContentPath().getTime().isBefore(ttlTime)) {
                 final String message = String.format("%s is before webhook ttl %s", attempt.getContentPath().toUrl(), ttlTime);
-                log.debug(webhook.getName(), message);
+                log.debug("{}: {}", webhook.getName(), message);
                 webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
                 return true;
             }
@@ -195,7 +195,7 @@ class WebhookLeader implements Lockable {
         ChannelConfig channelConfig = optionalChannelConfig.get();
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
             String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
-            log.debug(webhook.getName(), message);
+            log.debug("{}: {}", webhook.getName(), message);
             webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
             return true;
         } else {
@@ -207,7 +207,7 @@ class WebhookLeader implements Lockable {
         int maxAttempts = attempt.getWebhook().getMaxAttempts();
         if (maxAttempts > 0 && attempt.number > maxAttempts) {
             String message = String.format("%s max attempts reached (%s)", attempt.getContentPath().toUrl(), maxAttempts);
-            log.debug(webhook.getName() + " " + message);
+            log.debug("{}: {}", webhook.getName(), message);
             webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
             return true;
         } else {
@@ -271,7 +271,7 @@ class WebhookLeader implements Lockable {
                 webhookInProcess.remove(webhook.getName(), contentPath);
                 log.trace("done sending {} to {} ", contentPath, webhook.getName());
             } catch (Exception e) {
-                log.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
+                log.warn("exception sending {} to {}", contentPath, webhook.getName(), e);
             } finally {
                 semaphore.release();
                 ActiveTraces.end();
@@ -301,7 +301,7 @@ class WebhookLeader implements Lockable {
         leadershipLock.ifPresent(distributedLockRunner::delete);
         closeStrategy();
         stopExecutor();
-        log.info("exited webhook " + name);
+        log.info("exited webhook {}", name);
     }
 
     private void stopExecutor() {
@@ -311,12 +311,12 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         log.debug("stopExecutor " + name);
         try {
-            log.debug("awating termination " + name);
+            log.debug("awating termination {}", name);
             executorService.shutdownNow();
             executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
-            log.info("stopped Executor " + name);
+            log.info("stopped Executor {}", name);
         } catch (InterruptedException e) {
-            log.error("unable to stop?" + name, e);
+            log.error("unable to stop {}?", name, e);
             Thread.currentThread().interrupt();
         }
     }
@@ -327,7 +327,7 @@ class WebhookLeader implements Lockable {
                 webhookStrategy.close();
             }
         } catch (Exception e) {
-            log.warn("unable to close strategy", e);
+            log.error("unable to close strategy", e);
         }
     }
 

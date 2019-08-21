@@ -56,11 +56,11 @@ public class ChannelTtlEnforcer {
         protected void runOneIteration() throws Exception {
             try {
                 long start = System.currentTimeMillis();
-                log.info("running channel cleanup");
+                log.debug("running channel cleanup");
                 ttlEnforcer.deleteFilteredPaths(spokePath, channelService, handleCleanup());
                 log.info("completed channel cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
-                log.info("issue cleaning up channels in spoke", e);
+                log.error("issue cleaning up channels in spoke", e);
             }
         }
 

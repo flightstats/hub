@@ -43,14 +43,15 @@ public class AppUrlCheck extends AbstractIdleService {
         if (hasHealthyServers()) {
             String appUrl = appProperties.getAppUrl();
             ClientResponse response = client.resource(appUrl).get(ClientResponse.class);
-            log.info("got response {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() != 200) {
                 String msg = "unable to connect to app.url " + appUrl + " status=" + response.getStatus();
                 log.error(msg);
                 throw new RuntimeException(msg);
             }
+            log.debug("app check url complete");
         } else {
-            log.info("no servers to test");
+            log.warn("no servers to test");
         }
     }
 
@@ -59,12 +60,12 @@ public class AppUrlCheck extends AbstractIdleService {
             String serverUri = localHostProperties.getUriScheme() + server;
             if (!serverUri.equals(localHostProperties.getUriWithHostName())) {
                 ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
-                log.info("got response {}", response);
+                log.trace("got response {}", response);
                 if (response.getStatus() == 200) {
                     return true;
                 }
             } else {
-                log.info("ignoring {}", serverUri);
+                log.warn("ignoring {}", serverUri);
             }
         }
         return false;

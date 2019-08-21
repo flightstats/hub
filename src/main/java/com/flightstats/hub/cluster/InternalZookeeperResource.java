@@ -62,7 +62,7 @@ public class InternalZookeeperResource {
     private Response returnData(String path,
                                 int depth,
                                 int olderThanDays) {
-        log.info("path {}, depth {}, olderThanDays {}", path, depth, olderThanDays);
+        log.debug("path {}, depth {}, olderThanDays {}", path, depth, olderThanDays);
         depth = Math.max(1, Math.min(2, depth));
         try {
             path = StringUtils.removeEnd(path, "/");
@@ -101,7 +101,7 @@ public class InternalZookeeperResource {
             data.put("string", new String(bytes));
             data.put("long", Longs.fromByteArray(bytes));
         } catch (Exception e) {
-            log.info("unable to convert to string ", path);
+            log.warn("unable to convert to string ", path);
         }
         ObjectNode stats = root.putObject("stats");
         stats.put("created", new DateTime(stat.getCtime()).toString());

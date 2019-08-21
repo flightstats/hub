@@ -118,7 +118,7 @@ class S3WriteQueueTest {
         try {
             s3WriteQueue.write();
         } catch (Exception e) {
-            log.info(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 }

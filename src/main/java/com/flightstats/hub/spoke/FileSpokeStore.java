@@ -59,7 +59,7 @@ public class FileSpokeStore {
             log.trace("copied {} {} {}", file, copy, setExecutable);
             return true;
         } catch (IOException e) {
-            log.info("unable to write to " + path, e);
+            log.error("unable to write to {}", path, e);
             return false;
         }
     }
@@ -83,9 +83,9 @@ public class FileSpokeStore {
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
-            log.debug("file not found {}", path);
+            log.error("file not found {}", path);
         } catch (IOException e) {
-            log.info("unable to read from " + path, e);
+            log.error("unable to read from " + path, e);
         }
     }
 
@@ -168,7 +168,7 @@ public class FileSpokeStore {
                 writeKey(output, keyFromPath);
             }
         } catch (Exception e) {
-            log.info("error with " + path, e);
+            log.error("error with " + path, e);
         }
     }
 
@@ -280,13 +280,13 @@ public class FileSpokeStore {
             limitCompare += limitPath[i] + "/";
         }
         for (String item : items) {
-            log.info("looking at {} {}", item, limitCompare);
+            log.debug("looking at {} {}", item, limitCompare);
             String current = path + "/" + item + "/";
             if (current.compareTo(limitCompare) <= 0) {
                 if (count < 4) {
                     recurseDelete(path + "/" + item, limitPath, count + 1, channel);
                 } else {
-                    log.info("deleting {}", spokePath + "/" + current);
+                    log.debug("deleting {}", spokePath + "/" + current);
                     FileUtils.deleteQuietly(new File(spokePath + "/" + current));
                 }
             }

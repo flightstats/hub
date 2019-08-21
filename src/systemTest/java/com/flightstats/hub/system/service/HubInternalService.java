@@ -26,7 +26,7 @@ public class HubInternalService {
             Response<Void> response = call.execute();
             log.info("max items enforcer response status: " + response.code());
         } catch (Exception e) {
-            log.warn("error max items enforcer response: ", e.getMessage());
+            log.error("error max items enforcer response: ", e.getMessage());
             throw e;
         }
     }

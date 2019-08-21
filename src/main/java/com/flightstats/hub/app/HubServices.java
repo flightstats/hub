@@ -33,7 +33,7 @@ public class HubServices {
 
     public static void register(Service service, TYPE... types) {
         for (TYPE type : types) {
-            log.info("registering " + service.getClass().getName() + " for " + type);
+            log.debug("registering " + service.getClass().getName() + " for " + type);
             serviceMap.get(type).add(service);
         }
     }
@@ -45,13 +45,13 @@ public class HubServices {
                 serviceList.addAll(serviceMap.get(type));
             }
             for (Service service : serviceList) {
-                log.info("starting service " + service.getClass().getName());
+                log.info("starting service {} for type {}", service.getClass().getName(), type);
                 service.startAsync();
                 service.awaitRunning();
                 log.info("running service " + service.getClass().getName());
             }
         } catch (Exception e) {
-            log.error("unable to start services, exiting", e);
+            log.error("unable to start services for type {}, exiting", type, e);
             System.exit(-1);
         }
     }

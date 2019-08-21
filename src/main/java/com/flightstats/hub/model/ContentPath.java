@@ -16,7 +16,7 @@ public interface ContentPath extends Comparable<ContentPath> {
             substring = StringUtils.substringAfter(substring, "/");
             return fromUrl(substring);
         } catch (Exception e) {
-            logger.info("unable to parse " + url + " " + e.getMessage());
+            logger.warn("unable to parse " + url + " " + e.getMessage());
             return Optional.empty();
         }
     }

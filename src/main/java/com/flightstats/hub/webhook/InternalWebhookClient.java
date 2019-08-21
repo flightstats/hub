@@ -71,16 +71,16 @@ public class InternalWebhookClient {
         String hubUrl = uriScheme + url;
         ClientResponse response = null;
         try {
-            log.info("calling {}", hubUrl);
+            log.debug("calling {}", hubUrl);
             response = client.resource(hubUrl).put(ClientResponse.class);
             if (response.getStatus() == 200) {
-                log.debug("success {}", response);
+                log.trace("success putting {}: {}", hubUrl, response);
                 return true;
             } else {
-                log.warn("unexpected response {}", response);
+                log.error("unexpected response putting {}: {}", hubUrl, response);
             }
         } catch (Exception e) {
-            log.warn("unable to put " + hubUrl, e);
+            log.error("unable to put {}", hubUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -91,16 +91,16 @@ public class InternalWebhookClient {
         ClientResponse response = null;
         String hubUrl = uriScheme + url;
         try {
-            log.info("calling {}", hubUrl);
+            log.debug("calling {}", hubUrl);
             response = client.resource(hubUrl).get(ClientResponse.class);
             if (response.getStatus() == 200) {
-                log.debug("success {}", response);
+                log.trace("success {}", response);
                 return Integer.parseInt(response.getEntity(String.class));
             } else {
-                log.warn("unexpected response {}", response);
+                log.error("unexpected response {}", response);
             }
         } catch (Exception e) {
-            log.warn("unable to get " + hubUrl, e);
+            log.error("unable to get " + hubUrl, e);
         } finally {
             HubUtils.close(response);
         }

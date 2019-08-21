@@ -90,7 +90,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                             traces.log(log);
                         }
                     } catch (Exception e) {
-                        log.warn("unexpected exception " + servers, e);
+                        log.warn("unexpected exception {}", servers, e);
                     }
                 }
             });
@@ -118,19 +118,19 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                 String url = uriScheme + server + "/internal/spoke/test/" + path;
                 ClientResponse response = query_client.resource(url).get(ClientResponse.class);
                 if (response.getStatus() == 200) {
-                    log.info("success calling {}", response);
+                    log.debug("success calling {}", response);
                 } else if (response.getStatus() == 404) {
                     log.warn("test not yet implemented {}", response);
                 } else {
-                    log.warn("failed response {}", response);
+                    log.error("failed response {}", response);
                     return false;
                 }
             } catch (Exception e) {
-                log.warn("unable to test " + path + " with " + server, e);
+                log.error("unable to test {} with {}", path, server, e);
                 return false;
             }
         }
-        log.info("all startup tests succeeded  " + path);
+        log.info("all startup tests succeeded {}", path);
         return true;
     }
 
@@ -167,11 +167,11 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                             quorumLatch.countDown();
                             log.trace("server {} path {} response {}", server, path, response);
                         } else {
-                            log.info("write failed: server {} path {} response {}", server, path, response);
+                            log.warn("write failed: server {} path {} response {}", server, path, response);
                         }
                     } catch (Exception e) {
                         traces.add(server, e.getMessage());
-                        log.warn("write failed: " + server + " " + path, e);
+                        log.warn("write failed: {} {}", server, path, e);
                     } finally {
                         HubUtils.close(response);
                         resetThread();
@@ -225,15 +225,15 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                     }
                 }
             } catch (JsonMappingException e) {
-                log.info("JsonMappingException for " + path);
+                log.error("JsonMappingException for {}", path);
             } catch (ClientHandlerException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    log.warn("connection exception " + server);
+                    log.error("connection exception on {}", server);
                 } else {
-                    log.warn("unable to get content " + server + " " + path, e);
+                    log.error("unable to get content {} {}", server, path, e);
                 }
             } catch (Exception e) {
-                log.warn("unable to get content " + path, e);
+                log.error("unable to get content {}", path, e);
             } finally {
                 HubUtils.close(response);
                 resetThread();

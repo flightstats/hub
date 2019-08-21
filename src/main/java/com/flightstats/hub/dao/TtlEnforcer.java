@@ -42,7 +42,7 @@ public class TtlEnforcer {
                         commander.runInBash("rm " + " -rf " + dirPath, 1);
                     });
         } catch (Exception e) {
-            log.warn("unable to run " + path, e);
+            log.error("unable to run {}", path, e);
         }
     }
 }

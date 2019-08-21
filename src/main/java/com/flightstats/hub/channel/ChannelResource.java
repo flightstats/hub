@@ -113,7 +113,7 @@ public class ChannelResource {
 
         ChannelConfig channelConfig = channelService.getChannelConfig(channelName, cached)
                 .orElseThrow(() -> {
-                    log.info("unable to get channel " + channelName);
+                    log.error("unable to get channel {}", channelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -126,16 +126,16 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
-        log.debug("put channel {} {}", channelName, json);
+        log.trace("put channel {} {}", channelName, json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (oldConfig.isPresent()) {
             ChannelConfig config = oldConfig.get();
-            log.info("using old channel {} {}", config, config.getCreationDate().getTime());
+            log.trace("using old channel {} {}", config, config.getCreationDate().getTime());
             channelConfig = ChannelConfig.updateFromJson(config, StringUtils.defaultIfBlank(json, "{}"));
         }
-        log.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig.orElse(null), LocalHostOnly.isLocalhost(uriInfo));
+        log.debug("created channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
 
         URI channelUri = linkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
         ObjectNode output = linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelName);
@@ -148,10 +148,10 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateMetadata", channelName));
-        log.debug("patch channel {} {}", channelName, json);
+        log.trace("patch channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
-                    log.info("unable to patch channel " + channelName);
+                    log.error("unable to patch channel " + channelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -209,7 +209,7 @@ public class ChannelResource {
             if (content.getContentKey().isPresent()) {
                 key = content.getContentKey().get().toString();
             }
-            log.warn("unable to POST to " + channelName + " key " + key, e);
+            log.error("unable to POST to {} key {}", channelName, key, e);
             throw e;
         }
     }
@@ -305,10 +305,10 @@ public class ChannelResource {
             return notFound(channelName);
         }
         if (contentProperties.isChannelProtectionEnabled() || optionalChannelConfig.get().isProtect()) {
-            log.info("using localhost only to delete {}", channelName);
+            log.warn("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
-        log.info("using normal delete {}", channelName);
+        log.debug("using normal delete {}", channelName);
         return deletion(channelName);
     }
 

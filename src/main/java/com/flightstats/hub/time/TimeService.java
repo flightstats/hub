@@ -73,12 +73,12 @@ public class TimeService {
                 }
             } catch (ClientHandlerException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    log.warn("connection exception " + server);
+                    log.warn("connection exception {}", server);
                 } else {
-                    log.warn("unable to get time " + server, e);
+                    log.warn("unable to get time for server {}", server, e);
                 }
             } catch (Exception e) {
-                log.warn("unable to get time " + server, e);
+                log.warn("unable to get time for server {}", server, e);
             } finally {
                 HubUtils.close(response);
             }
@@ -91,16 +91,16 @@ public class TimeService {
         if (file.exists()) {
             file.delete();
         }
-        log.info("deleted file " + remoteFile);
+        log.info("deleted remote file {}; will use local ", remoteFile);
     }
 
     private void createFile() {
         try {
             File file = new File(remoteFile);
             FileUtils.write(file, "true", StandardCharsets.UTF_8);
-            log.info("wrote file " + remoteFile);
+            log.info("wrote remote file {}", remoteFile);
         } catch (IOException e) {
-            log.warn("unable to write file", e);
+            log.error("unable to write remote file", e);
             throw new RuntimeException("unable to write remoteFile " + remoteFile);
         }
     }
@@ -111,7 +111,7 @@ public class TimeService {
 
     public void setRemote(boolean remote) {
         isRemote = remote;
-        log.info("remote {}", remote);
+        log.debug("remote {}", remote);
         if (isRemote) {
             createFile();
         } else {

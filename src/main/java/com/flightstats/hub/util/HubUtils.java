@@ -84,7 +84,7 @@ public class HubUtils {
                     .accept(MediaType.WILDCARD_TYPE)
                     .head();
             if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-                log.info("latest not found for " + channelUrl + " " + response);
+                log.warn("latest not found for " + channelUrl + " " + response);
                 return Optional.empty();
             }
             return Optional.of(response.getLocation().toString());
@@ -103,14 +103,14 @@ public class HubUtils {
     public void startWebhook(Webhook webhook) {
         String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
         String json = webhook.toJson();
-        log.info("starting {} with {}", groupUrl, json);
+        log.debug("starting {} with {}", groupUrl, json);
         ClientResponse response = null;
         try {
             response = followClient.resource(groupUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, json);
-            log.info("start group response {}", response);
+            log.debug("start group response {}", response);
         } finally {
             HubUtils.close(response);
         }
@@ -118,17 +118,17 @@ public class HubUtils {
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
         String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
-        log.info("stopping {} ", groupUrl);
+        log.debug("stopping {} ", groupUrl);
         ClientResponse response = null;
         try {
             response = followClient.resource(groupUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .delete(ClientResponse.class);
+            log.debug("stop group response {}", response);
         } finally {
             HubUtils.close(response);
         }
-        log.debug("stop group response {}", response);
 
     }
 
@@ -144,21 +144,21 @@ public class HubUtils {
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, channelConfig.toJson());
-            log.info("put channel response {} {}", channelConfig, response);
+            log.trace("put channel response {} {}", channelConfig, response);
         } finally {
             HubUtils.close(response);
         }
     }
 
     public ChannelConfig getChannel(String channelUrl) {
-        log.debug("getting {} {}", channelUrl);
+        log.debug("getting {}", channelUrl);
         ClientResponse response = null;
         try {
             response = followClient.resource(channelUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .get(ClientResponse.class);
-            log.debug("get channel response {} {}", response);
+            log.trace("get channel response {}", response);
             if (response.getStatus() >= 400) {
                 return null;
             } else {
@@ -177,7 +177,7 @@ public class HubUtils {
         ClientResponse response = null;
         try {
             response = resource.post(ClientResponse.class, content.getData());
-            log.trace("got repsonse {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() == 201) {
                 return ContentKey.fromFullUrl(response.getLocation().toString());
             } else {
@@ -203,7 +203,7 @@ public class HubUtils {
             if (response.getStatus() == 200) {
                 return handler.apply(response);
             } else {
-                log.info("unable to get {} {}", uri, response);
+                log.debug("unable to get {} {}", uri, response);
                 return null;
             }
         } finally {
@@ -289,14 +289,14 @@ public class HubUtils {
     public boolean delete(String channelUrl) {
         ClientResponse response = null;
         try {
-            log.info("deleting {}", channelUrl);
+            log.debug("deleting {}", channelUrl);
             response = followClient.resource(channelUrl).delete(ClientResponse.class);
             log.trace("got response {}", response);
             if (response.getStatus() == 202) {
                 return true;
             }
         } catch (Exception e) {
-            log.warn("unable to delete " + channelUrl, e);
+            log.warn("unable to delete {}", channelUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -322,7 +322,7 @@ public class HubUtils {
                 root.put(response.getEntity(String.class), "failure");
             }
         } catch (Exception e) {
-            log.warn("unable to refresh " + server, e);
+            log.warn("unable to refresh {}", server, e);
         }
     }
 

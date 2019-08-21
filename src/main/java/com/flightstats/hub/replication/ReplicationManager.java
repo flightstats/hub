@@ -61,7 +61,7 @@ public class ReplicationManager {
     }
 
     private void startManager() {
-        log.info("starting");
+        log.debug("starting");
         ReplicationManager manager = this;
         watchManager.register(new Watcher() {
             @Override
@@ -84,7 +84,7 @@ public class ReplicationManager {
             log.info("replication stopped");
             return;
         }
-        log.info("starting checks for replication");
+        log.debug("starting checks for replication");
         replicateChannels();
         log.info("completed checks for replication");
     }
@@ -92,11 +92,11 @@ public class ReplicationManager {
     private synchronized void replicateChannels() {
         Set<String> replicators = new HashSet<>();
         Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(BuiltInTag.REPLICATED.toString(), false);
-        log.info("replicating channels {}", replicatedChannels);
+        log.debug("replicating channels {}", replicatedChannels);
         for (ChannelConfig channel : replicatedChannels) {
-            log.info("replicating channel {}", channel.getDisplayName());
             try {
                 processChannel(replicators, channel);
+                log.debug("replicated channel {}", channel.getDisplayName());
             } catch (Exception e) {
                 log.warn("error trying to replicate " + channel, e);
             }
@@ -131,12 +131,13 @@ public class ReplicationManager {
     private void stopAndRemove(Set<String> replicators, Map<String, ? extends Replicator> replicatorMap) {
         Set<String> toStop = new HashSet<>(replicatorMap.keySet());
         toStop.removeAll(replicators);
-        log.info("stopping replicators {}", toStop);
+        log.debug("stopping replicators {}", toStop);
         for (String nameToStop : toStop) {
-            log.info("stopping {}", nameToStop);
+            log.debug("stopping {}", nameToStop);
             Replicator replicator = replicatorMap.remove(nameToStop);
             replicator.stop();
         }
+        log.info("stopped replicators {}", toStop);
     }
 
     private void changeReplication(ChannelReplicator oldReplicator, ChannelReplicator newReplicator) {
@@ -147,12 +148,14 @@ public class ReplicationManager {
     }
 
     private void startReplication(ChannelReplicator replicator) {
+        String channelName = replicator.getChannel().getDisplayName();
         try {
-            log.debug("starting replication of " + replicator.getChannel().getDisplayName());
+            log.debug("starting replication of {}", channelName);
             replicator.start();
+            log.info("started replication of {}", channelName);
         } catch (Exception e) {
-            channelReplicatorMap.remove(replicator.getChannel().getDisplayName());
-            log.warn("unexpected replication issue " + replicator.getChannel().getDisplayName(), e);
+            channelReplicatorMap.remove(channelName);
+            log.warn("unexpected replication issue {}", channelName, e);
         }
     }
 

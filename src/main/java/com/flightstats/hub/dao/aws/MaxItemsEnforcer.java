@@ -52,7 +52,7 @@ public class MaxItemsEnforcer {
 
     private void updateMaxItems(ChannelConfig config) {
         String name = config.getDisplayName();
-        log.info("updating max items for channel {}", name);
+        log.debug("updating max items for channel {}", name);
         ActiveTraces.start("S3Config.updateMaxItems", name);
         Optional<ContentKey> optional = contentRetriever.getLatest(name, false);
         if (optional.isPresent()) {
@@ -62,7 +62,7 @@ public class MaxItemsEnforcer {
             }
         }
         ActiveTraces.end();
-        log.info("completed max items for channel {}", name);
+        log.info("completed max items update for channel {}. updated: {}", name, optional.map(ContentKey::toUrl).orElse("none"));
 
     }
 

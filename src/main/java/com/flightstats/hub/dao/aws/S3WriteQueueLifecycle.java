@@ -43,7 +43,7 @@ public class S3WriteQueueLifecycle extends AbstractService {
                         s3WriteQueue.write();
                     }
                 } catch (Exception e) {
-                    log.warn("exited thread", e);
+                    log.error("exited thread", e);
                     return null;
                 }
             });
@@ -54,9 +54,9 @@ public class S3WriteQueueLifecycle extends AbstractService {
         int count = 0;
         while (s3WriteQueue.getQueueSize() > 0) {
             count++;
-            log.info("waiting for keys {}", s3WriteQueue.getQueueSize());
+            log.info("Stopping. Waiting for {} keys", s3WriteQueue.getQueueSize());
             if (count >= 60) {
-                log.warn("waited too long for keys {}", s3WriteQueue.getQueueSize());
+                log.error("waited too long for keys. {} remaining in the queue", s3WriteQueue.getQueueSize());
                 return;
             }
             Sleeper.sleepQuietly(1000);

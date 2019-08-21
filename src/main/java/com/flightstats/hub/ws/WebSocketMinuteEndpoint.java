@@ -39,13 +39,13 @@ public class WebSocketMinuteEndpoint {
 
     @OnError
     public void onError(Session session, Throwable throwable, @PathParam("channel") String channel) {
-        log.warn("error " + channel, throwable);
+        log.warn("error {}", channel, throwable);
         webSocketService.close(session);
     }
 
     @OnClose
     public void onClose(Session session, @PathParam("channel") String channel) {
-        log.info("OnClose {}", channel);
+        log.debug("OnClose {}", channel);
         webSocketService.close(session);
     }
 }

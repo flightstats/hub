@@ -66,7 +66,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             startingKey = new ContentKey();
         }
         ContentPath contentPath = clusterCacheDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
-        log.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
+        log.debug("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
         return contentPath;
     }
 
@@ -123,14 +123,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
-                    log.info("InterruptedException with " + webhook.getName());
+                    log.warn("InterruptedException with " + webhook.getName());
                     Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
-                    log.debug("NoSuchChannelException for " + webhook.getName());
+                    log.warn("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
                     exceptionReference.set(e);
-                    log.warn("unexpected issue with " + webhook.getName(), e);
+                    log.error("unexpected issue with " + webhook.getName(), e);
                 }
             }
 

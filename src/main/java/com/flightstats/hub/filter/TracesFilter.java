@@ -28,17 +28,17 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         if (trace) {
             Object entity = response.getEntity();
             if (entity == null) {
-                log.info("trace == null");
+                log.debug("trace == null");
             } else {
                 if (mapper.canSerialize(entity.getClass())) {
                     entity = mapper.writeValueAsString(entity);
                 }
-                log.info("trace {} {}", entity.getClass(), entity);
+                log.debug("trace {} {}", entity.getClass(), entity);
             }
         }
         Thread thread = Thread.currentThread();
         if (!ActiveTraces.end(trace, response.getStatus())) {
-            log.debug("unable to end trace for {}", requestUri);
+            log.warn("unable to end trace for {}", requestUri);
         }
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
     }

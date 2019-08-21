@@ -43,7 +43,7 @@ public class LongSet {
         try {
             curator.create().forPath(getValuePath(value));
         } catch (KeeperException.NodeExistsException ignore) {
-            log.info("node exists " + getValuePath(value));
+            log.trace("node exists " + getValuePath(value));
         } catch (Exception e) {
             log.warn("unable to create " + getValuePath(value), e);
         }

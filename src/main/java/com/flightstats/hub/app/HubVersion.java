@@ -38,10 +38,10 @@ public class HubVersion {
                 version = "multiple hub jar files found: " + stringBuilder.toString();
             }
         } catch (NullPointerException e) {
-            log.info("unable to get version, presume local", e);
+            log.warn("unable to get version, presume local", e);
             version = "local";
         } catch (Exception e) {
-            log.info("unable to get version ", e);
+            log.warn("unable to get version ", e);
             version = "hub";
         }
         return version;
