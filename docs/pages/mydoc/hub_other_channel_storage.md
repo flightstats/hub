@@ -39,20 +39,22 @@ Spoke ignores this option.
 
 The available options are:
 
-* SINGLE (default)
+* BATCH (default)
+    * indexed items are batched into S3 every minute
+    * cost effective for channels with volumes of more than 2 items per minute
+    * once outside of Spoke, extremely efficient performance when combined with bulk reads
+    * in the near future all channels will use this storage strategy including historical channels
+
+* SINGLE (will be deprecated)
+    * currently this option is required for historical channels
     * each item is compressed and stored individually in S3
     * items are written asynchronously into S3
     * cost effective for channels with volumes of less than 2 items per minute 
     * once outside of Spoke, can be faster for individual items reads
     
-* BATCH
-    * indexed items are batched into S3 every minute
-    * cost effective for channels with volumes of more than 2 items per minute
-    * once outside of Spoke, extremely efficient performance when combined with bulk reads
-    
-* BOTH
+* BOTH (will be deprecated)
     * Uses both single and batch
-    * Useful for transitioning between strategies
+    * Useful for transitioning from single to batch
 
 ### Backend
 
