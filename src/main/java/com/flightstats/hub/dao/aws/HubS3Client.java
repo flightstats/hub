@@ -5,11 +5,13 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsResult;
+import com.amazonaws.services.s3.model.GetBucketLifecycleConfigurationRequest;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
@@ -23,9 +25,9 @@ import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.metrics.StatsdReporter;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -152,6 +154,15 @@ public class HubS3Client {
             s3Client.setBucketLifecycleConfiguration(request);
         } catch (SdkClientException e) {
             countError(e, request, "setBucketLifecycleConfiguration", Collections.singletonList("bucket:" + request.getBucketName()));
+            throw e;
+        }
+    }
+
+    BucketLifecycleConfiguration getBucketLifecycleConfiguration(GetBucketLifecycleConfigurationRequest getBucketLifecycleConfigurationRequest) {
+        try {
+            return s3Client.getBucketLifecycleConfiguration(getBucketLifecycleConfigurationRequest);
+        } catch (SdkClientException e) {
+            countError(e, getBucketLifecycleConfigurationRequest, "getBucketLifecycleConfiguration", Collections.singletonList("bucket:" + bucketName));
             throw e;
         }
     }
