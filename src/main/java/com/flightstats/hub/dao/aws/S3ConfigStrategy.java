@@ -12,12 +12,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 class S3ConfigStrategy {
 
-    public final static String BATCH_POSTFIX = "Batch";
-    public final static String SINGLE_POSTFIX = "";
+    final static String BATCH_POSTFIX = "Batch";
+    final static String SINGLE_POSTFIX = "";
+    final static String BUCKET_LIFECYCLE_RULE_PREFIX = "HUB_";
 
     static List<BucketLifecycleConfiguration.Rule> apportion(Iterable<ChannelConfig> channelConfigs, DateTime timeForSharding, int max) {
         List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
@@ -61,6 +63,7 @@ class S3ConfigStrategy {
         }
         log.info("total rules {}", rules.size());
         log.info("shardedRules {} keys {}", shardedRules.size(), shardedRules.keySet());
+        rules.forEach(rule->log.info("rule {}", rule.getId()));
         return rules;
     }
 
@@ -80,10 +83,18 @@ class S3ConfigStrategy {
     }
 
     private static BucketLifecycleConfiguration.Rule createRule(ChannelConfig config, String id) {
-        return new BucketLifecycleConfiguration.Rule()
+        log.info("*******************************************before id**************{}", id);
+        BucketLifecycleConfiguration.Rule r = new BucketLifecycleConfiguration.Rule()
                 .withFilter(new LifecycleFilter(new LifecyclePrefixPredicate(id + "/")))
-                .withId(id)
+                .withId(BUCKET_LIFECYCLE_RULE_PREFIX.concat(id))
                 .withExpirationInDays((int) config.getTtlDays())
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
+        log.info("*******************************************after id**************{}", r.getId());
+        return r;
+    }
+
+    static List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules(BucketLifecycleConfiguration currentBucketLifecycleConfiguration ){
+        List<BucketLifecycleConfiguration.Rule> currentBucketLifecycle = currentBucketLifecycleConfiguration.getRules();
+        return currentBucketLifecycle.stream().filter(rule-> !rule.getId().contains(BUCKET_LIFECYCLE_RULE_PREFIX)).collect(Collectors.toList());
     }
 }
