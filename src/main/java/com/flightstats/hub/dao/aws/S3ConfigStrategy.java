@@ -99,11 +99,10 @@ class S3ConfigStrategy {
      **/
     static List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules(BucketLifecycleConfiguration config) {
         List<BucketLifecycleConfiguration.Rule> currentBucketLifecycleRules = config.getRules();
-        List<BucketLifecycleConfiguration.Rule> filteredRules =
-                currentBucketLifecycleRules
+        return currentBucketLifecycleRules
                         .parallelStream()
-                        .filter(rule -> !rule.getId().contains(BUCKET_LIFECYCLE_RULE_PREFIX))
+                        .filter(rule -> !rule.getId().startsWith(BUCKET_LIFECYCLE_RULE_PREFIX))
+                        .limit(10)
                         .collect(Collectors.toList());
-        return filteredRules.size() < 10 ? filteredRules : filteredRules.subList(0, 10);
     }
 }
