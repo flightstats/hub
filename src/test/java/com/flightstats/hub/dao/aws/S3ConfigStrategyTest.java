@@ -12,6 +12,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class S3ConfigStrategyTest {
@@ -45,8 +46,12 @@ class S3ConfigStrategyTest {
         for (int i = 0; i < iterations; i++) {
             addRuleNames(new DateTime(2016, 1, 2 * i + 1, 1, 1));
         }
+
         assertEquals(names.size(), allRules.size());
-        assertTrue(allRules.containsAll(names));
+        names.forEach(name->{
+            String nameWithPrefix = S3ConfigStrategy.BUCKET_LIFECYCLE_RULE_PREFIX.concat(name);
+            assertTrue(allRules.contains(nameWithPrefix));
+        });
     }
 
     private void addRuleNames(DateTime timeForSharding) {
@@ -56,4 +61,19 @@ class S3ConfigStrategyTest {
         allRules.addAll(rules.stream().map(BucketLifecycleConfiguration.Rule::getId).collect(Collectors.toList()));
     }
 
+    @Test
+    public void testGetNonHubBucketLifecycleRules(){
+        List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
+        rules.add(new BucketLifecycleConfiguration.Rule().withId(S3ConfigStrategy.BUCKET_LIFECYCLE_RULE_PREFIX + "channel1_rule"));
+        rules.add(new BucketLifecycleConfiguration.Rule().withId(S3ConfigStrategy.BUCKET_LIFECYCLE_RULE_PREFIX + "channel2_rule"));
+        rules.add(new BucketLifecycleConfiguration.Rule().withId("terraform_rule1"));
+        rules.add(new BucketLifecycleConfiguration.Rule().withId("terraform_rule2"));
+
+        List<BucketLifecycleConfiguration.Rule> filteredRules =
+                S3ConfigStrategy.getNonHubBucketLifecycleRules(new BucketLifecycleConfiguration().withRules(rules));
+        assertTrue(filteredRules.size() == 2);
+        assertFalse(filteredRules.get(0).getId().startsWith(S3ConfigStrategy.BUCKET_LIFECYCLE_RULE_PREFIX));
+        assertFalse(filteredRules.get(1).getId().startsWith(S3ConfigStrategy.BUCKET_LIFECYCLE_RULE_PREFIX));
+
+    }
 }

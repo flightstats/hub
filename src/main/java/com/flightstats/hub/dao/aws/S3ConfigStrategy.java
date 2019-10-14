@@ -12,12 +12,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 class S3ConfigStrategy {
 
-    public final static String BATCH_POSTFIX = "Batch";
-    public final static String SINGLE_POSTFIX = "";
+    final static String BATCH_POSTFIX = "Batch";
+    final static String SINGLE_POSTFIX = "";
+    final static String BUCKET_LIFECYCLE_RULE_PREFIX = "HUB_";
 
     static List<BucketLifecycleConfiguration.Rule> apportion(Iterable<ChannelConfig> channelConfigs, DateTime timeForSharding, int max) {
         List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
@@ -82,8 +84,25 @@ class S3ConfigStrategy {
     private static BucketLifecycleConfiguration.Rule createRule(ChannelConfig config, String id) {
         return new BucketLifecycleConfiguration.Rule()
                 .withFilter(new LifecycleFilter(new LifecyclePrefixPredicate(id + "/")))
-                .withId(id)
+                .withId(BUCKET_LIFECYCLE_RULE_PREFIX.concat(id))
                 .withExpirationInDays((int) config.getTtlDays())
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
+    }
+
+    /**
+     * S3 Bucket lifecycle rules limit                         = 1000 per bucket
+     * Max S3 Bucket lifecycle rules Hub can create            = 990
+     * Max S3 Bucket lifecycle rules terraform code can create = 10
+     * The lifecycle rules created in hub only expires the objects based on TTL days configuration in hub channel.
+     * The expiration action in S3 adds delete marker to current object and does not delete it.
+     * The lifecycle rules set in terraform code cleans up all the delete markers and previous versions of the object in the S3 bucket.
+     **/
+    static List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules(BucketLifecycleConfiguration config) {
+        List<BucketLifecycleConfiguration.Rule> currentBucketLifecycleRules = config.getRules();
+        return currentBucketLifecycleRules
+                        .parallelStream()
+                        .filter(rule -> !rule.getId().startsWith(BUCKET_LIFECYCLE_RULE_PREFIX))
+                        .limit(10)
+                        .collect(Collectors.toList());
     }
 }

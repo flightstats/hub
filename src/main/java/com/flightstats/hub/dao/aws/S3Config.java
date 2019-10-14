@@ -1,38 +1,31 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
+import com.amazonaws.services.s3.model.GetBucketLifecycleConfigurationRequest;
 import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.config.properties.S3Properties;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class S3Config {
 
-    // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure code.
+    // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure(terraform) code.
     private static final Integer S3_LIFECYCLE_RULES_AVAILABLE = 990;
 
     private final DistributedAsyncLockRunner distributedLockRunner;
@@ -117,12 +110,25 @@ public class S3Config {
             log.trace("updating {} ", rules);
 
             if (!rules.isEmpty()) {
+                rules.addAll(getNonHubBucketLifecycleRules());
+
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
-                SetBucketLifecycleConfigurationRequest request = new SetBucketLifecycleConfigurationRequest(s3Properties.getBucketName(), lifecycleConfig);
+                SetBucketLifecycleConfigurationRequest request =
+                        new SetBucketLifecycleConfigurationRequest(s3Properties.getBucketName(), lifecycleConfig);
                 s3Client.setBucketLifecycleConfiguration(request);
                 log.info("updated {} rules with ttl life cycle ", rules.size());
+
             }
             ActiveTraces.end();
+        }
+
+        private List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules() {
+            GetBucketLifecycleConfigurationRequest request =
+                    new GetBucketLifecycleConfigurationRequest(s3Properties.getBucketName());
+            BucketLifecycleConfiguration bucketLifecycleConfiguration =
+                    s3Client.getBucketLifecycleConfiguration(request);
+            return S3ConfigStrategy.getNonHubBucketLifecycleRules(bucketLifecycleConfiguration);
+
         }
     }
 
