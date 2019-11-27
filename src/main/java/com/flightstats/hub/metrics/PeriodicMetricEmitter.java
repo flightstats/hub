@@ -34,6 +34,6 @@ public class PeriodicMetricEmitter {
         if (!s3AccessMonitor.verifyReadWriteAccess()) {
             statsdReporter.incrementCounter("s3.access.failed");
         }
-        statsdReporter.serviceCheck()
+        statsdReporter.serviceCheckNodesInCluster();
     }
 }

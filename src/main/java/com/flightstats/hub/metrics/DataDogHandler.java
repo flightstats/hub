@@ -41,7 +41,7 @@ class DataDogHandler {
         this.appUrl = appProperties.getAppUrl();
     }
 
-    private Boolean checkNodes(String node) {
+    private Boolean checkNode(String node) {
         try {
             String propertiesPath = "/internal/properties";
             ClientResponse response = RestClient
@@ -63,7 +63,7 @@ class DataDogHandler {
     ServiceCheck serviceCheckNodesInCluster() {
         Set<String> nodes = curatorCluster.getAllServers();
         Boolean nodesPresent = nodes.stream()
-                .allMatch(this::checkNodes);
+                .allMatch(this::checkNode);
 
         ServiceCheck.Status status = nodesPresent ? OK : CRITICAL;
 

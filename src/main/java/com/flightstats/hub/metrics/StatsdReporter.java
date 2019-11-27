@@ -96,7 +96,7 @@ public class StatsdReporter {
         clients.forEach(method);
     }
 
-    public void serviceCheck() {
+    void serviceCheckNodesInCluster() {
         statsDFilter.getDataDogClient().serviceCheck(dataDogHandler.serviceCheckNodesInCluster());
     }
 
