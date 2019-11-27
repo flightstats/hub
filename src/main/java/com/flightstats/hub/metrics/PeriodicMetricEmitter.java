@@ -24,6 +24,8 @@ public class PeriodicMetricEmitter {
         this.spokeProperties = spokeProperties;
     }
 
+
+
     void emit() {
         statsdReporter.gauge("s3.writeQueue.total", s3Properties.getWriteQueueSize());
         statsdReporter.gauge("s3.writeQueue.threads", s3Properties.getWriteQueueThreadCount());
@@ -32,5 +34,6 @@ public class PeriodicMetricEmitter {
         if (!s3AccessMonitor.verifyReadWriteAccess()) {
             statsdReporter.incrementCounter("s3.access.failed");
         }
+        statsdReporter.serviceCheck()
     }
 }

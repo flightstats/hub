@@ -17,8 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class S3ConfigStrategyTest {
 
-    private TreeSet<String> allRules = new TreeSet<>();
-    private final List<ChannelConfig> channelConfigs = new ArrayList<>();
 
     @Test
     void testThree() {
@@ -36,6 +34,8 @@ class S3ConfigStrategyTest {
     }
 
     private void verify(int channels, int iterations) {
+        TreeSet<String> allRules = new TreeSet<>();
+        List<ChannelConfig> channelConfigs = new ArrayList<>();
         List<String> names = new ArrayList<>();
         for (int i = 0; i < channels; i++) {
             String name = StringUtils.randomAlphaNumeric(10);
@@ -44,7 +44,9 @@ class S3ConfigStrategyTest {
             names.add(S3ConfigStrategy.getChannelTypedName(config, S3ConfigStrategy.BATCH_POSTFIX));
         }
         for (int i = 0; i < iterations; i++) {
-            addRuleNames(new DateTime(2016, 1, 2 * i + 1, 1, 1));
+            addRuleNames(new DateTime(2016, 1, 2 * i + 1, 1, 1),
+                    channelConfigs,
+                    allRules);
         }
 
         assertEquals(names.size(), allRules.size());
@@ -54,7 +56,7 @@ class S3ConfigStrategyTest {
         });
     }
 
-    private void addRuleNames(DateTime timeForSharding) {
+    private void addRuleNames(DateTime timeForSharding, List<ChannelConfig> channelConfigs, TreeSet<String> allRules) {
         int max = 100;
         List<BucketLifecycleConfiguration.Rule> rules = S3ConfigStrategy.apportion(channelConfigs, timeForSharding, max);
         assertEquals(max, rules.size());

@@ -1,8 +1,10 @@
 package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
+import com.timgroup.statsd.ServiceCheck;
 import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.zookeeper.data.Stat;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -92,6 +94,10 @@ public class StatsdReporter {
     private void reportWithBothClients(Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
         clients.forEach(method);
+    }
+
+    public void serviceCheck() {
+        statsDFilter.getDataDogClient().serviceCheck(dataDogHandler.serviceCheckNodesInCluster());
     }
 
 }

@@ -53,6 +53,10 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
+    StatsDClient getDataDogClient() {
+        return dataDogClient;
+    }
+
     public boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
     }
