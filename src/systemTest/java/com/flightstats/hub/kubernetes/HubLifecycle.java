@@ -28,6 +28,7 @@ public class HubLifecycle {
 
     @SneakyThrows
     public void setup() {
+        log.info("$$$$$$$$$$$$$$$$$$$$$$ ", getReleaseName());
         if (releaseStatus.releaseExists(getReleaseName())) {
             log.info("Release is already installed; skipping");
         } else {
