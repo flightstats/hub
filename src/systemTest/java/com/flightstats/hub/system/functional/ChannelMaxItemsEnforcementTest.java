@@ -50,7 +50,7 @@ class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
     }
 
     private boolean confirmInLocation(ChannelItemWithBody item, Location location) {
-        return channelItemRetriever.getItemsForDayLocation(item.getItemUrl(), location)
+        return channelItemRetriever.getItemsForDayFromLocation(item.getItemUrl(), location)
                 .filter(i -> Arrays.asList(i.get_links().getUris()).contains(item.getItemUrl())).isPresent();
     }
 

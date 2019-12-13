@@ -50,12 +50,14 @@ public class GuiceModule extends AbstractModule {
     @Provides
     public Retrofit retrofitHub(ServiceProperties serviceProperties) {
         Gson gson = new GsonBuilder()
+                .setLenient()
                 .registerTypeAdapter(Date.class, new HubDateTypeAdapter())
                 .registerTypeAdapter(DateTime.class, new HubDateTimeTypeAdapter())
                 .create();
         return new Retrofit.Builder()
                 .baseUrl(serviceProperties.getHubUrl())
                 .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(MultipartConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(new OkHttpClient.Builder().build())
                 .build();
@@ -68,6 +70,7 @@ public class GuiceModule extends AbstractModule {
         return new Retrofit.Builder()
                 .baseUrl(serviceProperties.getCallbackUrl())
                 .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(MultipartConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
                 .build();

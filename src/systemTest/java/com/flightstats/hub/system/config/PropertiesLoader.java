@@ -18,7 +18,6 @@ public class PropertiesLoader {
         properties.setProperty(PropertiesName.HELM_RELEASE_NAME, getHelmReleaseName(properties));
         properties.setProperty(PropertiesName.HELM_RELEASE_DELETE, isHelmReleaseDeletable(properties));
         properties.setProperty(PropertiesName.HELM_CLUSTERED_HUB, isHelmHubClustered(properties));
-
         return properties;
     }
 

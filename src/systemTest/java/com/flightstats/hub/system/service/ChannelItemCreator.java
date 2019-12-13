@@ -15,6 +15,7 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -54,6 +55,19 @@ public class ChannelItemCreator {
                 .collect(toList());
     }
 
+    public ChannelItemWithBody addItemIgnoreFail(String channelName, Object data) {
+        try {
+            Call<ChannelItem> call = channelItemResourceClient.add(channelName, data);
+            Response<ChannelItem> response = call.execute();
+            log.info("channel item creation response {} ", response);
+            return buildChannelItem(response, data);
+        } catch (IOException e) {
+            log.error("{}", e);
+            return null;
+        }
+
+    }
+
     @SneakyThrows
     public ChannelItemWithBody addItem(String channelName, Object data) {
         Call<ChannelItem> call = channelItemResourceClient.add(channelName, data);
@@ -62,7 +76,6 @@ public class ChannelItemCreator {
         assertEquals(CREATED.getStatusCode(), response.code());
         assertNotNull(response);
         assertNotNull(response.body());
-
         return buildChannelItem(response, data);
     }
 

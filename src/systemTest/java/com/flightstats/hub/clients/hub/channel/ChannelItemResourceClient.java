@@ -3,11 +3,13 @@ package com.flightstats.hub.clients.hub.channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.ChannelItemQueryDirection;
 import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.model.TimeQueryResult;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -23,6 +25,7 @@ public interface ChannelItemResourceClient {
                                @Path(value="historicalPath", encoded=true) String historicalPath,
                                @Body Object item);
 
+
     @GET("/channel/{channelName}/{year}/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}")
     Call<Object> get(@Path("channelName") String channelName,
                      @Path("year") int year,
@@ -35,11 +38,22 @@ public interface ChannelItemResourceClient {
                      @Path("hash") String hash);
 
     @GET("/channel/{channelName}/{year}/{month}/{day}")
-    Call<TimeQueryResult> getItemForTimeFromLocation(@Path("channelName") String channelName,
-                                               @Path("year") int year,
-                                               @Path("month") int month,
-                                               @Path("day") int day,
-                                               @Query("location") Location location);
+    Call<TimeQueryResult> getDayPathFromLocation(@Path("channelName") String channelName,
+                                                 @Path("year") int year,
+                                                 @Path("month") int month,
+                                                 @Path("day") int day,
+                                                 @Query("location") Location location);
+
+    @GET("/channel/{channelName}/{year}/{month}/{day}/{hour}/{minute}")
+    @Headers("Content-Type:multipart/mixed")
+    Call<TimeQueryResult> getMinutePathFromLocation(@Path("channelName") String channelName,
+                                                    @Path("year") int year,
+                                                    @Path("month") int month,
+                                                    @Path("day") int day,
+                                                    @Path("hour") int hour,
+                                                    @Path("minute") int minute,
+                                                    @Query("location") Location location,
+                                                    @Query("bulk") boolean bulk);
 
 
     @GET("/channel/{itemPath}/{direction}/{numberOfItems}")

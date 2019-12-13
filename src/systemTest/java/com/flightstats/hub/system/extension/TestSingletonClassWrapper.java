@@ -2,6 +2,7 @@ package com.flightstats.hub.system.extension;
 
 
 import com.flightstats.hub.kubernetes.HubLifecycle;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +17,12 @@ public class TestSingletonClassWrapper {
     private HubLifecycle hubLifecycle;
 
     @BeforeAll
-    void setup() {
+    void setupAll() {
         hubLifecycle.setup();
+    }
+
+    @AfterAll
+    void teardownAll() {
+        hubLifecycle.cleanup();
     }
 }

@@ -10,5 +10,9 @@ class YamlKeys {
     static final String INSTALL_ZK = "installZookeeper";
     static final String INSTALL_LOCALSTACK = "installLocalstack";
     static final String INSTALL_CB_SERVER = "installCallbackserver";
-
+    static final String REPLICAS = "replicas";
+    static final String STATEFULSET = "statefulset";
+    static final String ZOOKEEPER = "zookeeper";
+    static final String PROPERTIES = "properties";
+    static final String CONFIG_MAP = "configMap";
 }

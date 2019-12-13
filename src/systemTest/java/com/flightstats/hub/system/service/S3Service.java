@@ -121,6 +121,7 @@ public class S3Service {
                 log.error("actual {}, testData {}", actual, TEST_DATA);
                 throw new Error("actual does not match expected");
             }
+            log.info("found item {}", actual);
             return true;
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {

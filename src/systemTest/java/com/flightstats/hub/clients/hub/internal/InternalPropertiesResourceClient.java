@@ -4,7 +4,7 @@ import com.flightstats.hub.model.InternalProperties;
 import retrofit2.Call;
 import retrofit2.http.GET;
 
-public interface    InternalPropertiesResourceClient {
+public interface InternalPropertiesResourceClient {
     @GET("/internal/properties")
     Call<InternalProperties> get();
 }
