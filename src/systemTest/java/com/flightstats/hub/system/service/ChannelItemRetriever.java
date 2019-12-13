@@ -65,7 +65,6 @@ public class ChannelItemRetriever {
                     location,
                     true);
             Response<TimeQueryResult> res = response.execute();
-            Optional.ofNullable(res.body()).ifPresent(body -> log.info(body.toString()));
             return Optional.ofNullable(res.body());
         } catch (Exception e) {
             log.error(e.getMessage());

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -173,12 +174,11 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
 
 
     Boolean verifyItems(String item) {
-        if (!itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_SINGLE).isPresent()) {
-            log.info("long term single not present");
-        }
-        if (!itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_BATCH).isPresent()) {
-            log.info("long term batch not present");
-        }
+        log.info("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
+        itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_SINGLE)
+                .ifPresent(i -> log.info("long term single present {}", i));
+        itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_BATCH)
+                .ifPresent(i -> log.info("long term batch present {}", i));
         List<Optional<Object>> items = Arrays.asList(
                 itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM),
                 itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_BATCH));
@@ -230,31 +230,41 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
                 pathParts.getMinute());
     }
 
+    List<String> getPathsForMinutePaths() {
+        List<String> values = new ArrayList<>();
+        channels.forEach((String key, CopyOnWriteArrayList<String> val) -> values.addAll(val));
+        List<String> minutePaths = values.stream().map(this::getMinutePath)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> paths = values.stream().filter((String val) -> {
+            String minutePath =  getMinutePath(val);
+            if (minutePaths.contains(minutePath)) {
+                minutePaths.remove(minutePath);
+                return true;
+            }
+            return false;
+        }).collect(Collectors.toList());
+
+        log.info("************* {}", paths);
+        return paths;
+    }
+
     @Test
     @SneakyThrows
     void channelStorage_itemInSpokeAndS3_item() {
         createChannels();
-        restartExecutor.submit(this::waitForRestartOnAllNodes);
+//        restartExecutor.submit(this::waitForRestartOnAllNodes);
         insertExecutor.submit(this::addItemsToChannels);
         latch.await(SETUP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
         if (latch.getCount() > 0) {
             throw new Exception("test timed out in set up phase");
         }
-        List<String> values = new CopyOnWriteArrayList<>();
-        channels.forEach((String key, CopyOnWriteArrayList<String> val) -> values.addAll(val));
-        List<String> minutePaths = values.stream().map(this::getMinutePath)
-                .collect(Collectors.toList());
-        List<String> paths = values.stream().filter((String val) -> {
-            String minutePath =  getMinutePath(val);
-            return !minutePaths.contains(minutePath);
-        }).collect(Collectors.toList());
-
-        log.info("************* {}", minutePaths);
-        paths.forEach(item -> Awaitility.await()
+        getPathsForMinutePaths().forEach(item -> Awaitility.await()
                     .atMost(Duration.TWO_MINUTES)
                     .pollInterval(Duration.FIVE_SECONDS)
                     .until(() -> {
                         try {
+                            log.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                             return verifyItems(item);
                         } catch (Exception e) {
                             log.error(e.getMessage());
