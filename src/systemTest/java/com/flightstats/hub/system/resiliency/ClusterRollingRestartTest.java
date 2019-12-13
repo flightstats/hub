@@ -45,8 +45,8 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
     public static final String HUB_NODE_COUNT = "5";
     public static final String S3_VERIFIER_OFFSET = "1";
     public static final String SPOKE_WRITE_MINUTES = "3";
-    private static final int ITEMS_PER_CHANNEL = 400;
-    private static final int NUMBER_OF_CHANNELS = 250;
+    private static final int ITEMS_PER_CHANNEL = 500;
+    private static final int NUMBER_OF_CHANNELS = 75;
     private static final int SETUP_TIMEOUT_MINUTES = 30;
     private static final int ITEM_INSERT_PARALLELISM = getRuntime().availableProcessors();
     private static final CountDownLatch latch = new CountDownLatch(2);
@@ -174,21 +174,22 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
 
 
     Boolean verifyItems(String item) {
-        log.info("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
-        itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_SINGLE)
-                .ifPresent(i -> log.info("long term single present {}", i));
-        itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_BATCH)
-                .ifPresent(i -> log.info("long term batch present {}", i));
-        List<Optional<Object>> items = Arrays.asList(
-                itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM),
-                itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_BATCH));
-        return items.stream().allMatch(a ->
-                a.isPresent() &&
-                items
-                .stream()
-                .allMatch(b ->
-                        b.isPresent() &&
-                        a.get().equals(b.get())));
+        Optional<Object> singleItem = itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_SINGLE);
+        Optional<Object> batchItem = itemRetriever.getBulkMinuteFromLocation(item, Location.LONG_TERM_BATCH);
+        if (!singleItem.isPresent()) {
+            log.info("long term single not present {}", item);
+        }
+
+        if (!batchItem.isPresent()) {
+            log.info("long term batch present {}", item);
+        }
+        if (singleItem.isPresent() && batchItem.isPresent()) {
+            if (batchItem.get().equals(singleItem.get())) {
+                return true;
+            }
+            log.error("expected batchItem: {} to equal singleItem: {}", batchItem.get(), singleItem.get());
+        }
+        return false;
     }
 
     void createChannels() {
@@ -253,7 +254,7 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
     @SneakyThrows
     void channelStorage_itemInSpokeAndS3_item() {
         createChannels();
-//        restartExecutor.submit(this::waitForRestartOnAllNodes);
+        restartExecutor.submit(this::waitForRestartOnAllNodes);
         insertExecutor.submit(this::addItemsToChannels);
         latch.await(SETUP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
         if (latch.getCount() > 0) {
@@ -264,7 +265,6 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
                     .pollInterval(Duration.FIVE_SECONDS)
                     .until(() -> {
                         try {
-                            log.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                             return verifyItems(item);
                         } catch (Exception e) {
                             log.error(e.getMessage());
