@@ -97,14 +97,8 @@ public class ClusterRollingRestartTest extends TestSingletonClassWrapper {
     }
 
     void staggeredRestartNodes(List<String> nodes) {
-        String firstNode = nodes.get(0);
-        podRestart.execute(helmProperties.getReleaseName(),
-                Collections.singletonList(firstNode));
-        waitForNodeToReturnHealthy(firstNode);
-        log.info("first node returned healthy");
-        List<String> nextNodes = nodes.subList(1, nodes.size());
-        log.info("process starting for {}", nextNodes);
-        for (String node: nextNodes) {
+        for (String node: nodes) {
+            log.info("restart process starting for {}", nodes);
             podRestart.execute(helmProperties.getReleaseName(),
                     Collections.singletonList(node));
             waitForNodeToReturnHealthy(node);
