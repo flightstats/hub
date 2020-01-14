@@ -133,8 +133,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         mapItems(configurations, result);
 
         while (result.getLastEvaluatedKey() != null) {
-            new ScanRequest(dynamoProperties.getWebhookConfigTableName()).setExclusiveStartKey(result.getLastEvaluatedKey());
-            result = dbClient.scan(new ScanRequest(dynamoProperties.getWebhookConfigTableName()));
+            ScanRequest scanRequest = new ScanRequest(dynamoProperties.getWebhookConfigTableName())
+                    .withExclusiveStartKey(result.getLastEvaluatedKey());
+            result = dbClient.scan(scanRequest);
             mapItems(configurations, result);
         }
 
