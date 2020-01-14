@@ -39,13 +39,15 @@ class HubS3ClientTest {
     void countError() {
         String requestId = "numbers-and-letters-go-here";
         when(s3ResponseMetadata.getRequestId()).thenReturn(requestId);
+        when(s3Properties.getBucketName()).thenReturn("testBucket");
+
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         AmazonWebServiceRequest request = mock(AmazonWebServiceRequest.class);
         when(amazonS3Client.getCachedResponseMetadata(request)).thenReturn(s3ResponseMetadata);
         StatsdReporter statsdReporter = mock(StatsdReporter.class);
+
         HubS3Client hubS3Client = new HubS3Client(s3Properties, amazonS3Client, statsdReporter);
         SdkClientException exception = new AmazonS3Exception("something f'd up");
-
         hubS3Client.countError(exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
 
         verify(statsdReporter).count(
@@ -53,8 +55,7 @@ class HubS3ClientTest {
                 1,
                 "exception:com.amazonaws.services.s3.model.AmazonS3Exception",
                 "method:fauxMethod",
-                "requestId:" + requestId,
-                "foo:bar"
+                "bucket:testBucket"
         );
     }
 
@@ -62,13 +63,16 @@ class HubS3ClientTest {
     void putObject() {
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         StatsdReporter statsdReporter = mock(StatsdReporter.class);
-        HubS3Client hubS3Client = new HubS3Client(s3Properties, amazonS3Client, statsdReporter);
+        when(s3Properties.getBucketName()).thenReturn("testBucket");
 
         InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
         ObjectMetadata metadata = new ObjectMetadata();
         PutObjectRequest request = new PutObjectRequest("testBucket", "testKey", emptyStream, metadata);
 
         when(amazonS3Client.putObject(request)).thenThrow(new SdkClientException("testException"));
+
+        HubS3Client hubS3Client = new HubS3Client(s3Properties, amazonS3Client, statsdReporter);
+
 
         try {
             hubS3Client.putObject(request);
@@ -80,8 +84,7 @@ class HubS3ClientTest {
         String[] tags = {
             "exception:com.amazonaws.SdkClientException",
             "method:putObject",
-            "bucket:testBucket",
-            "key:testKey"
+            "bucket:testBucket"
         };
 
         verify(statsdReporter).count(METRIC_NAME, METRIC_VALUE, tags);
