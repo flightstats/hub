@@ -26,7 +26,7 @@ class S3BatchTest {
         assertTrue(webhook.isHeartbeat());
         assertEquals((Integer) 2, webhook.getParallelCalls());
         assertEquals((Integer) 360, webhook.getTtlMinutes());
-        assertEquals((Integer) 12, webhook.getMaxAttempts());
+        assertEquals((Integer) 0, webhook.getMaxAttempts());
         assertEquals("MINUTE", webhook.getBatch());
     }
 
