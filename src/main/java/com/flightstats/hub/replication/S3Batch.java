@@ -13,7 +13,7 @@ public class S3Batch {
     @VisibleForTesting
     static final String S3_BATCH = "S3Batch_";
     private static final int TTL_MINUTES = 60 * 6;
-    private static final int MAX_ATTEMPTS = 12;
+    private static final int MAX_ATTEMPTS = 0;
 
     private ChannelConfig channel;
     private HubUtils hubUtils;
