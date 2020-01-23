@@ -57,6 +57,41 @@ class DynamoWebhookDaoTest {
     }
 
     @Test
+    void testSingleGetReturnsNullIfConfigIsUnparseable() {
+        GetItemResult result = mock(GetItemResult.class);
+        HashMap<String, AttributeValue> nameMap = new HashMap<>();
+        nameMap.put("name", new AttributeValue("bob"));
+
+        when(dynamoProperties.getWebhookConfigTableName()).thenReturn("webhooks");
+        when(dbClient.getItem("webhooks", nameMap, true)).thenReturn(result);
+        when(result.getItem()).thenReturn(createBogusEntry());
+
+        DynamoWebhookDao mockedDao = new DynamoWebhookDao(dbClient, dynamoProperties, webhookProperties);
+        assertNull(mockedDao.get("bob"));
+    }
+
+    @Test
+    void testGetAllDropsUnparseableConfigs() {
+        Webhook webhook1 = buildGenericWebhook("webhook1");
+        Webhook webhook2 = buildGenericWebhook("webhook2");
+
+        Map<String, AttributeValue> webhook1Record = toDynamoEntry(webhook1);
+        Map<String, AttributeValue> webhook2Record= toDynamoEntry(webhook2);
+        Map<String, AttributeValue> bogusRecord = createBogusEntry();
+
+        ScanResult result = new ScanResult()
+                .withItems(Arrays.asList(webhook1Record, bogusRecord, webhook2Record));
+        when(dbClient.scan(any(ScanRequest.class))).thenReturn(result);
+
+        DynamoWebhookDao mockedDao = new DynamoWebhookDao(dbClient, dynamoProperties, webhookProperties);
+        Collection<Webhook> webhookConfigs = mockedDao.getAll(false);
+
+        assertNotNull(webhookConfigs);
+        assertEquals(2, webhookConfigs.size());
+        assertThat(webhookConfigs, hasItems(webhook1, webhook2));
+    }
+
+    @Test
     void testGetAllReturnsMultiplePagesOfResults() {
         when(dynamoProperties.getWebhookConfigTableName()).thenReturn("webhooks");
 
@@ -128,4 +163,11 @@ class DynamoWebhookDaoTest {
         dynamoEntry.put("batch", new AttributeValue(webhook.getBatch()));
         return dynamoEntry;
     }
+
+    private Map<String, AttributeValue> createBogusEntry() {
+        Map<String, AttributeValue> bogusRecord = new HashMap<>();
+        bogusRecord.put("i exist", new AttributeValue("to break your code"));
+        return bogusRecord;
+    }
+
 }
