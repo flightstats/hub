@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 public class DynamoWebhookDao implements Dao<Webhook> {
@@ -74,10 +76,20 @@ public class DynamoWebhookDao implements Dao<Webhook> {
             if (result.getItem() == null) {
                 return null;
             }
-            return mapItem(result.getItem());
+            return tryMapItem(result.getItem())
+                    .orElseThrow(() -> new ResourceNotFoundException("Unable to read webhook config from dynamo " + name));
         } catch (ResourceNotFoundException e) {
             log.warn("group not found {}", name, e);
             return null;
+        }
+    }
+
+    private Optional<Webhook> tryMapItem(Map<String, AttributeValue> item) {
+        try {
+            return Optional.of(mapItem(item));
+        } catch (Exception e) {
+            log.warn("Unable to map webhook config {} {}", item.get("key"), e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -144,7 +156,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     private void mapItems(List<Webhook> configurations, ScanResult result) {
         for (Map<String, AttributeValue> item : result.getItems()) {
-            configurations.add(mapItem(item));
+            tryMapItem(item).ifPresent(configurations::add);
         }
     }
 
