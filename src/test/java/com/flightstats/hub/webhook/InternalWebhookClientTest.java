@@ -159,48 +159,48 @@ class InternalWebhookClientTest {
 
     @Test
     void testDelete_success() {
-        mockWebhookDelete(SERVER1, true);
+        mockWebhookStop(SERVER1, true);
 
-        assertTrue(internalWebhookClient.remove(WEBHOOK_NAME, SERVER1));
-        verify(restClient).resource(deleteUrl(SERVER1));
+        assertTrue(internalWebhookClient.stop(WEBHOOK_NAME, SERVER1));
+        verify(restClient).resource(stopUrl(SERVER1));
     }
 
     @Test
     void testDelete_fails() {
-        mockWebhookDelete(SERVER1, false);
+        mockWebhookStop(SERVER1, false);
 
-        assertFalse(internalWebhookClient.remove(WEBHOOK_NAME, SERVER1));
-        verify(restClient).resource(deleteUrl(SERVER1));
+        assertFalse(internalWebhookClient.stop(WEBHOOK_NAME, SERVER1));
+        verify(restClient).resource(stopUrl(SERVER1));
     }
 
     @Test
     void testDeleteAll_success() {
-        mockWebhookDelete(SERVER1, true);
-        mockWebhookDelete(SERVER2, true);
-        mockWebhookDelete(SERVER3, true);
+        mockWebhookStop(SERVER1, true);
+        mockWebhookStop(SERVER2, true);
+        mockWebhookStop(SERVER3, true);
 
-        List<String> removed = internalWebhookClient.remove(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3));
+        List<String> removed = internalWebhookClient.stop(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3));
 
         assertEquals(newArrayList(SERVER1, SERVER2, SERVER3), removed);
 
-        verify(restClient).resource(deleteUrl(SERVER1));
-        verify(restClient).resource(deleteUrl(SERVER2));
-        verify(restClient).resource(deleteUrl(SERVER3));
+        verify(restClient).resource(stopUrl(SERVER1));
+        verify(restClient).resource(stopUrl(SERVER2));
+        verify(restClient).resource(stopUrl(SERVER3));
     }
 
     @Test
     void testDeleteAll_withSomeFailure_continuesToCallDeleteonAllServers() {
-        mockWebhookDelete(SERVER1, false);
-        mockWebhookDelete(SERVER2, false);
-        mockWebhookDelete(SERVER3, true);
+        mockWebhookStop(SERVER1, false);
+        mockWebhookStop(SERVER2, false);
+        mockWebhookStop(SERVER3, true);
 
-        List<String> removed = internalWebhookClient.remove(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3));
+        List<String> removed = internalWebhookClient.stop(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3));
 
         assertEquals(newArrayList(SERVER3), removed);
 
-        verify(restClient).resource(deleteUrl(SERVER1));
-        verify(restClient).resource(deleteUrl(SERVER2));
-        verify(restClient).resource(deleteUrl(SERVER3));
+        verify(restClient).resource(stopUrl(SERVER1));
+        verify(restClient).resource(stopUrl(SERVER2));
+        verify(restClient).resource(stopUrl(SERVER3));
     }
 
     private void mockServerWebhookCount(String server, int count) {
@@ -216,12 +216,12 @@ class InternalWebhookClientTest {
         when(clientResponse.getStatus()).thenReturn(200);
     }
 
-    private void mockWebhookDelete(String server, boolean success) {
+    private void mockWebhookStop(String server, boolean success) {
         ClientResponse response = mock(ClientResponse.class);
         when(response.getStatus()).thenReturn(success ? 200 : 500);
         WebResource webResource = mock(WebResource.class);
         when(webResource.put(ClientResponse.class)).thenReturn(response);
-        when(restClient.resource(deleteUrl(server))).thenReturn(webResource);
+        when(restClient.resource(stopUrl(server))).thenReturn(webResource);
     }
 
     private String runUrl(String server) {
@@ -232,7 +232,7 @@ class InternalWebhookClientTest {
         return format("http://%s/internal/webhook/count", server);
     }
 
-    private String deleteUrl(String server) {
-        return format("http://%s/internal/webhook/delete/%s", server, WEBHOOK_NAME);
+    private String stopUrl(String server) {
+        return format("http://%s/internal/webhook/stop/%s", server, WEBHOOK_NAME);
     }
 }

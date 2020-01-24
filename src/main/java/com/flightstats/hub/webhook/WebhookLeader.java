@@ -156,6 +156,7 @@ class WebhookLeader implements Lockable {
             leadership.setLeadership(false);
             closeStrategy();
             stopExecutor();
+            webhookStateReaper.stop(webhook.getName());
             if (deleteOnExit.get()) {
                 webhookStateReaper.delete(webhook.getName());
             }
@@ -316,7 +317,7 @@ class WebhookLeader implements Lockable {
             executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
             log.info("stopped Executor {}", name);
         } catch (InterruptedException e) {
-            log.error("unable to stop {}?", name, e);
+            log.error("unable to delete {}?", name, e);
             Thread.currentThread().interrupt();
         }
     }
