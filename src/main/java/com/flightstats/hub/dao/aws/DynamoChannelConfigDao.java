@@ -143,7 +143,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             }
             cfg = builder.build();
         } catch (Exception e) {
-            log.warn("Unable to map channel {} {}", item.get("key"), e.getMessage());
+            log.warn("Unable to map channel {}", item.get("key"), e);
         }
         return Optional.ofNullable(cfg);
     }

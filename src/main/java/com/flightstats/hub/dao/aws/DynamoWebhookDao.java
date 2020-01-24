@@ -88,7 +88,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         try {
             return Optional.of(mapItem(item));
         } catch (Exception e) {
-            log.warn("Unable to map webhook config {} {}", item.get("key"), e.getMessage());
+            log.warn("Unable to map webhook config {}", item.get("key"), e);
             return Optional.empty();
         }
     }
