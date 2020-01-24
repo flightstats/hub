@@ -69,8 +69,8 @@ public class S3Batch {
         return channel;
     }
 
-    public void stop() {
-        hubUtils.stopGroupCallback(getGroupName(), getChannelUrl());
+    public void delete() {
+        hubUtils.deleteWebhook(getGroupName(), getChannelUrl());
     }
 
 }

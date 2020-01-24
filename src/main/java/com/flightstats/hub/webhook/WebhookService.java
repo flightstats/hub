@@ -34,6 +34,7 @@ public class WebhookService {
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
     private final WebhookManager webhookManager;
+    private final WebhookStateReaper webhookStateReaper;
     private final ClusterCacheDao clusterCacheDao;
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
@@ -44,6 +45,7 @@ public class WebhookService {
     public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao,
                           WebhookValidator webhookValidator,
                           WebhookManager webhookManager,
+                          WebhookStateReaper webhookStateReaper,
                           ClusterCacheDao clusterCacheDao,
                           ChannelService channelService,
                           ContentRetriever contentRetriever,
@@ -52,6 +54,7 @@ public class WebhookService {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
         this.webhookManager = webhookManager;
+        this.webhookStateReaper = webhookStateReaper;
         this.clusterCacheDao = clusterCacheDao;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
@@ -152,8 +155,9 @@ public class WebhookService {
     public void delete(String name) {
         log.debug("deleting webhook {}", name);
         deleteInstancesIfTagWebhook(name);
+        this.webhookManager.stop(name);
         this.webhookDao.delete(name);
-        this.webhookManager.delete(name);
+        this.webhookStateReaper.delete(name);
     }
 
     void updateCursor(Webhook webhook, ContentPath item) {

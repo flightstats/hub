@@ -113,7 +113,7 @@ public class WebhookManager {
                 log.warn("found multiple servers! {}", servers);
                 Collections.shuffle(servers);
                 for (int i = 1; i < servers.size(); i++) {
-                    webhookClient.remove(name, servers.get(i));
+                    webhookClient.stop(name, servers.get(i));
                 }
             }
             if (servers.isEmpty()) {
@@ -131,9 +131,9 @@ public class WebhookManager {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    public void delete(String name) {
-        webhookClient.remove(name, activeWebhooks.getServers(name));
-        webhookStateReaper.delete(name);
+    public void stop(String name) {
+        webhookClient.stop(name, activeWebhooks.getServers(name));
+        webhookStateReaper.stop(name);
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {

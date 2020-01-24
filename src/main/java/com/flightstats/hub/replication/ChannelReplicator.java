@@ -48,7 +48,7 @@ class ChannelReplicator implements Replicator {
     }
 
     public void stop() {
-        hubUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
+        hubUtils.deleteWebhook(getGroupName(), channel.getReplicationSource());
     }
 
 }

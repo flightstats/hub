@@ -85,8 +85,8 @@ class WebhookManagerTest {
 
         verify(webhookClient, never()).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), any());
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyString());
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
     }
 
     @Test
@@ -101,7 +101,7 @@ class WebhookManagerTest {
 
         verify(webhookClient).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), any());
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyString());
     }
 
     @Test
@@ -115,7 +115,7 @@ class WebhookManagerTest {
 
         verify(webhookClient).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyString());
     }
 
     @Test
@@ -123,14 +123,14 @@ class WebhookManagerTest {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1, SERVER2, SERVER3));
 
-        when(webhookClient.remove(WEBHOOK_NAME, SERVER1)).thenReturn(true);
-        when(webhookClient.remove(WEBHOOK_NAME, SERVER2)).thenReturn(true);
-        when(webhookClient.remove(WEBHOOK_NAME, SERVER3)).thenReturn(true);
+        when(webhookClient.stop(WEBHOOK_NAME, SERVER1)).thenReturn(true);
+        when(webhookClient.stop(WEBHOOK_NAME, SERVER2)).thenReturn(true);
+        when(webhookClient.stop(WEBHOOK_NAME, SERVER3)).thenReturn(true);
 
         WebhookManager webhookManager = getWebhookManager();
         webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
-        verify(webhookClient, times(2)).remove(eq(WEBHOOK_NAME), matches(
+        verify(webhookClient, times(2)).stop(eq(WEBHOOK_NAME), matches(
                 format("(%s|%s|%s)", SERVER1, SERVER2, SERVER3)));
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
         verify(webhookClient, never()).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
@@ -146,7 +146,7 @@ class WebhookManagerTest {
         webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), true);
 
         verify(webhookClient).runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1));
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyString());
     }
 
     @Test
@@ -157,14 +157,14 @@ class WebhookManagerTest {
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1, SERVER2, SERVER3));
 
         when(webhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3))).thenReturn(Optional.of(SERVER1));
-        when(webhookClient.remove(WEBHOOK_NAME, SERVER1)).thenReturn(true);
-        when(webhookClient.remove(WEBHOOK_NAME, SERVER2)).thenReturn(true);
-        when(webhookClient.remove(WEBHOOK_NAME, SERVER3)).thenReturn(true);
+        when(webhookClient.stop(WEBHOOK_NAME, SERVER1)).thenReturn(true);
+        when(webhookClient.stop(WEBHOOK_NAME, SERVER2)).thenReturn(true);
+        when(webhookClient.stop(WEBHOOK_NAME, SERVER3)).thenReturn(true);
 
         WebhookManager webhookManager = getWebhookManager();
         webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), true);
 
-        verify(webhookClient, times(2)).remove(eq(WEBHOOK_NAME), matches(
+        verify(webhookClient, times(2)).stop(eq(WEBHOOK_NAME), matches(
                 format("(%s|%s|%s)", SERVER1, SERVER2, SERVER3)));
         verify(webhookClient).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
     }
@@ -181,8 +181,8 @@ class WebhookManagerTest {
 
         verify(activeWebhooks, never()).isActiveWebhook(anyString());
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
-        verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyString());
     }
 
     @Test

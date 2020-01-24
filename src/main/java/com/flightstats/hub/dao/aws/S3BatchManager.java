@@ -67,7 +67,7 @@ public class S3BatchManager {
             if (channel.isSingle()) {
                 if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {
                     log.debug("turning off batch webhook {}", channel.getDisplayName());
-                    s3Batch.stop();
+                    s3Batch.delete();
                 }
             } else {
                 log.info("batching channel {}", channel.getDisplayName());
@@ -76,7 +76,7 @@ public class S3BatchManager {
             }
         }
         for (String groupName : existingBatchGroups) {
-            log.info("stopping unused batch webhook {}", groupName);
+            log.info("deleting unused batch webhook {}", groupName);
             webhookService.delete(groupName);
         }
     }
