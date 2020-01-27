@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Slf4j
 public class DynamoWebhookDao implements Dao<Webhook> {
@@ -69,31 +68,34 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     @Override
     public Webhook get(String name) {
+        return getDynamoItem(name)
+                .flatMap(this::mapItem)
+                .orElse(null);
+    }
+
+    private Optional<Map<String, AttributeValue>> getDynamoItem(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("name", new AttributeValue(name));
         try {
             GetItemResult result = dbClient.getItem(dynamoProperties.getWebhookConfigTableName(), keyMap, true);
-            if (result.getItem() == null) {
-                return null;
-            }
-            return tryMapItem(result.getItem())
-                    .orElseThrow(() -> new ResourceNotFoundException("Unable to read webhook config from dynamo " + name));
+            return Optional.ofNullable(result)
+                    .map(GetItemResult::getItem);
         } catch (ResourceNotFoundException e) {
             log.warn("group not found {}", name, e);
-            return null;
+            return Optional.empty();
         }
     }
 
-    private Optional<Webhook> tryMapItem(Map<String, AttributeValue> item) {
+    private Optional<Webhook> mapItem(Map<String, AttributeValue> item) {
         try {
-            return Optional.of(mapItem(item));
+            return Optional.of(constructWebhook(item));
         } catch (Exception e) {
             log.warn("Unable to map webhook config {}", item.get("key"), e);
             return Optional.empty();
         }
     }
 
-    private Webhook mapItem(Map<String, AttributeValue> item) {
+    private Webhook constructWebhook(Map<String, AttributeValue> item) {
         Webhook.WebhookBuilder builder = Webhook.builder()
                 .name(item.get("name").getS())
                 .callbackUrl(item.get("callbackUrl").getS());
@@ -156,7 +158,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     private void mapItems(List<Webhook> configurations, ScanResult result) {
         for (Map<String, AttributeValue> item : result.getItems()) {
-            tryMapItem(item).ifPresent(configurations::add);
+            mapItem(item).ifPresent(configurations::add);
         }
     }
 
