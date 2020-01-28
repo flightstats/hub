@@ -27,20 +27,9 @@ public class WebhookValidator {
         this.webhookProperties = webhookProperties;
     }
 
-    private void isValidCallbackTimeoutSeconds(int value) {
-        int minimum = webhookProperties.getCallbackTimeoutMinimum();
-        int maximum = webhookProperties.getCallbackTimeoutMaximum();
-        if (isOutsideRange(value, minimum, maximum)) {
-            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
-        }
-    }
-
-    private static boolean isOutsideRange(int value, int minimum, int maximum) {
-        return (value > maximum || value < minimum);
-    }
-
     void validate(Webhook webhook) {
         String name = webhook.getName();
+
         if (StringUtils.isEmpty(name)) {
             throw new InvalidRequestException("{\"error\": \"Webhook name is required\"}");
         }
@@ -87,4 +76,18 @@ public class WebhookValidator {
         }
 
     }
+
+    private void isValidCallbackTimeoutSeconds(int value) {
+        int minimum = webhookProperties.getCallbackTimeoutMinimum();
+        int maximum = webhookProperties.getCallbackTimeoutMaximum();
+
+        if (isOutsideRange(value, minimum, maximum)) {
+            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
+        }
+    }
+
+    private static boolean isOutsideRange(int value, int minimum, int maximum) {
+        return (value > maximum || value < minimum);
+    }
+
 }
