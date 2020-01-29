@@ -86,10 +86,8 @@ public class WebhookManager {
     }
 
     private synchronized void manageWebhooks(boolean useCache) {
-        final Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(useCache));
-        for (Webhook daoWebhook : daoWebhooks) {
-            manageWebhook(daoWebhook, false);
-        }
+        webhookDao.getAll(useCache)
+                .forEach(webhook -> manageWebhook(webhook, false));
     }
 
     void notifyWatchers(Webhook webhook) {
@@ -105,12 +103,12 @@ public class WebhookManager {
             // associated with a tag webhook
             return;
         }
-        final String name = daoWebhook.getName();
+        String name = daoWebhook.getName();
         if (activeWebhooks.isActiveWebhook(name)) {
             log.debug("found existing webhook {}", name);
-            final List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
+            List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
             if (servers.size() >= 2) {
-                log.warn("found multiple servers! {}", servers);
+                log.warn("found multiple servers leading {}! {}", name, servers);
                 Collections.shuffle(servers);
                 for (int i = 1; i < servers.size(); i++) {
                     webhookClient.stop(name, servers.get(i));
@@ -140,7 +138,7 @@ public class WebhookManager {
         statusBuilder.lastCompleted(clusterCacheDao.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WEBHOOK_LAST_COMPLETED));
         try {
             statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
-            final ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookContentPathSet.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
+            ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookContentPathSet.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {
             log.warn("unable to get status {}", webhook.getName(), e);
