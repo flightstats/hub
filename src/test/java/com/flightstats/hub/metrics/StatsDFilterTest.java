@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -23,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class StatsDFilterTest {
 
     @Mock
@@ -130,26 +130,46 @@ class StatsDFilterTest {
 
     @Test
     void testStatsdFilterIsSecondaryReporting_handlesNull() {
-        when(channelConfigDao.getCached(anyString())).thenReturn(null);
-        when(webhookDao.getCached(anyString())).thenReturn(null);
+        Mockito.lenient().when(channelConfigDao.getCached(anyString())).thenReturn(null);
+        Mockito.lenient().when(webhookDao.getCached(anyString())).thenReturn(null);
 
         assertFalse(statsDFilter.isSecondaryReporting("foo"));
     }
 
     @Test
-    void testStatsdFilterIsSecondaryReporting_trueIfAnyTrue() {
-        when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
-        when(channelConfig.isSecondaryMetricsReporting()).thenReturn(false);
-        when(webhookDao.getCached(anyString())).thenReturn(webhook);
-        when(webhook.isSecondaryMetricsReporting()).thenReturn(true);
+    void testStatsdFilterIsSecondaryReporting_trueIfWebhookIsTrue() {
+        Mockito.lenient().when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
+        Mockito.lenient().when(channelConfig.isSecondaryMetricsReporting()).thenReturn(false);
+        Mockito.lenient().when(webhookDao.getCached(anyString())).thenReturn(webhook);
+        Mockito.lenient().when(webhook.isSecondaryMetricsReporting()).thenReturn(true);
 
         assertTrue(statsDFilter.isSecondaryReporting("foo"));
     }
 
     @Test
-    void testStatsdFilterIsSecondaryReporting_handleNullAndTrue() {
-        when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
-        when(channelConfig.isSecondaryMetricsReporting()).thenReturn(true);
+    void testStatsdFilterIsSecondaryReporting_trueIfChannelIsTrue() {
+        Mockito.lenient().when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
+        Mockito.lenient().when(channelConfig.isSecondaryMetricsReporting()).thenReturn(true);
+        Mockito.lenient().when(webhookDao.getCached(anyString())).thenReturn(webhook);
+        Mockito.lenient().when(webhook.isSecondaryMetricsReporting()).thenReturn(false);
+
+        assertTrue(statsDFilter.isSecondaryReporting("foo"));
+    }
+
+    @Test
+    void testStatsdFilterIsSecondaryReporting_handleNullWebhookAndTrueChannel() {
+        Mockito.lenient().when(webhookDao.getCached(anyString())).thenReturn(null);
+        Mockito.lenient().when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
+        Mockito.lenient().when(channelConfig.isSecondaryMetricsReporting()).thenReturn(true);
+
+        assertTrue(statsDFilter.isSecondaryReporting("foo"));
+    }
+
+    @Test
+    void testStatsdFilterIsSecondaryReporting_handleNullChannelAndTrueWebhook() {
+        Mockito.lenient().when(channelConfigDao.getCached(anyString())).thenReturn(null);
+        Mockito.lenient().when(webhookDao.getCached(anyString())).thenReturn(webhook);
+        Mockito.lenient().when(webhook.isSecondaryMetricsReporting()).thenReturn(true);
 
         assertTrue(statsDFilter.isSecondaryReporting("foo"));
     }
