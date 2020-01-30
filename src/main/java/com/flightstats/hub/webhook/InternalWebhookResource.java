@@ -166,6 +166,9 @@ public class InternalWebhookResource {
         if (!permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "run", name), false)) {
             return Response.status(400).build();  // TODO: Fix Hub cluster being assumed to contain only webhook-leadership-eligible nodes.
         }
+        if (!webhookService.get(name).isPresent()) {
+            return Response.status(404).build();
+        }
         return attemptRun(name);
     }
 
@@ -174,6 +177,9 @@ public class InternalWebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response stop(@PathParam("name") String name) {
         permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "stop", name));
+        if (!webhookService.get(name).isPresent()) {
+            return Response.status(404).build();
+        }
         return attemptStop(name);
     }
 
