@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.PermissionsChecker;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.StaleEntity;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class InternalWebhookResource {
     private static final Long DEFAULT_STALE_AGE = TimeUnit.HOURS.toMinutes(1);
 
     private final PermissionsChecker permissionsChecker;
+    private final LocalHostProperties localHostProperties;
     private final WebhookService webhookService;
     private final LocalWebhookManager localWebhookManager;
     private final StaleEntity staleEntity;
@@ -47,11 +49,13 @@ public class InternalWebhookResource {
 
     @Inject
     public InternalWebhookResource(PermissionsChecker permissionsChecker,
+                                   LocalHostProperties localHostProperties,
                                    WebhookService webhookService,
                                    LocalWebhookManager localWebhookManager,
                                    StaleEntity staleEntity,
                                    ObjectMapper objectMapper) {
         this.permissionsChecker = permissionsChecker;
+        this.localHostProperties = localHostProperties;
         this.webhookService = webhookService;
         this.localWebhookManager = localWebhookManager;
         this.staleEntity = staleEntity;
@@ -183,7 +187,7 @@ public class InternalWebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response running() {
         ObjectNode root = objectMapper.createObjectNode();
-        ArrayNode arrayNode = root.putArray("webhooks");
+        ArrayNode arrayNode = root.putArray(localHostProperties.getName());
         localWebhookManager.getRunning().forEach(arrayNode::add);
 
         return Response.ok(root).build();
