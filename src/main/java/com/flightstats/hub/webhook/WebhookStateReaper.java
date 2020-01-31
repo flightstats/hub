@@ -31,15 +31,24 @@ class WebhookStateReaper {
         this.webhookProperties = webhookProperties;
     }
 
+    void stop(String webhook) {
+        if (!webhookProperties.isWebhookLeadershipEnabled()) {
+            return;
+        }
+        log.debug("stopping {}", webhook);
+        webhookLeaderLocks.deleteWebhookLeader(webhook);
+        log.info("stopped {}", webhook);
+    }
+
     void delete(String webhook) {
         if (!webhookProperties.isWebhookLeadershipEnabled()) {
             return;
         }
+        stop(webhook);
         log.debug("deleting {}", webhook);
         contentKeysInFlight.delete(webhook);
         clusterCacheDao.delete(webhook, WEBHOOK_LAST_COMPLETED);
         webhookErrorService.delete(webhook);
-        webhookLeaderLocks.deleteWebhookLeader(webhook);
         log.info("deleted {}", webhook);
     }
 }

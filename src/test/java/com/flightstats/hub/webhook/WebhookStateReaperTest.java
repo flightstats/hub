@@ -13,6 +13,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,8 +71,16 @@ class WebhookStateReaperTest {
         contentKeysInFlight = new WebhookContentInFlight(zooKeeperUtils);
     }
 
+    @AfterEach
+    void teardown() throws Exception {
+        // ...AND then clean up the state so the next test can run.  Eww. Ideally this would manually clear ZK nodes, I think.
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.delete(webhookName);
+    }
+
     @Test
-    void testCleansUpZookeeperNodesRelatedToState() throws Exception {
+    void testDeleteCleansUpZookeeperNodesRelatedToState() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -90,7 +99,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
+    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -108,7 +117,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
+    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
@@ -126,7 +135,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
+    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
@@ -144,7 +153,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -162,7 +171,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDoesNothingIfLeadershipDisabled() throws Exception {
+    void testDeleteDoesNothingIfLeadershipDisabled() throws Exception {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         // GIVEN
         addLastCompleted(webhookName);
@@ -179,11 +188,121 @@ class WebhookStateReaperTest {
         assertErrorExists(webhookName);
         assertWebhookInProcessExists(webhookName);
         assertWebhookLeaderExists(webhookName);
+    }
 
-        // ...AND then clean up the state so the next test can run.  Eww.
-        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
-        reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
-        reaper.delete(webhookName);
+    @Test
+    void testStopCleansUpZookeeperNodesRelatedToLeadershipStateButNotProgressOrErrors() throws Exception {
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.stop(webhookName);
+
+        // THEN
+        assertWebhookLeaderDeleted(webhookName);
+
+        assertLastCompletedExists(webhookName);
+        assertErrorExists(webhookName);
+        assertWebhookInProcessExists(webhookName);
+    }
+
+    @Test
+    void testStopCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.stop(webhookName);
+
+        // THEN
+        assertWebhookLeaderDeleted(webhookName);
+        assertErrorDeleted(webhookName);
+
+        assertLastCompletedExists(webhookName);
+        assertWebhookInProcessExists(webhookName);
+    }
+
+    @Test
+    void testStopCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
+        // GIVEN
+        addLastCompleted(webhookName);
+        addError(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.stop(webhookName);
+
+        // THEN
+        assertWebhookLeaderDeleted(webhookName);
+        assertWebhookInProcessDeleted(webhookName);
+
+        assertLastCompletedExists(webhookName);
+        assertErrorExists(webhookName);
+    }
+
+    @Test
+    void testStopCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
+        // GIVEN
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.stop(webhookName);
+
+        // THEN
+        assertWebhookLeaderDeleted(webhookName);
+        assertLastCompletedDeleted(webhookName);
+
+        assertWebhookInProcessExists(webhookName);
+        assertErrorExists(webhookName);
+    }
+
+    @Test
+    void testStopCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.stop(webhookName);
+
+        // THEN
+        assertWebhookLeaderDeleted(webhookName);
+        assertLastCompletedExists(webhookName);
+        assertErrorExists(webhookName);
+        assertWebhookInProcessExists(webhookName);
+    }
+
+    @Test
+    void testStopDoesNothingIfLeadershipDisabled() throws Exception {
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.stop(webhookName);
+
+        // THEN
+        assertLastCompletedExists(webhookName);
+        assertErrorExists(webhookName);
+        assertWebhookInProcessExists(webhookName);
+        assertWebhookLeaderExists(webhookName);
     }
 
     private void addLastCompleted(String webhook) throws Exception {

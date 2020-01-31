@@ -129,7 +129,7 @@ public class WebhookCoordinator {
 
     public void stopLeader(String name) {
         webhookClient.stop(name, activeWebhooks.getServers(name));
-        webhookStateReaper.delete(name);
+        webhookStateReaper.stop(name);
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {

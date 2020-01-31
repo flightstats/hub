@@ -156,6 +156,7 @@ class WebhookLeader implements Lockable {
             leadership.setLeadership(false);
             closeStrategy();
             stopExecutor();
+            webhookStateReaper.stop(webhook.getName());
             if (deleteOnExit.get()) {
                 webhookStateReaper.delete(webhook.getName());
             }
