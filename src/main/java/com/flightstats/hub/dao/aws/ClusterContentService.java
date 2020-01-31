@@ -488,7 +488,7 @@ public class ClusterContentService implements ContentService {
         clusterCacheDao.delete(channelName, LAST_SINGLE_VERIFIED);
         Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
-            new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).stop();
+            new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).delete();
         }
     }
 
@@ -519,7 +519,7 @@ public class ClusterContentService implements ContentService {
 
         if (newConfig.isSingle()) {
             if (oldConfig != null && !oldConfig.isSingle()) {
-                s3Batch.stop();
+                s3Batch.delete();
             }
         } else {
             s3Batch.start();
