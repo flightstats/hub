@@ -45,7 +45,7 @@ class WebhookCoordinatorTest {
     @Mock
     private WebhookErrorService webhookErrorService;
     @Mock
-    private WebhookContentPathSet webhookContentPathSet;
+    private WebhookContentInFlight keysInFlight;
     @Mock
     private InternalWebhookClient webhookClient;
     @Mock
@@ -205,7 +205,7 @@ class WebhookCoordinatorTest {
         return new WebhookCoordinator(
                 localWebhookRunner,
                 webhookErrorService,
-                webhookContentPathSet,
+                keysInFlight,
                 webhookClient,
                 webhookStateReaper,
                 clusterCacheDao,

@@ -13,19 +13,19 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED
 @Slf4j
 class WebhookStateReaper {
     private final ClusterCacheDao clusterCacheDao;
-    private final WebhookContentPathSet webhookInProcess;
+    private final WebhookContentInFlight contentKeysInFlight;
     private final WebhookErrorService webhookErrorService;
     private final WebhookLeaderLocks webhookLeaderLocks;
     private final WebhookProperties webhookProperties;
 
     @Inject
     WebhookStateReaper(ClusterCacheDao clusterCacheDao,
-                       WebhookContentPathSet webhookInProcess,
+                       WebhookContentInFlight contentKeysInFlight,
                        WebhookErrorService webhookErrorService,
                        WebhookLeaderLocks webhookLeaderLocks,
                        WebhookProperties webhookProperties) {
         this.clusterCacheDao = clusterCacheDao;
-        this.webhookInProcess = webhookInProcess;
+        this.contentKeysInFlight = contentKeysInFlight;
         this.webhookErrorService = webhookErrorService;
         this.webhookLeaderLocks = webhookLeaderLocks;
         this.webhookProperties = webhookProperties;
@@ -36,7 +36,7 @@ class WebhookStateReaper {
             return;
         }
         log.debug("deleting {}", webhook);
-        webhookInProcess.delete(webhook);
+        contentKeysInFlight.delete(webhook);
         clusterCacheDao.delete(webhook, WEBHOOK_LAST_COMPLETED);
         webhookErrorService.delete(webhook);
         webhookLeaderLocks.deleteWebhookLeader(webhook);

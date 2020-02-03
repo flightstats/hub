@@ -32,7 +32,7 @@ public class WebhookCoordinator {
 
     private final LocalWebhookRunner localWebhookRunner;
     private final WebhookErrorService webhookErrorService;
-    private final WebhookContentPathSet webhookContentPathSet;
+    private final WebhookContentInFlight contentKeysInFlight;
     private final InternalWebhookClient webhookClient;
     private final WebhookStateReaper webhookStateReaper;
     private final ClusterCacheDao clusterCacheDao;
@@ -43,7 +43,7 @@ public class WebhookCoordinator {
     @Inject
     public WebhookCoordinator(LocalWebhookRunner localWebhookRunner,
                               WebhookErrorService webhookErrorService,
-                              WebhookContentPathSet webhookContentPathSet,
+                              WebhookContentInFlight contentKeysInFlight,
                               InternalWebhookClient webhookClient,
                               WebhookStateReaper webhookStateReaper,
                               ClusterCacheDao clusterCacheDao,
@@ -53,7 +53,7 @@ public class WebhookCoordinator {
                               @Named("Webhook") Dao<Webhook> webhookDao) {
         this.localWebhookRunner = localWebhookRunner;
         this.webhookErrorService = webhookErrorService;
-        this.webhookContentPathSet = webhookContentPathSet;
+        this.contentKeysInFlight = contentKeysInFlight;
         this.webhookClient = webhookClient;
         this.webhookStateReaper = webhookStateReaper;
         this.clusterCacheDao = clusterCacheDao;
@@ -136,8 +136,8 @@ public class WebhookCoordinator {
         statusBuilder.lastCompleted(clusterCacheDao.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WEBHOOK_LAST_COMPLETED));
         try {
             statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
-            ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookContentPathSet.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
-            statusBuilder.inFlight(inFlight);
+            ArrayList<ContentPath> contentInFlight = new ArrayList<>(new TreeSet<>(contentKeysInFlight.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
+            statusBuilder.inFlight(contentInFlight);
         } catch (Exception e) {
             log.warn("unable to get status {}", webhook.getName(), e);
             statusBuilder.errors(Collections.emptyList());

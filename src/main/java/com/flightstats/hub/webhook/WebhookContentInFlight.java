@@ -8,13 +8,13 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
-class WebhookContentPathSet {
+class WebhookContentInFlight {
     private final static String BASE_PATH = "/GroupInFlight";
 
     private final SafeZooKeeperUtils zooKeeperUtils;
 
     @Inject
-    public WebhookContentPathSet(SafeZooKeeperUtils zooKeeperUtils) {
+    public WebhookContentInFlight(SafeZooKeeperUtils zooKeeperUtils) {
         this.zooKeeperUtils = zooKeeperUtils;
     }
 
