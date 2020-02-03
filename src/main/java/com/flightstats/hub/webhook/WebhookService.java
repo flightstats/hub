@@ -37,7 +37,7 @@ public class WebhookService {
     private final ClusterCacheDao clusterCacheDao;
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
-    private final LocalWebhookManager localWebhookManager;
+    private final LocalWebhookRunner localWebhookRunner;
     private final WebhookProperties webhookProperties;
 
     @Inject
@@ -47,7 +47,7 @@ public class WebhookService {
                           ClusterCacheDao clusterCacheDao,
                           ChannelService channelService,
                           ContentRetriever contentRetriever,
-                          LocalWebhookManager localWebhookManager,
+                          LocalWebhookRunner localWebhookRunner,
                           WebhookProperties webhookProperties) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
@@ -55,7 +55,7 @@ public class WebhookService {
         this.clusterCacheDao = clusterCacheDao;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
-        this.localWebhookManager = localWebhookManager;
+        this.localWebhookRunner = localWebhookRunner;
         this.webhookProperties = webhookProperties;
     }
 
@@ -172,7 +172,7 @@ public class WebhookService {
                 .map((Webhook::getName))
                 .collect(Collectors.toSet());
 
-        localWebhookManager.runAndWait("TagWebhook.deleteAll", names, this::delete);
+        localWebhookRunner.runAndWait("TagWebhook.deleteAll", names, this::delete);
     }
 
     // Add new wh instances for new or updated tag webhook

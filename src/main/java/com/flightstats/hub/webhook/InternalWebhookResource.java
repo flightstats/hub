@@ -40,9 +40,10 @@ public class InternalWebhookResource {
     private final PermissionsChecker permissionsChecker;
     private final LocalHostProperties localHostProperties;
     private final WebhookService webhookService;
-    private final LocalWebhookManager localWebhookManager;
+    private final LocalWebhookRunner localWebhookRunner;
     private final StaleEntity staleEntity;
     private final ObjectMapper objectMapper;
+
 
     @Context
     private UriInfo uriInfo;
@@ -51,13 +52,13 @@ public class InternalWebhookResource {
     public InternalWebhookResource(PermissionsChecker permissionsChecker,
                                    LocalHostProperties localHostProperties,
                                    WebhookService webhookService,
-                                   LocalWebhookManager localWebhookManager,
+                                   LocalWebhookRunner localWebhookRunner,
                                    StaleEntity staleEntity,
                                    ObjectMapper objectMapper) {
         this.permissionsChecker = permissionsChecker;
         this.localHostProperties = localHostProperties;
         this.webhookService = webhookService;
-        this.localWebhookManager = localWebhookManager;
+        this.localWebhookRunner = localWebhookRunner;
         this.staleEntity = staleEntity;
         this.objectMapper = objectMapper;
     }
@@ -179,7 +180,7 @@ public class InternalWebhookResource {
     @GET
     @Path("/count")
     public Response count() {
-        return Response.ok(localWebhookManager.getCount()).build();
+        return Response.ok(localWebhookRunner.getCount()).build();
     }
 
     @GET
@@ -188,20 +189,20 @@ public class InternalWebhookResource {
     public Response running() {
         ObjectNode root = objectMapper.createObjectNode();
         ArrayNode arrayNode = root.putArray(localHostProperties.getName());
-        localWebhookManager.getRunning().forEach(arrayNode::add);
+        localWebhookRunner.getRunning().forEach(arrayNode::add);
 
         return Response.ok(root).build();
     }
 
     private Response attemptRun(String name) {
-        if (localWebhookManager.ensureRunning(name)) {
+        if (localWebhookRunner.ensureRunning(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();
     }
 
     private Response attemptDelete(String name) {
-        localWebhookManager.stopLocal(name, true);
+        localWebhookRunner.stop(name, true);
         return Response.ok().build();
     }
 
