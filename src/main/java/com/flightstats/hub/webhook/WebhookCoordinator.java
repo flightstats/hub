@@ -18,9 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -29,10 +27,10 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED
 
 @Slf4j
 @Singleton
-public class WebhookManager {
+public class WebhookCoordinator {
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
-    private final LocalWebhookManager localWebhookManager;
+    private final LocalWebhookRunner localWebhookRunner;
     private final WebhookErrorService webhookErrorService;
     private final WebhookContentPathSet webhookContentPathSet;
     private final InternalWebhookClient webhookClient;
@@ -43,17 +41,17 @@ public class WebhookManager {
     private final Dao<Webhook> webhookDao;
 
     @Inject
-    public WebhookManager(LocalWebhookManager localWebhookManager,
-                          WebhookErrorService webhookErrorService,
-                          WebhookContentPathSet webhookContentPathSet,
-                          InternalWebhookClient webhookClient,
-                          WebhookStateReaper webhookStateReaper,
-                          ClusterCacheDao clusterCacheDao,
-                          ActiveWebhooks activeWebhooks,
-                          WebhookProperties webhookProperties,
-                          WatchManager watchManager,
-                          @Named("Webhook") Dao<Webhook> webhookDao) {
-        this.localWebhookManager = localWebhookManager;
+    public WebhookCoordinator(LocalWebhookRunner localWebhookRunner,
+                              WebhookErrorService webhookErrorService,
+                              WebhookContentPathSet webhookContentPathSet,
+                              InternalWebhookClient webhookClient,
+                              WebhookStateReaper webhookStateReaper,
+                              ClusterCacheDao clusterCacheDao,
+                              ActiveWebhooks activeWebhooks,
+                              WebhookProperties webhookProperties,
+                              WatchManager watchManager,
+                              @Named("Webhook") Dao<Webhook> webhookDao) {
+        this.localWebhookRunner = localWebhookRunner;
         this.webhookErrorService = webhookErrorService;
         this.webhookContentPathSet = webhookContentPathSet;
         this.webhookClient = webhookClient;
@@ -64,8 +62,8 @@ public class WebhookManager {
         this.webhookDao = webhookDao;
 
         if (webhookProperties.isWebhookLeadershipEnabled()) {
-            register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
-            register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
+            register(new WebhookCoordinatorIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+            register(new WebhookCoordinatorScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
         }
     }
 
@@ -73,7 +71,7 @@ public class WebhookManager {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                manageWebhooks(true);
+                manageWebhookLeaders(true);
             }
 
             @Override
@@ -82,20 +80,20 @@ public class WebhookManager {
             }
 
         });
-        manageWebhooks(false);
+        manageWebhookLeaders(false);
     }
 
-    private synchronized void manageWebhooks(boolean useCache) {
+    private synchronized void manageWebhookLeaders(boolean useCache) {
         webhookDao.getAll(useCache)
-                .forEach(webhook -> manageWebhook(webhook, false));
+                .forEach(webhook -> ensureRunningOnOnlyOneServer(webhook, false));
     }
 
     void notifyWatchers(Webhook webhook) {
-        manageWebhook(webhook, true);
+        ensureRunningOnOnlyOneServer(webhook, true);
     }
 
     @VisibleForTesting
-    void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
+    void ensureRunningOnOnlyOneServer(Webhook daoWebhook, boolean webhookChanged) {
         if (daoWebhook.getTagUrl() != null && !daoWebhook.getTagUrl().isEmpty()) {
             // tag webhooks are not processed like normal webhooks.
             // they are used as prototype definitions for new webhooks added
@@ -129,7 +127,7 @@ public class WebhookManager {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    public void delete(String name) {
+    public void stopLeader(String name) {
         webhookClient.remove(name, activeWebhooks.getServers(name));
         webhookStateReaper.delete(name);
     }
@@ -147,7 +145,7 @@ public class WebhookManager {
         }
     }
 
-    private class WebhookIdleService extends AbstractIdleService {
+    private class WebhookCoordinatorIdleService extends AbstractIdleService {
 
         @Override
         protected void startUp() {
@@ -156,16 +154,16 @@ public class WebhookManager {
 
         @Override
         protected void shutDown() {
-            localWebhookManager.stopAllLocal();
+            localWebhookRunner.stopAll();
             notifyWatchers();
         }
 
     }
 
-    private class WebhookScheduledService extends AbstractScheduledService {
+    private class WebhookCoordinatorScheduledService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() {
-            manageWebhooks(false);
+            manageWebhookLeaders(false);
         }
 
         @Override

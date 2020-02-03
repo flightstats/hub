@@ -39,9 +39,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 @Execution(ExecutionMode.SAME_THREAD)
-class WebhookManagerTest {
+class WebhookCoordinatorTest {
     @Mock
-    private LocalWebhookManager localWebhookManager;
+    private LocalWebhookRunner localWebhookRunner;
     @Mock
     private WebhookErrorService webhookErrorService;
     @Mock
@@ -80,8 +80,8 @@ class WebhookManagerTest {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet("hub-01"));
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), false);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient, never()).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), any());
@@ -96,8 +96,8 @@ class WebhookManagerTest {
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), false);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), any());
@@ -110,8 +110,8 @@ class WebhookManagerTest {
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), false);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
@@ -127,8 +127,8 @@ class WebhookManagerTest {
         when(webhookClient.remove(WEBHOOK_NAME, SERVER2)).thenReturn(true);
         when(webhookClient.remove(WEBHOOK_NAME, SERVER3)).thenReturn(true);
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), false);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient, times(2)).remove(eq(WEBHOOK_NAME), matches(
                 format("(%s|%s|%s)", SERVER1, SERVER2, SERVER3)));
@@ -142,8 +142,8 @@ class WebhookManagerTest {
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1));
         when(webhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1))).thenReturn(Optional.of(SERVER1));
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), true);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), true);
 
         verify(webhookClient).runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1));
         verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
@@ -161,8 +161,8 @@ class WebhookManagerTest {
         when(webhookClient.remove(WEBHOOK_NAME, SERVER2)).thenReturn(true);
         when(webhookClient.remove(WEBHOOK_NAME, SERVER3)).thenReturn(true);
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(Webhook.builder().name(WEBHOOK_NAME).build(), true);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), true);
 
         verify(webhookClient, times(2)).remove(eq(WEBHOOK_NAME), matches(
                 format("(%s|%s|%s)", SERVER1, SERVER2, SERVER3)));
@@ -176,8 +176,8 @@ class WebhookManagerTest {
                 .tagUrl("http://some.tag")
                 .build();
 
-        WebhookManager webhookManager = getWebhookManager();
-        webhookManager.manageWebhook(tagWebhook, false);
+        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(tagWebhook, false);
 
         verify(activeWebhooks, never()).isActiveWebhook(anyString());
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
@@ -201,9 +201,9 @@ class WebhookManagerTest {
         services.forEach((type, svcs) -> assertTrue(type + " has services registered", svcs.isEmpty()));
     }
 
-    private WebhookManager getWebhookManager() {
-        return new WebhookManager(
-                localWebhookManager,
+    private WebhookCoordinator getWebhookManager() {
+        return new WebhookCoordinator(
+                localWebhookRunner,
                 webhookErrorService,
                 webhookContentPathSet,
                 webhookClient,

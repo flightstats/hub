@@ -33,7 +33,7 @@ public class WebhookService {
 
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
-    private final WebhookManager webhookManager;
+    private final WebhookCoordinator webhookCoordinator;
     private final ClusterCacheDao clusterCacheDao;
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
@@ -43,7 +43,7 @@ public class WebhookService {
     @Inject
     public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao,
                           WebhookValidator webhookValidator,
-                          WebhookManager webhookManager,
+                          WebhookCoordinator webhookCoordinator,
                           ClusterCacheDao clusterCacheDao,
                           ChannelService channelService,
                           ContentRetriever contentRetriever,
@@ -51,7 +51,7 @@ public class WebhookService {
                           WebhookProperties webhookProperties) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
-        this.webhookManager = webhookManager;
+        this.webhookCoordinator = webhookCoordinator;
         this.clusterCacheDao = clusterCacheDao;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
@@ -104,13 +104,13 @@ public class WebhookService {
         }
 
         webhookDao.upsert(webhook);
-        webhookManager.notifyWatchers(webhook);
+        webhookCoordinator.notifyWatchers(webhook);
         return preExisting;
     }
 
     private void upsertTagWebhook(Webhook webhook) {
         this.webhookDao.upsert(webhook);
-        this.webhookManager.notifyWatchers(webhook);
+        this.webhookCoordinator.notifyWatchers(webhook);
         this.upsertTagWebhookInstances(webhook);
     }
 
@@ -145,7 +145,7 @@ public class WebhookService {
         } catch (NoSuchChannelException e) {
             log.warn("no channel found for " + channel);
         }
-        webhookManager.getStatus(webhook, builder);
+        webhookCoordinator.getStatus(webhook, builder);
         return builder.build();
     }
 
@@ -153,7 +153,7 @@ public class WebhookService {
         log.debug("deleting webhook {}", name);
         deleteInstancesIfTagWebhook(name);
         this.webhookDao.delete(name);
-        this.webhookManager.delete(name);
+        this.webhookCoordinator.stopLeader(name);
     }
 
     void updateCursor(Webhook webhook, ContentPath item) {
