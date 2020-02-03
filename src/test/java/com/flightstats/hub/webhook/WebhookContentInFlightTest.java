@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class WebhookContentPathSetTest {
+class WebhookContentInFlightTest {
     private SafeZooKeeperUtils zooKeeperUtils;
-    private WebhookContentPathSet groupSet;
+    private WebhookContentInFlight keysInFlight;
     private String groupName;
 
     @BeforeEach
@@ -27,7 +27,7 @@ class WebhookContentPathSetTest {
 
     @Test
     void testLifecycle() throws Exception {
-        groupSet = new WebhookContentPathSet(zooKeeperUtils);
+        keysInFlight = new WebhookContentInFlight(zooKeeperUtils);
         ContentKey first = new ContentKey();
         ContentKey second = new ContentKey();
         ContentKey third = new ContentKey();
@@ -41,29 +41,29 @@ class WebhookContentPathSetTest {
     }
 
     private void removeAndCompare(ContentKey key, int expected) {
-        groupSet.remove(groupName, key);
-        Set<ContentPath> set = groupSet.getSet(groupName, key);
+        keysInFlight.remove(groupName, key);
+        Set<ContentPath> set = keysInFlight.getSet(groupName, key);
         assertEquals(expected, set.size());
         assertFalse(set.contains(key));
     }
 
     private void addAndCompare(ContentKey key, int expected) {
-        groupSet.add(groupName, key);
-        Set<ContentPath> set = groupSet.getSet(groupName, key);
+        keysInFlight.add(groupName, key);
+        Set<ContentPath> set = keysInFlight.getSet(groupName, key);
         assertEquals(expected, set.size());
         assertTrue(set.contains(key));
     }
 
     @Test
     void testDelete() throws Exception {
-        groupSet = new WebhookContentPathSet(zooKeeperUtils);
+        keysInFlight = new WebhookContentInFlight(zooKeeperUtils);
         groupName = "testDelete";
         ContentKey contentKey = new ContentKey();
         addAndCompare(contentKey, 1);
         addAndCompare(new ContentKey(), 2);
         addAndCompare(new ContentKey(), 3);
-        groupSet.delete(groupName);
-        assertEquals(0, groupSet.getSet(groupName, contentKey).size());
+        keysInFlight.delete(groupName);
+        assertEquals(0, keysInFlight.getSet(groupName, contentKey).size());
 
     }
 
