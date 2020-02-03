@@ -109,7 +109,7 @@ public class WebhookCoordinator {
                 log.warn("found multiple servers leading {}! {}", name, servers);
                 Collections.shuffle(servers);
                 for (int i = 1; i < servers.size(); i++) {
-                    webhookClient.remove(name, servers.get(i));
+                    webhookClient.stop(name, servers.get(i));
                 }
             }
             if (servers.isEmpty()) {
@@ -128,7 +128,7 @@ public class WebhookCoordinator {
     }
 
     public void stopLeader(String name) {
-        webhookClient.remove(name, activeWebhooks.getServers(name));
+        webhookClient.stop(name, activeWebhooks.getServers(name));
         webhookStateReaper.delete(name);
     }
 
