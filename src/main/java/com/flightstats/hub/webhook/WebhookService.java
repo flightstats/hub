@@ -154,7 +154,7 @@ public class WebhookService {
         deleteInstancesIfTagWebhook(name);
         this.webhookDao.delete(name);
         this.webhookCoordinator.stopLeader(name);
-    }
+d   }
 
     void updateCursor(Webhook webhook, ContentPath item) {
         this.delete(webhook.getName());
