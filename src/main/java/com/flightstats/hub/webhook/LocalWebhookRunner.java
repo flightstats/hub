@@ -79,7 +79,7 @@ public class LocalWebhookRunner {
                 return true;
             }
             log.info("webhook has changed {} to {}; stopping", runningWebhook, daoWebhook);
-            stop(name, false);
+            stop(name);
         }
         log.info("starting {}", name);
         return start(daoWebhook);
@@ -95,14 +95,14 @@ public class LocalWebhookRunner {
     }
 
     void stopAll() {
-        runAndWait("LocalWebhookRunner.stopAll", localLeaders.keySet(), (name) -> stop(name, false));
+        runAndWait("LocalWebhookRunner.stopAll", localLeaders.keySet(), this::stop);
     }
 
-    void stop(String name, boolean delete) {
-        log.info("stop {} {}", name, delete);
+    void stop(String name) {
+        log.info("stopping {} if running local", name);
         if (localLeaders.containsKey(name)) {
             log.info("stopping local {}", name);
-            localLeaders.get(name).exit(delete);
+            localLeaders.get(name).exit();
             localLeaders.remove(name);
         }
     }

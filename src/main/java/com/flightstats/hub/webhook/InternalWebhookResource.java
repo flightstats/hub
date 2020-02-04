@@ -202,7 +202,7 @@ public class InternalWebhookResource {
     }
 
     private Response attemptStop(String name) {
-        localWebhookRunner.stop(name, true);
+        localWebhookRunner.stop(name);
         return Response.ok().build();
     }
 
