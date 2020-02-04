@@ -155,8 +155,8 @@ public class WebhookService {
     public void delete(String name) {
         log.debug("deleting webhook {}", name);
         deleteInstancesIfTagWebhook(name);
-        this.webhookDao.delete(name);
         this.webhookCoordinator.stopLeader(name);
+        this.webhookDao.delete(name);
         this.webhookStateReaper.delete(name);
     }
 
