@@ -157,9 +157,6 @@ class WebhookLeader implements Lockable {
             closeStrategy();
             stopExecutor();
             webhookStateReaper.stop(webhook.getName());
-            if (deleteOnExit.get()) {
-                webhookStateReaper.delete(webhook.getName());
-            }
             log.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             statsdReporter.incrementEventCompletion(LEADERSHIP_METRIC, "name:" + webhook.getName());
             webhookStrategy = null;
@@ -262,12 +259,8 @@ class WebhookLeader implements Lockable {
                 long start = System.currentTimeMillis();
                 boolean shouldGoToNextItem = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
                 statsdReporter.time("webhook", start, "name:" + webhook.getName());
-                if (shouldGoToNextItem) {
-                    if (increaseLastUpdated(contentPath)) {
-                        if (!deleteOnExit.get()) {
-                            clusterCacheDao.setIfNewer(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
-                        }
-                    }
+                if (shouldGoToNextItem && increaseLastUpdated(contentPath)) {
+                    clusterCacheDao.setIfNewer(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
                 }
                 keysInFlight.remove(webhook.getName(), contentPath);
                 log.trace("done sending {} to {} ", contentPath, webhook.getName());
@@ -295,10 +288,9 @@ class WebhookLeader implements Lockable {
         return changed.get();
     }
 
-    void exit(boolean delete) {
+    void exit() {
         String name = webhook.getName();
-        log.debug("exiting webhook {} deleting {}", name, delete);
-        deleteOnExit.set(delete);
+        log.debug("stopping leadership on webhook {}", name);
         leadershipLock.ifPresent(distributedLockRunner::delete);
         closeStrategy();
         stopExecutor();
