@@ -1,7 +1,6 @@
 package com.flightstats.hub.config.binding;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -33,8 +32,6 @@ import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
-import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
@@ -67,7 +64,7 @@ import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.SecretFilter;
 import com.flightstats.hub.util.StaleEntity;
-import com.flightstats.hub.webhook.WebhookManager;
+import com.flightstats.hub.webhook.WebhookCoordinator;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.flightstats.hub.ws.WebSocketService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -306,7 +303,7 @@ public class HubBindings extends AbstractModule {
 
         bind(ReplicationManager.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
-        bind(WebhookManager.class).asEagerSingleton();
+        bind(WebhookCoordinator.class).asEagerSingleton();
         bind(SpokeManager.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
 

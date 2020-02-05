@@ -33,29 +33,29 @@ public class WebhookService {
 
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
-    private final WebhookManager webhookManager;
+    private final WebhookCoordinator webhookCoordinator;
     private final ClusterCacheDao clusterCacheDao;
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
-    private final LocalWebhookManager localWebhookManager;
+    private final LocalWebhookRunner localWebhookRunner;
     private final WebhookProperties webhookProperties;
 
     @Inject
     public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao,
                           WebhookValidator webhookValidator,
-                          WebhookManager webhookManager,
+                          WebhookCoordinator webhookCoordinator,
                           ClusterCacheDao clusterCacheDao,
                           ChannelService channelService,
                           ContentRetriever contentRetriever,
-                          LocalWebhookManager localWebhookManager,
+                          LocalWebhookRunner localWebhookRunner,
                           WebhookProperties webhookProperties) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
-        this.webhookManager = webhookManager;
+        this.webhookCoordinator = webhookCoordinator;
         this.clusterCacheDao = clusterCacheDao;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
-        this.localWebhookManager = localWebhookManager;
+        this.localWebhookRunner = localWebhookRunner;
         this.webhookProperties = webhookProperties;
     }
 
@@ -104,13 +104,13 @@ public class WebhookService {
         }
 
         webhookDao.upsert(webhook);
-        webhookManager.notifyWatchers(webhook);
+        webhookCoordinator.notifyWatchers(webhook);
         return preExisting;
     }
 
     private void upsertTagWebhook(Webhook webhook) {
         this.webhookDao.upsert(webhook);
-        this.webhookManager.notifyWatchers(webhook);
+        this.webhookCoordinator.notifyWatchers(webhook);
         this.upsertTagWebhookInstances(webhook);
     }
 
@@ -145,7 +145,7 @@ public class WebhookService {
         } catch (NoSuchChannelException e) {
             log.warn("no channel found for " + channel);
         }
-        webhookManager.getStatus(webhook, builder);
+        webhookCoordinator.getStatus(webhook, builder);
         return builder.build();
     }
 
@@ -153,7 +153,7 @@ public class WebhookService {
         log.debug("deleting webhook {}", name);
         deleteInstancesIfTagWebhook(name);
         this.webhookDao.delete(name);
-        this.webhookManager.delete(name);
+        this.webhookCoordinator.stopLeader(name);
     }
 
     void updateCursor(Webhook webhook, ContentPath item) {
@@ -172,7 +172,7 @@ public class WebhookService {
                 .map((Webhook::getName))
                 .collect(Collectors.toSet());
 
-        localWebhookManager.runAndWait("TagWebhook.deleteAll", names, this::delete);
+        localWebhookRunner.runAndWait("TagWebhook.deleteAll", names, this::delete);
     }
 
     // Add new wh instances for new or updated tag webhook

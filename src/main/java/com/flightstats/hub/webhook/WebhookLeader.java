@@ -45,7 +45,7 @@ class WebhookLeader implements Lockable {
     private final WebhookService webhookService;
     private final StatsdReporter statsdReporter;
     private final ClusterCacheDao clusterCacheDao;
-    private final WebhookContentPathSet webhookInProcess;
+    private final WebhookContentInFlight keysInFlight;
     private final WebhookErrorService webhookErrorService;
     private final WebhookStateReaper webhookStateReaper;
     private final DistributedLeaderLockManager lockManager;
@@ -67,7 +67,7 @@ class WebhookLeader implements Lockable {
                          WebhookService webhookService,
                          StatsdReporter statsdReporter,
                          ClusterCacheDao clusterCacheDao,
-                         WebhookContentPathSet webhookInProcess,
+                         WebhookContentInFlight keysInFlight,
                          WebhookErrorService webhookErrorService,
                          WebhookStateReaper webhookStateReaper,
                          DistributedLeaderLockManager lockManager,
@@ -78,7 +78,7 @@ class WebhookLeader implements Lockable {
         this.webhookService = webhookService;
         this.statsdReporter = statsdReporter;
         this.clusterCacheDao = clusterCacheDao;
-        this.webhookInProcess = webhookInProcess;
+        this.keysInFlight = keysInFlight;
         this.webhookErrorService = webhookErrorService;
         this.webhookStateReaper = webhookStateReaper;
         this.lockManager = lockManager;
@@ -229,7 +229,7 @@ class WebhookLeader implements Lockable {
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
-        Set<ContentPath> inProcessSet = webhookInProcess.getSet(webhook.getName(), lastCompletedPath);
+        Set<ContentPath> inProcessSet = keysInFlight.getSet(webhook.getName(), lastCompletedPath);
         log.debug("sending in process {} to {}", inProcessSet, webhook.getName());
         for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedPath) < 0) {
@@ -242,7 +242,7 @@ class WebhookLeader implements Lockable {
                 }
                 send(contentPath);
             } else {
-                webhookInProcess.remove(webhook.getName(), toSend);
+                keysInFlight.remove(webhook.getName(), toSend);
             }
         }
     }
@@ -255,7 +255,7 @@ class WebhookLeader implements Lockable {
             String workerName = Thread.currentThread().getName();
             Thread.currentThread().setName(workerName + "|" + parentName);
             ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
-            webhookInProcess.add(webhook.getName(), contentPath);
+            keysInFlight.add(webhook.getName(), contentPath);
             try {
                 statsdReporter.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                 long start = System.currentTimeMillis();
@@ -268,7 +268,7 @@ class WebhookLeader implements Lockable {
                         }
                     }
                 }
-                webhookInProcess.remove(webhook.getName(), contentPath);
+                keysInFlight.remove(webhook.getName(), contentPath);
                 log.trace("done sending {} to {} ", contentPath, webhook.getName());
             } catch (Exception e) {
                 log.warn("exception sending {} to {}", contentPath, webhook.getName(), e);
