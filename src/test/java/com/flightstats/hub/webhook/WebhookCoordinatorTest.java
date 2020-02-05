@@ -80,7 +80,7 @@ class WebhookCoordinatorTest {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet("hub-01"));
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient, never()).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
@@ -96,7 +96,7 @@ class WebhookCoordinatorTest {
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
@@ -110,7 +110,7 @@ class WebhookCoordinatorTest {
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
@@ -127,7 +127,7 @@ class WebhookCoordinatorTest {
         when(webhookClient.remove(WEBHOOK_NAME, SERVER2)).thenReturn(true);
         when(webhookClient.remove(WEBHOOK_NAME, SERVER3)).thenReturn(true);
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
 
         verify(webhookClient, times(2)).remove(eq(WEBHOOK_NAME), matches(
@@ -142,7 +142,7 @@ class WebhookCoordinatorTest {
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1));
         when(webhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1))).thenReturn(Optional.of(SERVER1));
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), true);
 
         verify(webhookClient).runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1));
@@ -161,7 +161,7 @@ class WebhookCoordinatorTest {
         when(webhookClient.remove(WEBHOOK_NAME, SERVER2)).thenReturn(true);
         when(webhookClient.remove(WEBHOOK_NAME, SERVER3)).thenReturn(true);
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), true);
 
         verify(webhookClient, times(2)).remove(eq(WEBHOOK_NAME), matches(
@@ -176,7 +176,7 @@ class WebhookCoordinatorTest {
                 .tagUrl("http://some.tag")
                 .build();
 
-        WebhookCoordinator webhookCoordinator = getWebhookManager();
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(tagWebhook, false);
 
         verify(activeWebhooks, never()).isActiveWebhook(anyString());
@@ -187,7 +187,7 @@ class WebhookCoordinatorTest {
 
     @Test
     void testRegistersServices() {
-        getWebhookManager();
+        getWebhookCoordinator();
         Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
         assertEquals(2, services.get(HubServices.TYPE.AFTER_HEALTHY_START).size());
         assertEquals(1, services.get(HubServices.TYPE.PRE_STOP).size());
@@ -196,12 +196,12 @@ class WebhookCoordinatorTest {
     @Test
     void testIfNotLeaderWontRegisterServices() {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
-        getWebhookManager();
+        getWebhookCoordinator();
         Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
         services.forEach((type, svcs) -> assertTrue(type + " has services registered", svcs.isEmpty()));
     }
 
-    private WebhookCoordinator getWebhookManager() {
+    private WebhookCoordinator getWebhookCoordinator() {
         return new WebhookCoordinator(
                 localWebhookRunner,
                 webhookErrorService,
