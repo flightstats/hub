@@ -15,7 +15,7 @@ import java.util.Optional;
  * So any ContentKeys contained within that second come before the SecondPath.
  */
 @Slf4j
-public class SecondPath implements ContentPathKeys {
+public class SecondPath implements DurationBasedContentPath {
     public static final SecondPath NONE = new SecondPath(new DateTime(1, DateTimeZone.UTC));
     private final DateTime time;
     private final Collection<ContentKey> keys;

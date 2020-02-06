@@ -15,7 +15,7 @@ import java.util.Optional;
  * So any ContentKeys contained within that minute come before the MinutePath.
  */
 @Slf4j
-public class MinutePath implements ContentPathKeys {
+public class MinutePath implements DurationBasedContentPath {
     public static final MinutePath NONE = new MinutePath(new DateTime(1, DateTimeZone.UTC));
     private final DateTime time;
     private final Collection<ContentKey> keys;

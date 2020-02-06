@@ -9,7 +9,7 @@ import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DurationBasedContentPath;
 import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.SecondPath;
@@ -50,7 +50,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private final ObjectMapper objectMapper;
     private final Webhook webhook;
 
-    private BlockingQueue<ContentPathKeys> queue;
+    private BlockingQueue<DurationBasedContentPath> queue;
     private String channel;
     private ScheduledExecutorService executorService;
 
@@ -58,7 +58,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private TimeUtil.Unit unit;
     private int period;
     private Supplier<Integer> getOffsetSeconds;
-    private BiFunction<DateTime, Collection<ContentKey>, ContentPathKeys> getContentPathKeys;
+    private BiFunction<DateTime, Collection<ContentKey>, DurationBasedContentPath> getContentPathKeys;
     private Supplier<ContentPath> getEmptyPath;
     private Function<ContentPath, DateTime> getReplicatingStable;
     private Function<DateTime, DateTime> getNextTime;
@@ -201,7 +201,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                                 .filter(key -> key.compareTo(lastAdded) > 0)
                                 .collect(Collectors.toCollection(ArrayList::new));
 
-                        ContentPathKeys pathAndKeys = getContentPathKeys.apply(timeBeingWorkedOn, keys);
+                        DurationBasedContentPath pathAndKeys = getContentPathKeys.apply(timeBeingWorkedOn, keys);
                         log.trace("results {} {} {}", channel, pathAndKeys, pathAndKeys.getKeys());
                         queue.put(pathAndKeys);
 
@@ -270,7 +270,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
         response.put("batchUrl", getBulkUrl(channelUrl, contentPath, "batch"));
         response.put("bulkUrl", getBulkUrl(channelUrl, contentPath, "bulk"));
         ArrayNode uris = response.putArray("uris");
-        Collection<ContentKey> keys = ((ContentPathKeys) contentPath).getKeys();
+        Collection<ContentKey> keys = ((DurationBasedContentPath) contentPath).getKeys();
         for (ContentKey key : keys) {
             uris.add(channelUrl + "/" + key.toUrl());
         }

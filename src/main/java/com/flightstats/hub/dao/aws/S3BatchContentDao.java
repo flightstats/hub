@@ -22,7 +22,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DurationBasedContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
@@ -152,7 +152,7 @@ public class S3BatchContentDao implements ContentDao {
         return builder.build();
     }
 
-    private ZipInputStream getZipInputStream(String channel, ContentPathKeys minutePath) {
+    private ZipInputStream getZipInputStream(String channel, DurationBasedContentPath minutePath) {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
         long start = System.currentTimeMillis();
         try {

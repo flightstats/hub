@@ -20,7 +20,7 @@ import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DurationBasedContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.LargeContentUtils;
@@ -322,8 +322,8 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending) {
-        final List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
+    private void getValues(String channelName, Consumer<Content> callback, DurationBasedContentPath durationBasedContentPath, boolean descending) {
+        final List<ContentKey> keys = new ArrayList<>(durationBasedContentPath.getKeys());
         if (descending) {
             Collections.reverse(keys);
         }
