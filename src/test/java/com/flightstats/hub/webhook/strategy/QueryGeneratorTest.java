@@ -1,7 +1,8 @@
-package com.flightstats.hub.webhook;
+package com.flightstats.hub.webhook.strategy;
 
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.webhook.strategy.QueryGenerator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;

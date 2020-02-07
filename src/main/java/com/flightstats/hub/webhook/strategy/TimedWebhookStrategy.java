@@ -1,4 +1,4 @@
-package com.flightstats.hub.webhook;
+package com.flightstats.hub.webhook.strategy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -16,6 +16,7 @@ import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
