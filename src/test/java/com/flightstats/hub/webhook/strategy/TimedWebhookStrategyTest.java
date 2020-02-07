@@ -1,20 +1,18 @@
-package com.flightstats.hub.webhook;
+package com.flightstats.hub.webhook.strategy;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SecondPath;
-import com.flightstats.hub.test.IntegrationTestSetup;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TimedWebhookStrategyTest {
-    @BeforeAll
-    static void setupIntegration() {
-        IntegrationTestSetup.run();
-    }
+//    @BeforeAll
+//    static void setupIntegration() {
+//        IntegrationTestSetup.run();
+//    }
 
     @Test
     void testRoundingSecondPath() {
@@ -44,4 +42,17 @@ class TimedWebhookStrategyTest {
         assertEquals(expected, stable.toString(), start.toString());
     }
 
+    @Test
+    void testRoundingMinutePath() {
+        compareContentPath(new DateTime(2016, 4, 21, 17, 0, 59, 0, DateTimeZone.UTC), "2016-04-21T16:59:00.000Z");
+        compareContentPath(new DateTime(2016, 4, 21, 17, 1, 58, 0, DateTimeZone.UTC), "2016-04-21T17:00:00.000Z");
+        compareContentPath(new DateTime(2016, 4, 21, 17, 58, 1, 0, DateTimeZone.UTC), "2016-04-21T17:57:00.000Z");
+        compareContentPath(new DateTime(2016, 4, 21, 17, 59, 59, 0, DateTimeZone.UTC), "2016-04-21T17:58:00.000Z");
+    }
+
+    private void compareContentPath(DateTime start, String expected) {
+        ContentKey secondPath = new ContentKey(start);
+        DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
+        assertEquals(expected, stable.toString(), start.toString());
+    }
 }
