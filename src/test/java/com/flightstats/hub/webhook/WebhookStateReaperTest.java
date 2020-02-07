@@ -80,7 +80,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDeleteCleansUpZookeeperNodesRelatedToState() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -99,7 +99,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -117,7 +117,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
@@ -135,7 +135,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
@@ -153,7 +153,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDeleteCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -171,7 +171,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testDeleteDoesNothingIfLeadershipDisabled() throws Exception {
+    void testDelete_doesNothing_whenLeadershipDisabled() throws Exception {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         // GIVEN
         addLastCompleted(webhookName);
@@ -191,7 +191,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testStopCleansUpZookeeperNodesRelatedToLeadershipStateButNotProgressOrErrors() throws Exception {
+    void testStop_cleansUpOnlyZookeeperLeadershipState() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -211,7 +211,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testStopCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
+    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoWebhookErrors() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -230,7 +230,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testStopCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
+    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoWebhookInProcess() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
@@ -249,7 +249,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testStopCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
+    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoContentWasAdded() throws Exception {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
@@ -268,7 +268,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testStopCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+    void testStop_cleansUpNothing_whenNoWebhookLeader() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -286,7 +286,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    void testStopDoesNothingIfLeadershipDisabled() throws Exception {
+    void testStop_doesNothing_whenLeadershipDisabled() throws Exception {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         // GIVEN
         addLastCompleted(webhookName);
