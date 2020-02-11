@@ -17,6 +17,7 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.Webhook;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -25,7 +26,11 @@ import org.joda.time.Minutes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -158,15 +163,9 @@ class TimedWebhookStrategy implements WebhookStrategy {
         return clusterCacheDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
-    @Override
-    public void start(Webhook webhook, ContentPath initialStartingPath) {
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
-        executorService = Executors.newSingleThreadScheduledExecutor(factory);
-        log.info("starting {} with starting path {}", webhook, initialStartingPath);
-        executorService.scheduleAtFixedRate(new Runnable() {
-
-            ContentPath lastAdded = initialStartingPath;
-
+    @VisibleForTesting
+    Runnable getContentKeyGenerator(Webhook webhook, ContentPath initialStartingPath) {
+        return new Runnable() {
             @Override
             public void run() {
                 try {
@@ -185,6 +184,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     log.error("unexpected issue with {}", webhook.getName(), e);
                 }
             }
+            ContentPath lastAdded = initialStartingPath;
 
             private void doWork() throws InterruptedException {
                 DateTime timeBeingWorkedOn = getNextTime();
@@ -234,8 +234,19 @@ class TimedWebhookStrategy implements WebhookStrategy {
                 }
                 return getNextTime.apply(lastTime);
             }
+        };
+    }
 
-        }, getOffsetSeconds.get(), period, TimeUnit.SECONDS);
+    @Override
+    public void start(Webhook webhook, ContentPath initialStartingPath) {
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
+        executorService = Executors.newSingleThreadScheduledExecutor(factory);
+        log.info("starting {} with starting path {}", webhook, initialStartingPath);
+        executorService.scheduleAtFixedRate(
+                getContentKeyGenerator(webhook, initialStartingPath),
+                getOffsetSeconds.get(),
+                period,
+                TimeUnit.SECONDS);
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
@@ -257,6 +268,13 @@ class TimedWebhookStrategy implements WebhookStrategy {
             throw e;
         }
         return Optional.ofNullable(queue.poll(10, TimeUnit.MINUTES));
+    }
+
+    @VisibleForTesting
+    SortedSet<ContentPathKeys> drainQueue() {
+        List<ContentPathKeys> contentPaths = new ArrayList<>();
+        queue.drainTo(contentPaths);
+        return new TreeSet<>(contentPaths);
     }
 
     @Override
