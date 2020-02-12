@@ -39,7 +39,6 @@ class WebhookLeader implements Lockable {
     private static final MetricsType LEADERSHIP_METRIC = MetricsType.WEBHOOK_LEADERSHIP;
 
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
-    private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     private final ContentRetriever contentRetriever;
     private final WebhookService webhookService;
@@ -259,7 +258,7 @@ class WebhookLeader implements Lockable {
                 long start = System.currentTimeMillis();
                 boolean shouldGoToNextItem = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
                 statsdReporter.time("webhook", start, "name:" + webhook.getName());
-                if (shouldGoToNextItem && increaseLastUpdated(contentPath)) {
+                if (shouldGoToNextItem && increaseLastUpdatedIfNewer(contentPath)) {
                     clusterCacheDao.setIfNewer(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
                 }
                 keysInFlight.remove(webhook.getName(), contentPath);
@@ -275,8 +274,8 @@ class WebhookLeader implements Lockable {
         });
     }
 
-    private boolean increaseLastUpdated(ContentPath newPath) {
-        final AtomicBoolean changed = new AtomicBoolean(false);
+    private boolean increaseLastUpdatedIfNewer(ContentPath newPath) {
+        AtomicBoolean changed = new AtomicBoolean(false);
         lastUpdated.getAndUpdate(existingPath -> {
             if (newPath.compareTo(existingPath) > 0) {
                 changed.set(true);
