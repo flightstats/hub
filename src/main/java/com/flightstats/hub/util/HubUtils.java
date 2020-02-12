@@ -116,16 +116,16 @@ public class HubUtils {
         }
     }
 
-    public void stopGroupCallback(String groupName, String sourceChannel) {
-        String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
-        log.debug("stopping {} ", groupUrl);
+    public void deleteWebhook(String groupName, String sourceChannel) {
+        String webhookUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
+        log.debug("deleting {} ", webhookUrl);
         ClientResponse response = null;
         try {
-            response = followClient.resource(groupUrl)
+            response = followClient.resource(webhookUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .delete(ClientResponse.class);
-            log.debug("stop group response {}", response);
+            log.debug("delete webhook {}", response);
         } finally {
             HubUtils.close(response);
         }

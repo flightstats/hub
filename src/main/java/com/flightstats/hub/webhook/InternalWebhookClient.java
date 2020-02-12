@@ -33,14 +33,14 @@ public class InternalWebhookClient {
         this.uriScheme = localHostProperties.getUriScheme();
     }
 
-    List<String> remove(String name, Collection<String> servers) {
+    List<String> stop(String name, Collection<String> servers) {
         return servers.stream()
-                .filter(server -> remove(name, server))
+                .filter(server -> stop(name, server))
                 .collect(toList());
     }
 
-    boolean remove(String name, String server) {
-        return put(server + "/internal/webhook/delete/" + name);
+    boolean stop(String name, String server) {
+        return put(server + "/internal/webhook/stop/" + name);
     }
 
     Optional<String> runOnServerWithFewestWebhooks(String name) {

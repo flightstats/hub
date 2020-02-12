@@ -75,7 +75,7 @@ public class InternalWebhookResource {
         directions.put("errors", "HTTP GET to /internal/webhook/errors to list all webhooks with recent errors.");
         directions.put("running", "HTTP GET to /internal/webhook/running to list all webhooks that are running on this server.");
         directions.put("run/{name}", "HTTP PUT to /internal/webhook/run/{name} to start processing this webhook.");
-        directions.put("delete/{name}", "HTTP PUT to /internal/webhook/delete/{name} to stop processing this webhook on this server.");
+        directions.put("stop/{name}", "HTTP PUT to /internal/webhook/stop/{name} to stop processing this webhook on this server.");
 
         final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
@@ -170,11 +170,11 @@ public class InternalWebhookResource {
     }
 
     @PUT
-    @Path("/delete/{name}")
+    @Path("/stop/{name}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response delete(@PathParam("name") String name) {
-        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
-        return attemptDelete(name);
+    public Response stop(@PathParam("name") String name) {
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "stop", name));
+        return attemptStop(name);
     }
 
     @GET
@@ -201,8 +201,8 @@ public class InternalWebhookResource {
         return Response.status(400).build();
     }
 
-    private Response attemptDelete(String name) {
-        localWebhookRunner.stop(name, true);
+    private Response attemptStop(String name) {
+        localWebhookRunner.stop(name);
         return Response.ok().build();
     }
 
