@@ -117,11 +117,11 @@ public class HubUtils {
     }
 
     public void deleteWebhook(String groupName, String sourceChannel) {
-        String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
-        log.debug("stopping {} ", groupUrl);
+        String webhookUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
+        log.debug("deleting {} ", webhookUrl);
         ClientResponse response = null;
         try {
-            response = followClient.resource(groupUrl)
+            response = followClient.resource(webhookUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .delete(ClientResponse.class);
