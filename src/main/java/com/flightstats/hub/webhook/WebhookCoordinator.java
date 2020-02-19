@@ -103,9 +103,10 @@ public class WebhookCoordinator {
             return;
         }
         String name = daoWebhook.getName();
-        if (activeWebhooks.isActiveWebhook(name)) {
+        ActiveWebhooks.WebhookState state = activeWebhooks.getState(name);
+        if (state.isLeadershipAcquired()) {
             log.debug("found existing webhook {}", name);
-            List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
+            List<String> servers = new ArrayList<>(state.getRunningServers());
             if (servers.size() >= 2) {
                 log.warn("found multiple servers leading {}! {}", name, servers);
                 Collections.shuffle(servers);
@@ -129,7 +130,8 @@ public class WebhookCoordinator {
     }
 
     public void stopLeader(String name) {
-        webhookClient.stop(name, activeWebhooks.getServers(name));
+        ActiveWebhooks.WebhookState state = activeWebhooks.getState(name);
+        webhookClient.stop(name, state.getRunningServers());
         webhookStateReaper.stop(name);
     }
 

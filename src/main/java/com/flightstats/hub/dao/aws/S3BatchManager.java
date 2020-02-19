@@ -65,8 +65,9 @@ public class S3BatchManager {
                     appProperties.getAppEnv());
 
             if (channel.isSingle()) {
-                if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {
-                    log.debug("turning off batch webhook {}", channel.getDisplayName());
+                ActiveWebhooks.WebhookState state = activeWebhooks.getState(channel.getName());
+                if (!state.isStopped()) {
+                    log.debug("turning off batch webhook for {}", channel.getDisplayName());
                     s3Batch.delete();
                 }
             } else {

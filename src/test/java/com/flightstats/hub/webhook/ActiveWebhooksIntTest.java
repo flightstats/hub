@@ -18,9 +18,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
 import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -101,11 +104,20 @@ class ActiveWebhooksIntTest {
         assertEquals(3, webhooks.size());
         assertEquals(newHashSet(WEBHOOK_WITH_LOCK, WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE), newHashSet(webhooks));
 
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_A_FEW_LEASES));
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LOCK));
+        ActiveWebhooks.WebhookState state = ActiveWebhooks.WebhookState.builder().build();
+        assertEquals(
+                state.withLeadershipAcquired(true).withRunningServers(getServersWithPort(SERVER_IP1, SERVER_IP2)),
+                activeWebhooks.getState(WEBHOOK_WITH_A_FEW_LEASES));
+        assertEquals(
+                state.withLeadershipAcquired(true).withRunningServers(getServersWithPort(SERVER_IP1)),
+                activeWebhooks.getState(WEBHOOK_WITH_LEASE));
+        assertEquals(
+                state.withLeadershipAcquired(true).withRunningServers(newHashSet()),
+                activeWebhooks.getState(WEBHOOK_WITH_LOCK));
 
-        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
+        assertEquals(
+                state.withLeadershipAcquired(false).withRunningServers(newHashSet()),
+                activeWebhooks.getState(EMPTY_WEBHOOK));
     }
 
     private void createWebhook(String webhook) {
@@ -132,5 +144,11 @@ class ActiveWebhooksIntTest {
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
+
+    private Set<String> getServersWithPort(String... servers) {
+        return Stream.of(servers)
+                .map(server -> format("%s:0", server))
+                .collect(toSet());
     }
 }
