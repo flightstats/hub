@@ -77,10 +77,10 @@ public class ChannelValidator {
                 throw new ForbiddenRequestException("{\"error\": \"A channels retention policy (keepForever) is not allowed to decrease in this environment\"}");
             }
 
-            if (config.getMaxItems() < oldConfig.getMaxItems()) {
+            if (!config.getKeepForever() && config.getMaxItems() < oldConfig.getMaxItems()) {
                 throw new ForbiddenRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
             }
-            if (config.getTtlDays() < oldConfig.getTtlDays()) {
+            if (!config.getKeepForever() && config.getTtlDays() < oldConfig.getTtlDays()) {
                 throw new ForbiddenRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
             }
             if (!StringUtils.isEmpty(oldConfig.getReplicationSource())

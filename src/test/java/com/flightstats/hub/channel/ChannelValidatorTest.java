@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import static com.flightstats.hub.model.ChannelType.BATCH;
 import static com.flightstats.hub.model.ChannelType.BOTH;
 import static com.flightstats.hub.model.ChannelType.SINGLE;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -163,6 +165,21 @@ class ChannelValidatorTest {
                 .name("mychan")
                 .keepForever(true)
                 .build(), null, false);
+    }
+
+    @Test
+    void testDowngradingFromKeepForever() {
+        ChannelConfig forever = getBuilder()
+                .name("forever")
+                .keepForever(true)
+                .build();
+
+        assertThrows(ForbiddenRequestException.class,
+                () -> validator.validate(forever.toBuilder().keepForever(false).maxItems(300).build(), forever, false));
+
+        assertThrows(ForbiddenRequestException.class,
+                () -> validator.validate(forever.toBuilder().keepForever(false).ttlDays(300).build(), forever, false));
+
     }
 
     @Test
@@ -372,6 +389,27 @@ class ChannelValidatorTest {
                 .storage(SINGLE.name())
                 .build();
         assertThrows(InvalidRequestException.class, () -> validator.validate(historical.toBuilder().storage(BATCH.name()).build(), historical, false));
+    }
+
+
+    @Test
+    void changeToKeepForeverFromTtlDays() {
+        ChannelConfig single = ChannelConfig.builder()
+                .owner("some guy")
+                .ttlDays(30)
+                .keepForever(false)
+                .name("defaults").build();
+        assertDoesNotThrow(() -> validator.validate(single.toBuilder().keepForever(true).ttlDays(0).build(), single, false));
+    }
+
+    @Test
+    void changeToKeepForeverFromMaxItems() {
+        ChannelConfig single = ChannelConfig.builder()
+                .owner("some guy")
+                .maxItems(30)
+                .keepForever(false)
+                .name("defaults").build();
+        assertDoesNotThrow(() -> validator.validate(single.toBuilder().keepForever(true).maxItems(0).build(), single, false));
     }
 
 }
