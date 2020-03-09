@@ -56,6 +56,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private final ObjectMapper objectMapper;
     private final Webhook webhook;
 
+    private final ThreadFactory threadFactory;
     private BlockingQueue<ContentPathKeys> queue;
     private String channel;
     private ScheduledExecutorService executorService;
@@ -81,6 +82,10 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
         this.channel = webhook.getChannelName();
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
+        this.threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s")
+                .build();
+
         if (webhook.isSecond()) {
             secondConfig();
         } else {
@@ -239,8 +244,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     @Override
     public void start(Webhook webhook, ContentPath initialStartingPath) {
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
-        executorService = Executors.newSingleThreadScheduledExecutor(factory);
+        executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
         log.info("starting {} with starting path {}", webhook, initialStartingPath);
         executorService.scheduleAtFixedRate(
                 getContentKeyGenerator(webhook, initialStartingPath),
