@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -55,6 +57,7 @@ public class InternalWebhookClient {
 
     /**
      * We want this to return this list in order from fewest to most
+     * If we get a non-200, return max int so it's tried last
      */
     @VisibleForTesting
     Collection<String> getOrderedServers() {
@@ -64,7 +67,8 @@ public class InternalWebhookClient {
     }
 
     private Integer getCount(String server) {
-        return get(server + "/internal/webhook/count");
+        return get(server + "/internal/webhook/count")
+                .orElse(Integer.MAX_VALUE);
     }
 
     private boolean put(String url) {
@@ -87,7 +91,7 @@ public class InternalWebhookClient {
         return false;
     }
 
-    private int get(String url) {
+    private Optional<Integer> get(String url) {
         ClientResponse response = null;
         String hubUrl = uriScheme + url;
         try {
@@ -95,7 +99,8 @@ public class InternalWebhookClient {
             response = client.resource(hubUrl).get(ClientResponse.class);
             if (response.getStatus() == 200) {
                 log.trace("success {}", response);
-                return Integer.parseInt(response.getEntity(String.class));
+                Integer count = Integer.parseInt(response.getEntity(String.class));
+                return Optional.of(count);
             } else {
                 log.error("unexpected response {}", response);
             }
@@ -104,6 +109,6 @@ public class InternalWebhookClient {
         } finally {
             HubUtils.close(response);
         }
-        return 0;
+        return Optional.empty();
     }
 }

@@ -17,8 +17,6 @@ import java.util.Optional;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,10 +36,6 @@ class InternalWebhookClientTest {
     private Client restClient;
     @Mock
     private LocalHostProperties localHostProperties;
-    @Mock
-    private ClientResponse clientResponse;
-    @Mock
-    private WebResource webResource;
     private InternalWebhookClient internalWebhookClient;
 
     @BeforeEach
@@ -53,11 +47,11 @@ class InternalWebhookClientTest {
     @Test
     void testRunOnServerWithFewestWebhooks() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
-        mockServerWebhookCount(SERVER2, 6);
-        mockServerWebhookCount(SERVER1, 1);
-        mockServerWebhookCount(SERVER3, 2);
+        mockServerWebhookCountEndpoint(SERVER2, 6);
+        mockServerWebhookCountEndpoint(SERVER1, 1);
+        mockServerWebhookCountEndpoint(SERVER3, 2);
 
-        mockWebhookRun(SERVER1);
+        mockWebhookRunEndpoint(SERVER1, true);
 
         Optional<String> serverRun = internalWebhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME);
 
@@ -71,11 +65,12 @@ class InternalWebhookClientTest {
     @Test
     void testRunOnServerWithFewestWebhooks_withFailureFromServerWithFewest() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
-        mockServerWebhookCount(SERVER2, 6);
-        mockServerWebhookCount(SERVER1, 1);
-        mockServerWebhookCount(SERVER3, 2);
+        mockServerWebhookCountEndpoint(SERVER2, 6);
+        mockServerWebhookCountEndpoint(SERVER1, 1);
+        mockServerWebhookCountEndpoint(SERVER3, 2);
 
-        mockWebhookRun(SERVER3);
+        mockWebhookRunEndpoint(SERVER1, false);
+        mockWebhookRunEndpoint(SERVER3, true);
 
         Optional<String> serverRun = internalWebhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME);
 
@@ -89,11 +84,11 @@ class InternalWebhookClientTest {
     @Test
     void testRunOnServerWithFewestWebhooks_picksOneIfServersAreTied() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
-        mockServerWebhookCount(SERVER2, 6);
-        mockServerWebhookCount(SERVER1, 1);
-        mockServerWebhookCount(SERVER3, 1);
+        mockServerWebhookCountEndpoint(SERVER2, 6);
+        mockServerWebhookCountEndpoint(SERVER1, 1);
+        mockServerWebhookCountEndpoint(SERVER3, 1);
 
-        mockWebhookRun(SERVER1);
+        mockWebhookRunEndpoint(SERVER1, true);
 
         Optional<String> serverRun = internalWebhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME);
 
@@ -107,30 +102,31 @@ class InternalWebhookClientTest {
     @Test
     void testRunOnServerWithFewestWebhooks_picksOneEvenIfACountRequestFails() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
-        mockServerWebhookCount(SERVER1, 1);
-        mockServerWebhookCount(SERVER2, 6);
-        mockServerWebhookCount(SERVER3, 2);
+        mockFailedServerWebhookCountEndpoint(SERVER1);
+        mockServerWebhookCountEndpoint(SERVER2, 6);
+        mockServerWebhookCountEndpoint(SERVER3, 2);
 
-        mockWebhookRun(SERVER3);
+        mockWebhookRunEndpoint(SERVER3, true);
 
         Optional<String> serverRun = internalWebhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME);
 
         assertEquals(Optional.of(SERVER3), serverRun);
 
-        verify(restClient).resource(runUrl(SERVER1));
         verify(restClient).resource(runUrl(SERVER3));
+        verify(restClient, never()).resource(runUrl(SERVER1));
         verify(restClient, never()).resource(runUrl(SERVER2));
     }
 
     @Test
     void testRunOnServerWithFewestWebhooks_returnsEmptyIfAllServersFailToRun() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
-        mockServerWebhookCount(SERVER1, 1);
-        mockServerWebhookCount(SERVER2, 6);
-        mockServerWebhookCount(SERVER3, 2);
+        mockServerWebhookCountEndpoint(SERVER1, 1);
+        mockServerWebhookCountEndpoint(SERVER2, 6);
+        mockServerWebhookCountEndpoint(SERVER3, 2);
 
-        when(restClient.resource(runUrl("no success"))).thenReturn(webResource);
-        when(clientResponse.getStatus()).thenReturn(200);
+        mockWebhookRunEndpoint(SERVER1, false);
+        mockWebhookRunEndpoint(SERVER2, false);
+        mockWebhookRunEndpoint(SERVER3, false);
 
         Optional<String> serverRun = internalWebhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME);
 
@@ -144,8 +140,8 @@ class InternalWebhookClientTest {
 
     @Test
     void testRunOnOneServer_runsInOrderUntilOneSucceeds() {
-        when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
-        mockWebhookRun(SERVER1);
+        mockWebhookRunEndpoint(SERVER2, false);
+        mockWebhookRunEndpoint(SERVER1, true);
 
         Optional<String> serverRun = internalWebhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER2, SERVER1, SERVER3));
 
@@ -154,30 +150,29 @@ class InternalWebhookClientTest {
         verify(restClient).resource(runUrl(SERVER2));
         verify(restClient).resource(runUrl(SERVER1));
         verify(restClient, never()).resource(runUrl(SERVER3));
-
     }
 
     @Test
     void testStop_success() {
-        mockWebhookStop(SERVER1, true);
+        mockWebhookStopEndpoint(SERVER1, true);
 
-        assertTrue(internalWebhookClient.stop(WEBHOOK_NAME, SERVER1));
+        assertEquals(newArrayList(SERVER1), internalWebhookClient.stop(WEBHOOK_NAME, newArrayList(SERVER1)));
         verify(restClient).resource(stopUrl(SERVER1));
     }
 
     @Test
     void testStop_fails() {
-        mockWebhookStop(SERVER1, false);
+        mockWebhookStopEndpoint(SERVER1, false);
 
-        assertFalse(internalWebhookClient.stop(WEBHOOK_NAME, SERVER1));
+        assertEquals(newArrayList(), internalWebhookClient.stop(WEBHOOK_NAME, newArrayList(SERVER1)));
         verify(restClient).resource(stopUrl(SERVER1));
     }
 
     @Test
     void testStopAll_success() {
-        mockWebhookStop(SERVER1, true);
-        mockWebhookStop(SERVER2, true);
-        mockWebhookStop(SERVER3, true);
+        mockWebhookStopEndpoint(SERVER1, true);
+        mockWebhookStopEndpoint(SERVER2, true);
+        mockWebhookStopEndpoint(SERVER3, true);
 
         List<String> removed = internalWebhookClient.stop(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3));
 
@@ -189,10 +184,10 @@ class InternalWebhookClientTest {
     }
 
     @Test
-    void testStopAll_withSomeFailure_continuesToCallDeleteonAllServers() {
-        mockWebhookStop(SERVER1, false);
-        mockWebhookStop(SERVER2, false);
-        mockWebhookStop(SERVER3, true);
+    void testStopAll_withSomeFailure_continuesToCallDeleteOnAllServers() {
+        mockWebhookStopEndpoint(SERVER1, false);
+        mockWebhookStopEndpoint(SERVER2, false);
+        mockWebhookStopEndpoint(SERVER3, true);
 
         List<String> removed = internalWebhookClient.stop(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3));
 
@@ -203,22 +198,38 @@ class InternalWebhookClientTest {
         verify(restClient).resource(stopUrl(SERVER3));
     }
 
-    private void mockServerWebhookCount(String server, int count) {
+    private void mockServerWebhookCountEndpoint(String server, int count) {
+        ClientResponse clientResponse = mock(ClientResponse.class);
+        WebResource webResource = mock(WebResource.class);
+
         when(clientResponse.getStatus()).thenReturn(200);
         when(clientResponse.getEntity(String.class)).thenReturn(String.valueOf(count));
         when(webResource.get(ClientResponse.class)).thenReturn(clientResponse);
         when(restClient.resource(countUrl(server))).thenReturn(webResource);
     }
 
-    private void mockWebhookRun(String server) {
-        when(restClient.resource(runUrl(server))).thenReturn(webResource);
-        when(webResource.put(ClientResponse.class)).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
+    private void mockFailedServerWebhookCountEndpoint(String server) {
+        ClientResponse clientResponse = mock(ClientResponse.class);
+        WebResource webResource = mock(WebResource.class);
+
+        when(clientResponse.getStatus()).thenReturn(500);
+        when(webResource.get(ClientResponse.class)).thenReturn(clientResponse);
+        when(restClient.resource(countUrl(server))).thenReturn(webResource);
     }
 
-    private void mockWebhookStop(String server, boolean success) {
+    private void mockWebhookRunEndpoint(String server, boolean success) {
+        ClientResponse clientResponse = mock(ClientResponse.class);
+        WebResource webResource = mock(WebResource.class);
+
+        when(restClient.resource(runUrl(server))).thenReturn(webResource);
+        when(webResource.put(ClientResponse.class)).thenReturn(clientResponse);
+        when(clientResponse.getStatus()).thenReturn(success ? 200 : 400);
+    }
+
+    private void mockWebhookStopEndpoint(String server, boolean success) {
         ClientResponse response = mock(ClientResponse.class);
         when(response.getStatus()).thenReturn(success ? 200 : 500);
+
         WebResource webResource = mock(WebResource.class);
         when(webResource.put(ClientResponse.class)).thenReturn(response);
         when(restClient.resource(stopUrl(server))).thenReturn(webResource);
