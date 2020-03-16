@@ -7,6 +7,7 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.webhook.strategy.WebhookStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;

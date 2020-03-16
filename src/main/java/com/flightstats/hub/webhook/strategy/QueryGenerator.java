@@ -1,4 +1,4 @@
-package com.flightstats.hub.webhook;
+package com.flightstats.hub.webhook.strategy;
 
 import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.Location;

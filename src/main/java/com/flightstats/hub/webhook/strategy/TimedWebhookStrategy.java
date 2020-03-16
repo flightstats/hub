@@ -1,4 +1,4 @@
-package com.flightstats.hub.webhook;
+package com.flightstats.hub.webhook.strategy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -16,6 +16,8 @@ import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.webhook.Webhook;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -24,7 +26,11 @@ import org.joda.time.Minutes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -50,6 +56,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private final ObjectMapper objectMapper;
     private final Webhook webhook;
 
+    private final ThreadFactory threadFactory;
     private BlockingQueue<ContentPathKeys> queue;
     private String channel;
     private ScheduledExecutorService executorService;
@@ -58,8 +65,8 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private TimeUtil.Unit unit;
     private int period;
     private Supplier<Integer> getOffsetSeconds;
-    private BiFunction<DateTime, Collection<ContentKey>, ContentPathKeys> newTime;
-    private Supplier<ContentPath> getNone;
+    private BiFunction<DateTime, Collection<ContentKey>, ContentPathKeys> getContentPathKeys;
+    private Supplier<ContentPath> getEmptyPath;
     private Function<ContentPath, DateTime> getReplicatingStable;
     private Function<DateTime, DateTime> getNextTime;
     private Duration duration;
@@ -75,6 +82,10 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
         this.channel = webhook.getChannelName();
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
+        this.threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s")
+                .build();
+
         if (webhook.isSecond()) {
             secondConfig();
         } else {
@@ -105,8 +116,8 @@ class TimedWebhookStrategy implements WebhookStrategy {
         unit = TimeUtil.Unit.MINUTES;
         duration = unit.getDuration();
 
-        newTime = MinutePath::new;
-        getNone = () -> MinutePath.NONE;
+        getContentPathKeys = MinutePath::new;
+        getEmptyPath = () -> MinutePath.NONE;
         getReplicatingStable = TimedWebhookStrategy::replicatingStable_minute;
         getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
     }
@@ -117,8 +128,8 @@ class TimedWebhookStrategy implements WebhookStrategy {
         unit = TimeUtil.Unit.SECONDS;
         duration = unit.getDuration();
 
-        newTime = SecondPath::new;
-        getNone = () -> SecondPath.NONE;
+        getContentPathKeys = SecondPath::new;
+        getEmptyPath = () -> SecondPath.NONE;
         getReplicatingStable = ContentPath::getTime;
         getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
     }
@@ -157,15 +168,9 @@ class TimedWebhookStrategy implements WebhookStrategy {
         return clusterCacheDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
-    @Override
-    public void start(Webhook webhook, ContentPath startingPath) {
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
-        executorService = Executors.newSingleThreadScheduledExecutor(factory);
-        log.info("starting {} with starting path {}", webhook, startingPath);
-        executorService.scheduleAtFixedRate(new Runnable() {
-
-            ContentPath lastAdded = startingPath;
-
+    @VisibleForTesting
+    Runnable getContentKeyGenerator(Webhook webhook, ContentPath initialStartingPath) {
+        return new Runnable() {
             @Override
             public void run() {
                 try {
@@ -184,43 +189,68 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     log.error("unexpected issue with {}", webhook.getName(), e);
                 }
             }
+            ContentPath lastAdded = initialStartingPath;
 
             private void doWork() throws InterruptedException {
-                DateTime nextTime = getNextTime.apply(lastAdded.getTime());
-                if (lastAdded instanceof ContentKey) {
-                    nextTime = lastAdded.getTime();
-                }
-                DateTime stable = TimeUtil.stable().minus(duration);
-                if (!contentRetriever.isLiveChannel(channel)) {
-                    ContentPath contentPath = contentRetriever.getLastUpdated(channel, getNone.get());
-                    DateTime replicatedStable = getReplicatingStable.apply(contentPath);
-                    if (replicatedStable.isBefore(stable)) {
-                        stable = replicatedStable;
-                    }
-                    log.debug("replicating {} stable {}", contentPath, stable);
-                }
-                log.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
-                while (nextTime.isBefore(stable)) {
+                DateTime timeBeingWorkedOn = getNextTime();
+                DateTime stableTime = getStableTime();
+                log.debug("webhook: {} lastAddedPath {} timeBeingWorkedOn {} stable {}",
+                        webhook, initialStartingPath, timeBeingWorkedOn, stableTime);
+
+                while (timeBeingWorkedOn.isBefore(stableTime)) {
+                    log.debug("working on {} {}", channel, timeBeingWorkedOn);
                     try {
                         ActiveTraces.start("TimedWebhookStrategy.doWork", webhook);
-                        Collection<ContentKey> keys = queryKeys(nextTime)
+                        Collection<ContentKey> keys = queryKeys(timeBeingWorkedOn)
                                 .stream()
                                 .filter(key -> key.compareTo(lastAdded) > 0)
                                 .collect(Collectors.toCollection(ArrayList::new));
 
-                        ContentPathKeys nextPath = newTime.apply(nextTime, keys);
-                        log.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
-                        queue.put(nextPath);
-                        lastAdded = nextPath;
+                        ContentPathKeys pathAndKeys = getContentPathKeys.apply(timeBeingWorkedOn, keys);
+                        log.trace("results {} {} {}", channel, pathAndKeys, pathAndKeys.getKeys());
+                        queue.put(pathAndKeys);
+
+                        lastAdded = pathAndKeys;
                         determineStrategy(lastAdded.getTime());
-                        nextTime = getNextTime.apply(lastAdded.getTime());
+                        timeBeingWorkedOn = getNextTime();
                     } finally {
                         ActiveTraces.end();
                     }
                 }
             }
 
-        }, getOffsetSeconds.get(), period, TimeUnit.SECONDS);
+            private DateTime getStableTime() {
+                DateTime defaultStableTime = TimeUtil.stable().minus(duration);
+                if (!contentRetriever.isLiveChannel(channel)) {
+                    ContentPath lastUpdatePath = contentRetriever.getLastUpdated(channel, getEmptyPath.get());
+                    DateTime replicatedStable = getReplicatingStable.apply(lastUpdatePath);
+                    log.debug("{}: replicating {} replicated stable {}", webhook, lastUpdatePath, replicatedStable);
+                    if (replicatedStable.isBefore(defaultStableTime)) {
+                        return replicatedStable;
+                    }
+                }
+                return defaultStableTime;
+            }
+
+            private DateTime getNextTime() {
+                DateTime lastTime = lastAdded.getTime();
+                if (lastAdded instanceof ContentKey) {
+                    return lastTime;
+                }
+                return getNextTime.apply(lastTime);
+            }
+        };
+    }
+
+    @Override
+    public void start(Webhook webhook, ContentPath initialStartingPath) {
+        executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        log.info("starting {} with starting path {}", webhook, initialStartingPath);
+        executorService.scheduleAtFixedRate(
+                getContentKeyGenerator(webhook, initialStartingPath),
+                getOffsetSeconds.get(),
+                period,
+                TimeUnit.SECONDS);
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
@@ -242,6 +272,13 @@ class TimedWebhookStrategy implements WebhookStrategy {
             throw e;
         }
         return Optional.ofNullable(queue.poll(10, TimeUnit.MINUTES));
+    }
+
+    @VisibleForTesting
+    SortedSet<ContentPathKeys> drainQueue() {
+        List<ContentPathKeys> contentPaths = new ArrayList<>();
+        queue.drainTo(contentPaths);
+        return new TreeSet<>(contentPaths);
     }
 
     @Override
@@ -269,7 +306,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     @Override
     public ContentPath inProcess(ContentPath contentPath) {
-        return newTime.apply(contentPath.getTime(), queryKeys(contentPath.getTime()));
+        return getContentPathKeys.apply(contentPath.getTime(), queryKeys(contentPath.getTime()));
     }
 
     @Override
