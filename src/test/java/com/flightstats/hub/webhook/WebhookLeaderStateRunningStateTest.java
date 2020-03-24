@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import static com.google.common.collect.Sets.newHashSet;
 import static junit.framework.Assert.assertEquals;
 
-class ActiveWebhooksWebhookStateTest {
+class WebhookLeaderStateRunningStateTest {
     @ParameterizedTest
     @MethodSource("buildTestData")
     void testRunning(TestData testData) {
@@ -31,7 +31,7 @@ class ActiveWebhooksWebhookStateTest {
     }
 
     private static Stream<TestData> buildTestData() {
-        ActiveWebhooks.WebhookState state = ActiveWebhooks.WebhookState.builder().build();
+        WebhookLeaderState.RunningState state = WebhookLeaderState.RunningState.builder().build();
         return Stream.of(
                 TestData.builder().testName("stopped")
                         .state(state
@@ -94,7 +94,7 @@ class ActiveWebhooksWebhookStateTest {
     @Value
     private static class TestData {
         String testName;
-        ActiveWebhooks.WebhookState state;
+        WebhookLeaderState.RunningState state;
 
         boolean running;
         boolean stopped;

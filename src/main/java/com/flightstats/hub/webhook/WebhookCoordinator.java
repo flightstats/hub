@@ -36,7 +36,7 @@ public class WebhookCoordinator {
     private final InternalWebhookClient webhookClient;
     private final WebhookStateReaper webhookStateReaper;
     private final ClusterCacheDao clusterCacheDao;
-    private final ActiveWebhooks activeWebhooks;
+    private final WebhookLeaderState webhookLeaderState;
     private final WatchManager watchManager;
     private final Dao<Webhook> webhookDao;
 
@@ -47,7 +47,7 @@ public class WebhookCoordinator {
                               InternalWebhookClient webhookClient,
                               WebhookStateReaper webhookStateReaper,
                               ClusterCacheDao clusterCacheDao,
-                              ActiveWebhooks activeWebhooks,
+                              WebhookLeaderState webhookLeaderState,
                               WebhookProperties webhookProperties,
                               WatchManager watchManager,
                               @Named("Webhook") Dao<Webhook> webhookDao) {
@@ -57,7 +57,7 @@ public class WebhookCoordinator {
         this.webhookClient = webhookClient;
         this.webhookStateReaper = webhookStateReaper;
         this.clusterCacheDao = clusterCacheDao;
-        this.activeWebhooks = activeWebhooks;
+        this.webhookLeaderState = webhookLeaderState;
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
 
@@ -103,7 +103,7 @@ public class WebhookCoordinator {
         }
 
         String name = daoWebhook.getName();
-        ActiveWebhooks.WebhookState state = activeWebhooks.getState(name);
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(name);
         WebhookActionDirector director = new WebhookActionDirector(daoWebhook, state, webhookChanged);
 
         if (director.webhookRequiresNoChanges()) {
@@ -125,11 +125,11 @@ public class WebhookCoordinator {
 
     @VisibleForTesting
     static class WebhookActionDirector {
-        private ActiveWebhooks.WebhookState state;
+        private final WebhookLeaderState.RunningState state;
         private final boolean hasChanged;
         private final Webhook webhook;
 
-        WebhookActionDirector(Webhook webhook, ActiveWebhooks.WebhookState state, boolean hasChanged) {
+        WebhookActionDirector(Webhook webhook, WebhookLeaderState.RunningState state, boolean hasChanged) {
             this.webhook = webhook;
             this.state = state;
             this.hasChanged = hasChanged;
@@ -159,7 +159,7 @@ public class WebhookCoordinator {
     }
 
     public void stopLeader(String name) {
-        ActiveWebhooks.WebhookState state = activeWebhooks.getState(name);
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(name);
         webhookClient.stop(name, state.getRunningServers());
         webhookStateReaper.stop(name);
     }

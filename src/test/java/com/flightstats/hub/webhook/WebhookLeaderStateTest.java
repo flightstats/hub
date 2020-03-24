@@ -2,13 +2,9 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
-import lombok.Builder;
-import lombok.Value;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,7 +21,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ActiveWebhooksTest {
+class WebhookLeaderStateTest {
     private static final int HUB_PORT = 8080;
 
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
@@ -44,11 +40,11 @@ class ActiveWebhooksTest {
     private LocalHostProperties localHostProperties;
     @Mock
     private WebhookProperties webhookProperties;
-    private ActiveWebhooks activeWebhooks;
+    private WebhookLeaderState webhookLeaderState;
 
     @BeforeEach
     void setup() {
-        activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
+        webhookLeaderState = new WebhookLeaderState(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
         reset(webhookLeaderLocks);
     }
 
@@ -58,7 +54,7 @@ class ActiveWebhooksTest {
                 .thenReturn(newHashSet(SERVER_IP2, SERVER_IP1));
         when(localHostProperties.getPort()).thenReturn(HUB_PORT);
 
-        ActiveWebhooks.WebhookState state = activeWebhooks.getState(WEBHOOK_WITH_A_FEW_LEASES);
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(getServersWithPort(SERVER_IP1, SERVER_IP2), state.getRunningServers());
     }
@@ -68,7 +64,7 @@ class ActiveWebhooksTest {
     void testGetServers_returnsAnEmptyListIfThereAreNoLeases() {
         when(webhookLeaderLocks.getServerLeases(EMPTY_WEBHOOK))
                 .thenReturn(newHashSet());
-        ActiveWebhooks.WebhookState state = activeWebhooks.getState(EMPTY_WEBHOOK);
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(EMPTY_WEBHOOK);
 
         assertEquals(newHashSet(), state.getRunningServers());
     }
@@ -78,7 +74,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks.WebhookState state = activeWebhooks.getState(WEBHOOK_WITH_LEASE);
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(WEBHOOK_WITH_LEASE);
         assertTrue(state.isLeadershipAcquired());
     }
 
@@ -88,7 +84,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks.WebhookState state = activeWebhooks.getState(EMPTY_WEBHOOK);
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(EMPTY_WEBHOOK);
         assertFalse(state.isLeadershipAcquired());
     }
 

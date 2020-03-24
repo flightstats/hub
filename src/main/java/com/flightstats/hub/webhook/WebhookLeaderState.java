@@ -13,12 +13,12 @@ import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
 @Singleton
-public class ActiveWebhooks {
+public class WebhookLeaderState {
     private final WebhookLeaderLocks webhookLeaderLocks;
     private final LocalHostProperties localHostProperties;
 
     @Inject
-    public ActiveWebhooks(
+    public WebhookLeaderState(
             WebhookLeaderLocks webhookLeaderLocks,
             ActiveWebhookSweeper activeWebhookSweeper,
             WebhookProperties webhookProperties,
@@ -31,8 +31,8 @@ public class ActiveWebhooks {
         this.localHostProperties = localHostProperties;
     }
 
-    public WebhookState getState(String webhookName) {
-        return WebhookState.builder()
+    public RunningState getState(String webhookName) {
+        return RunningState.builder()
                 .leadershipAcquired(hasLeader(webhookName))
                 .runningServers(getServers(webhookName))
                 .build();
@@ -51,7 +51,7 @@ public class ActiveWebhooks {
     @Builder
     @Wither
     @Value
-    public static class WebhookState {
+    public static class RunningState {
         boolean leadershipAcquired;
         Set<String> runningServers;
 

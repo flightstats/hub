@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-class ActiveWebhooksIntTest {
+class WebhookLeaderStateIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
@@ -98,26 +98,26 @@ class ActiveWebhooksIntTest {
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
+        WebhookLeaderState webhookLeaderState = new WebhookLeaderState(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals(3, webhooks.size());
         assertEquals(newHashSet(WEBHOOK_WITH_LOCK, WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE), newHashSet(webhooks));
 
-        ActiveWebhooks.WebhookState state = ActiveWebhooks.WebhookState.builder().build();
+        WebhookLeaderState.RunningState state = WebhookLeaderState.RunningState.builder().build();
         assertEquals(
                 state.withLeadershipAcquired(true).withRunningServers(getServersWithPort(SERVER_IP1, SERVER_IP2)),
-                activeWebhooks.getState(WEBHOOK_WITH_A_FEW_LEASES));
+                webhookLeaderState.getState(WEBHOOK_WITH_A_FEW_LEASES));
         assertEquals(
                 state.withLeadershipAcquired(true).withRunningServers(getServersWithPort(SERVER_IP1)),
-                activeWebhooks.getState(WEBHOOK_WITH_LEASE));
+                webhookLeaderState.getState(WEBHOOK_WITH_LEASE));
         assertEquals(
                 state.withLeadershipAcquired(true).withRunningServers(newHashSet()),
-                activeWebhooks.getState(WEBHOOK_WITH_LOCK));
+                webhookLeaderState.getState(WEBHOOK_WITH_LOCK));
 
         assertEquals(
                 state.withLeadershipAcquired(false).withRunningServers(newHashSet()),
-                activeWebhooks.getState(EMPTY_WEBHOOK));
+                webhookLeaderState.getState(EMPTY_WEBHOOK));
     }
 
     private void createWebhook(String webhook) {
