@@ -3,7 +3,6 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -83,8 +82,7 @@ public class InternalWebhookClient {
      * We want this to return this list in order from fewest to most
      * If we get a non-200, return max int so it's tried last
      */
-    @VisibleForTesting
-    Collection<String> getOrderedServers() {
+    private Collection<String> getOrderedServers() {
         return hubCluster.getRandomServers().stream()
                 .sorted(Comparator.comparingInt(this::getCount))
                 .collect(toList());
