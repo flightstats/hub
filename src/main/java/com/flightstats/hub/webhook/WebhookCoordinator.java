@@ -37,7 +37,7 @@ public class WebhookCoordinator {
     private final InternalWebhookClient webhookClient;
     private final WebhookStateReaper webhookStateReaper;
     private final ClusterCacheDao clusterCacheDao;
-    private final ActiveWebhooks activeWebhooks;
+    private final WebhookLeaderState webhookLeaderState;
     private final WatchManager watchManager;
     private final Dao<Webhook> webhookDao;
 
@@ -48,7 +48,7 @@ public class WebhookCoordinator {
                               InternalWebhookClient webhookClient,
                               WebhookStateReaper webhookStateReaper,
                               ClusterCacheDao clusterCacheDao,
-                              ActiveWebhooks activeWebhooks,
+                              WebhookLeaderState webhookLeaderState,
                               WebhookProperties webhookProperties,
                               WatchManager watchManager,
                               @Named("Webhook") Dao<Webhook> webhookDao) {
@@ -58,7 +58,7 @@ public class WebhookCoordinator {
         this.webhookClient = webhookClient;
         this.webhookStateReaper = webhookStateReaper;
         this.clusterCacheDao = clusterCacheDao;
-        this.activeWebhooks = activeWebhooks;
+        this.webhookLeaderState = webhookLeaderState;
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
 
@@ -103,9 +103,9 @@ public class WebhookCoordinator {
             return;
         }
         String name = daoWebhook.getName();
-        if (activeWebhooks.isActiveWebhook(name)) {
+        if (webhookLeaderState.isActiveWebhook(name)) {
             log.debug("found existing webhook {}", name);
-            List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
+            List<String> servers = new ArrayList<>(webhookLeaderState.getServers(name));
             if (servers.size() >= 2) {
                 log.warn("found multiple servers leading {}! {}", name, servers);
                 Collections.shuffle(servers);
@@ -129,7 +129,7 @@ public class WebhookCoordinator {
     }
 
     public void stopLeader(String name) {
-        webhookClient.stop(name, activeWebhooks.getServers(name));
+        webhookClient.stop(name, webhookLeaderState.getServers(name));
         webhookStateReaper.stop(name);
     }
 

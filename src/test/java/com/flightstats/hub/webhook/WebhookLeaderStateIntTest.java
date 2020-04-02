@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-class ActiveWebhooksIntTest {
+class WebhookLeaderStateIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
@@ -95,17 +95,17 @@ class ActiveWebhooksIntTest {
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
+        WebhookLeaderState webhookLeaderState = new WebhookLeaderState(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals(3, webhooks.size());
         assertEquals(newHashSet(WEBHOOK_WITH_LOCK, WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE), newHashSet(webhooks));
 
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_A_FEW_LEASES));
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LOCK));
+        assertTrue(webhookLeaderState.isActiveWebhook(WEBHOOK_WITH_A_FEW_LEASES));
+        assertTrue(webhookLeaderState.isActiveWebhook(WEBHOOK_WITH_LEASE));
+        assertTrue(webhookLeaderState.isActiveWebhook(WEBHOOK_WITH_LOCK));
 
-        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
+        assertFalse(webhookLeaderState.isActiveWebhook(EMPTY_WEBHOOK));
     }
 
     private void createWebhook(String webhook) {

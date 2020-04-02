@@ -10,12 +10,12 @@ import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
 @Singleton
-public class ActiveWebhooks {
+public class WebhookLeaderState {
     private final WebhookLeaderLocks webhookLeaderLocks;
     private final LocalHostProperties localHostProperties;
 
     @Inject
-    public ActiveWebhooks(
+    public WebhookLeaderState(
             WebhookLeaderLocks webhookLeaderLocks,
             ActiveWebhookSweeper activeWebhookSweeper,
             WebhookProperties webhookProperties,

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ActiveWebhooksTest {
+class WebhookLeaderStateTest {
     private static final int HUB_PORT = 8080;
 
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
@@ -39,11 +39,11 @@ class ActiveWebhooksTest {
     private LocalHostProperties localHostProperties;
     @Mock
     private WebhookProperties webhookProperties;
-    private ActiveWebhooks activeWebhooks;
+    private WebhookLeaderState webhookLeaderState;
 
     @BeforeEach
     public void setup() {
-        activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
+        webhookLeaderState = new WebhookLeaderState(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
     }
 
     @Test
@@ -51,7 +51,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getServerLeases(WEBHOOK_WITH_A_FEW_LEASES))
                 .thenReturn(newHashSet(SERVER_IP2, SERVER_IP1));
         when(localHostProperties.getPort()).thenReturn(HUB_PORT);
-        Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_A_FEW_LEASES);
+        Set<String> servers = webhookLeaderState.getServers(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(getServersWithPort(SERVER_IP1, SERVER_IP2), servers);
     }
@@ -61,7 +61,7 @@ class ActiveWebhooksTest {
     void testGetServers_returnsAnEmptyListIfThereAreNoLeases() {
         when(webhookLeaderLocks.getServerLeases(EMPTY_WEBHOOK))
                 .thenReturn(newHashSet());
-        Set<String> servers = activeWebhooks.getServers(EMPTY_WEBHOOK);
+        Set<String> servers = webhookLeaderState.getServers(EMPTY_WEBHOOK);
 
         assertEquals(newHashSet(), servers);
     }
@@ -71,7 +71,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
+        assertTrue(webhookLeaderState.isActiveWebhook(WEBHOOK_WITH_LEASE));
     }
 
 
@@ -80,7 +80,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
+        assertFalse(webhookLeaderState.isActiveWebhook(EMPTY_WEBHOOK));
     }
 
     private Set<String> getServersWithPort(String... servers) {
