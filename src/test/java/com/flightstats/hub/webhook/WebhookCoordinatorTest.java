@@ -77,8 +77,11 @@ class WebhookCoordinatorTest {
 
     @Test
     void testWhenWebhookIsManagedOnExactlyOneServer_doesNothing() {
-        when(webhookLeaderState.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
-        when(webhookLeaderState.getServers(WEBHOOK_NAME)).thenReturn(newHashSet("hub-01"));
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(true)
+                        .runningServers(newHashSet("hub-01"))
+                        .build());
 
         WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(Webhook.builder().name(WEBHOOK_NAME).build(), false);
@@ -91,8 +94,11 @@ class WebhookCoordinatorTest {
 
     @Test
     void testWhenNewWebhook_getsAddedToServerManagingFewestWebhooks() {
-        when(webhookLeaderState.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
-        when(webhookLeaderState.getServers(WEBHOOK_NAME)).thenReturn(newHashSet());
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(true)
+                        .runningServers(newHashSet())
+                        .build());
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
 
@@ -106,7 +112,11 @@ class WebhookCoordinatorTest {
 
     @Test
     void testWhenInactiveWebhook_getsAddedToServerManagingFewestWebhooks() {
-        when(webhookLeaderState.isActiveWebhook(WEBHOOK_NAME)).thenReturn(false);
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(false)
+                        .runningServers(newHashSet())
+                        .build());
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
 
@@ -120,8 +130,11 @@ class WebhookCoordinatorTest {
 
     @Test
     void testWhenWebhookIsManagedByMultipleServers_isRemovedFromAllButOneServer() {
-        when(webhookLeaderState.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
-        when(webhookLeaderState.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1, SERVER2, SERVER3));
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(true)
+                        .runningServers(newHashSet(SERVER1, SERVER2, SERVER3))
+                        .build());
 
         when(webhookClient.stop(WEBHOOK_NAME, SERVER1)).thenReturn(true);
         when(webhookClient.stop(WEBHOOK_NAME, SERVER2)).thenReturn(true);
@@ -138,8 +151,11 @@ class WebhookCoordinatorTest {
 
     @Test
     void testWhenWebhookHasChanged_isRunOnAServerThatItWasAlreadyRunningOn() {
-        when(webhookLeaderState.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
-        when(webhookLeaderState.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1));
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(true)
+                        .runningServers(newHashSet(SERVER1))
+                        .build());
         when(webhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1))).thenReturn(Optional.of(SERVER1));
 
         WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
@@ -153,8 +169,11 @@ class WebhookCoordinatorTest {
     void testWhenWebhookHasChanged_isRunOnAServerThatItWasAlreadyRunningOnAndOnlyOneServer() {
         // TODO: this is a weird case, because it doesn't check that it's trying to run on a server that hasn't been removed;
         // it just picks one that it was running on before it was deleted
-        when(webhookLeaderState.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
-        when(webhookLeaderState.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1, SERVER2, SERVER3));
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(true)
+                        .runningServers(newHashSet(SERVER1, SERVER2, SERVER3))
+                        .build());
 
         when(webhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1, SERVER2, SERVER3))).thenReturn(Optional.of(SERVER1));
         when(webhookClient.stop(WEBHOOK_NAME, SERVER1)).thenReturn(true);
@@ -179,7 +198,7 @@ class WebhookCoordinatorTest {
         WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
         webhookCoordinator.ensureRunningOnOnlyOneServer(tagWebhook, false);
 
-        verify(webhookLeaderState, never()).isActiveWebhook(anyString());
+        verify(webhookLeaderState, never()).getState(WEBHOOK_NAME);
         verify(webhookClient, never()).runOnOneServer(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
         verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyCollectionOf(String.class));
         verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyString());

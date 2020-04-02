@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class WebhookStateReaperTest {
+class RunningStateReaperTest {
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
     private static final ContentKey key = new ContentKey(start, "B");
     private static final String webhookName = "onTheHook";
