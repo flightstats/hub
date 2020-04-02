@@ -164,6 +164,40 @@ class WebhookCoordinatorTest {
     }
 
     @Test
+    void testWhenWebhookIsPausedButStillRunning_isStopped() {
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(true)
+                        .runningServers(newHashSet(SERVER1))
+                        .build());
+
+
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(getPausedWebhook(), true);
+
+        verify(webhookClient).stop(WEBHOOK_NAME, newHashSet(SERVER1));
+        verify(webhookClient, never()).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
+        verify(webhookClient, never()).runOnOnlyOneServer(eq(WEBHOOK_NAME), any());
+    }
+
+    @Test
+    void testWhenWebhookIsPausedAndNotRunning_doesNothing() {
+        when(webhookLeaderState.getState(WEBHOOK_NAME)).thenReturn(
+                WebhookLeaderState.RunningState.builder()
+                        .leadershipAcquired(false)
+                        .runningServers(newHashSet())
+                        .build());
+
+
+        WebhookCoordinator webhookCoordinator = getWebhookCoordinator();
+        webhookCoordinator.ensureRunningOnOnlyOneServer(getPausedWebhook(), true);
+
+        verify(webhookClient, never()).stop(eq(WEBHOOK_NAME), anyCollection());
+        verify(webhookClient, never()).runOnServerWithFewestWebhooks(WEBHOOK_NAME);
+        verify(webhookClient, never()).runOnOnlyOneServer(eq(WEBHOOK_NAME), any());
+    }
+
+    @Test
     void testSkipsTagWebhooks() {
         Webhook tagWebhook = Webhook.builder()
                 .name(WEBHOOK_NAME)
@@ -199,6 +233,13 @@ class WebhookCoordinatorTest {
         return Webhook.builder()
                 .name(WEBHOOK_NAME)
                 .paused(false)
+                .build();
+    }
+
+    private Webhook getPausedWebhook() {
+        return Webhook.builder()
+                .name(WEBHOOK_NAME)
+                .paused(true)
                 .build();
     }
 
