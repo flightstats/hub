@@ -19,7 +19,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -102,26 +101,45 @@ public class WebhookCoordinator {
             // associated with a tag webhook
             return;
         }
+
         String name = daoWebhook.getName();
         WebhookLeaderState.RunningState state = webhookLeaderState.getState(name);
-        if (state.isLeadershipAcquired()) {
-            log.debug("found existing webhook {}", name);
-            List<String> servers = new ArrayList<>(state.getRunningServers());
-            if (servers.size() >= 2) {
-                log.warn("found multiple servers leading {}! {}", name, servers);
-                Collections.shuffle(servers);
-                for (int i = 1; i < servers.size(); i++) {
-                    webhookClient.stop(name, servers.get(i));
-                }
-            }
-            if (servers.isEmpty()) {
-                webhookClient.runOnServerWithFewestWebhooks(name);
-            } else if (webhookChanged) {
-                webhookClient.runOnOneServer(name, servers);
-            }
-        } else {
+        WebhookActionDirector director = new WebhookActionDirector(state, webhookChanged);
+
+        if (director.webhookRequiresNoChanges()) {
+            log.debug("no changes required for {}", name);
+        } else if (director.webhookShouldStart()) {
             log.debug("found v2 webhook {}", name);
             webhookClient.runOnServerWithFewestWebhooks(name);
+        } else if (director.webhookShouldRestartOnOneServerAndStopAnyOthers()) {
+            log.debug("found existing webhook {} running on {}", name, state.getRunningServers());
+            webhookClient.runOnOnlyOneServer(name, state.getRunningServers());
+        } else {
+            log.warn("the webhook coordinator seems to have a bug; this statement shouldn't be reached");
+        }
+
+    }
+
+    @VisibleForTesting
+    static class WebhookActionDirector {
+        private final WebhookLeaderState.RunningState state;
+        private final boolean hasChanged;
+
+        WebhookActionDirector(WebhookLeaderState.RunningState state, boolean hasChanged) {
+            this.state = state;
+            this.hasChanged = hasChanged;
+        }
+
+        boolean webhookShouldStart() {
+            return state.isStopped();
+        }
+
+        boolean webhookRequiresNoChanges() {
+            return state.isRunningOnSingleServer() && !hasChanged;
+        }
+
+        boolean webhookShouldRestartOnOneServerAndStopAnyOthers() {
+            return hasChanged || state.isRunningInAbnormalState();
         }
     }
 
