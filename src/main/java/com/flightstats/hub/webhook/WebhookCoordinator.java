@@ -104,10 +104,13 @@ public class WebhookCoordinator {
 
         String name = daoWebhook.getName();
         WebhookLeaderState.RunningState state = webhookLeaderState.getState(name);
-        WebhookActionDirector director = new WebhookActionDirector(state, webhookChanged);
+        WebhookActionDirector director = new WebhookActionDirector(daoWebhook, state, webhookChanged);
 
         if (director.webhookRequiresNoChanges()) {
             log.debug("no changes required for {}", name);
+        } else if (director.webhookShouldStop()) {
+            log.debug("stopping {}", name);
+            webhookClient.stop(name, state.getRunningServers());
         } else if (director.webhookShouldStart()) {
             log.debug("found v2 webhook {}", name);
             webhookClient.runOnServerWithFewestWebhooks(name);
@@ -124,22 +127,30 @@ public class WebhookCoordinator {
     static class WebhookActionDirector {
         private final WebhookLeaderState.RunningState state;
         private final boolean hasChanged;
+        private final Webhook webhook;
 
-        WebhookActionDirector(WebhookLeaderState.RunningState state, boolean hasChanged) {
+        WebhookActionDirector(Webhook webhook, WebhookLeaderState.RunningState state, boolean hasChanged) {
+            this.webhook = webhook;
             this.state = state;
             this.hasChanged = hasChanged;
         }
 
+        boolean webhookShouldStop() {
+            return webhook.isPaused() && !state.isStopped();
+        }
+
         boolean webhookShouldStart() {
-            return state.isStopped();
+            return !webhook.isPaused() && state.isStopped();
         }
 
         boolean webhookRequiresNoChanges() {
-            return state.isRunningOnSingleServer() && !hasChanged;
+            boolean isUnchangedAndRunning = !webhook.isPaused() && state.isRunningOnSingleServer() && !hasChanged;
+            boolean isStoppedAndPaused = webhook.isPaused() && state.isStopped();
+            return isUnchangedAndRunning || isStoppedAndPaused;
         }
 
         boolean webhookShouldRestartOnOneServerAndStopAnyOthers() {
-            return hasChanged || state.isRunningInAbnormalState();
+            return !webhook.isPaused() && (hasChanged || state.isRunningInAbnormalState());
         }
     }
 
