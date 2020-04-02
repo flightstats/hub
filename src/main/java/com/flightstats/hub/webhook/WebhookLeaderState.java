@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Wither;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
@@ -53,7 +54,8 @@ public class WebhookLeaderState {
     @Value
     public static class RunningState {
         boolean leadershipAcquired;
-        Set<String> runningServers;
+        @Builder.Default
+        Set<String> runningServers = Collections.emptySet();
 
         public boolean isRunningOnSingleServer() {
             return isLeadershipAcquired() && getRunningServers().size() == 1;
