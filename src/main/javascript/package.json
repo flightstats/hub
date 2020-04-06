@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "aws-sdk": "^2.339.0",
-    "minimist": "^1.2.2",
+    "minimist": "^1.2.3",
     "ws": "^3.3.1"
   }
 }
