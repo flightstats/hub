@@ -123,7 +123,8 @@ public class WebhookCoordinator {
 
     }
 
-    private static class WebhookActionDirector {
+    @VisibleForTesting
+    static class WebhookActionDirector {
         private final WebhookLeaderState.RunningState state;
         private final boolean hasChanged;
         private final Webhook webhook;
