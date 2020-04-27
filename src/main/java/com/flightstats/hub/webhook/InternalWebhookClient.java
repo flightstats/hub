@@ -3,19 +3,18 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.flightstats.hub.constant.NamedBinding.WEBHOOK_CLIENT;
 import static java.util.stream.Collectors.toList;
@@ -45,22 +44,45 @@ public class InternalWebhookClient {
         return put(server + "/internal/webhook/stop/" + name);
     }
 
-    Optional<String> runOnServerWithFewestWebhooks(String name) {
-        return runOnOneServer(name, getOrderedServers());
+    Optional<String> runOnOnlyOneServer(String name, Collection<String> runningServers) {
+        Optional<String> successfulServerRun = Optional.ofNullable(
+                runOnOneServer(name, runningServers).orElseGet(
+                        () -> runOnServerWithFewestWebhooksExcluding(name, runningServers).orElse(null)));
+
+        runningServers.stream()
+                .filter(server -> successfulServerRun
+                        .map(successfulRun -> !server.equals(successfulRun))
+                        .orElse(true))
+                .forEach(server -> stop(name, server));
+
+        return successfulServerRun;
     }
 
     Optional<String> runOnOneServer(String name, Collection<String> servers) {
-        return servers.stream()
+        return runOnOneServer(name, servers.stream());
+    }
+
+    Optional<String> runOnServerWithFewestWebhooks(String name) {
+        return runOnServerWithFewestWebhooksExcluding(name, Collections.emptyList());
+    }
+
+    private Optional<String> runOnOneServer(String name, Stream<String> servers) {
+        return servers
                 .filter(server -> put(server + "/internal/webhook/run/" + name))
                 .findFirst();
+    }
+
+    private Optional<String> runOnServerWithFewestWebhooksExcluding(String name, Collection<String> servers) {
+        Stream<String> availableServers = getOrderedServers().stream()
+                .filter(server -> !servers.contains(server));
+        return runOnOneServer(name, availableServers);
     }
 
     /**
      * We want this to return this list in order from fewest to most
      * If we get a non-200, return max int so it's tried last
      */
-    @VisibleForTesting
-    Collection<String> getOrderedServers() {
+    private Collection<String> getOrderedServers() {
         return hubCluster.getRandomServers().stream()
                 .sorted(Comparator.comparingInt(this::getCount))
                 .collect(toList());

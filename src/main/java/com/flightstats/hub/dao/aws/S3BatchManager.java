@@ -7,7 +7,7 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.webhook.ActiveWebhooks;
+import com.flightstats.hub.webhook.WebhookLeaderState;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -27,20 +27,20 @@ public class S3BatchManager {
     private final WebhookService webhookService;
     private final Dao<ChannelConfig> channelConfigDao;
     private final HubUtils hubUtils;
-    private final ActiveWebhooks activeWebhooks;
+    private final WebhookLeaderState webhookLeaderState;
     private final AppProperties appProperties;
 
     @Inject
     public S3BatchManager(WebhookService webhookService,
                           @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                           HubUtils hubUtils,
-                          ActiveWebhooks activeWebhooks,
+                          WebhookLeaderState webhookLeaderState,
                           AppProperties appProperties,
                           S3Properties s3Properties) {
         this.webhookService = webhookService;
         this.channelConfigDao = channelConfigDao;
         this.hubUtils = hubUtils;
-        this.activeWebhooks = activeWebhooks;
+        this.webhookLeaderState = webhookLeaderState;
         this.appProperties = appProperties;
 
         if (s3Properties.isBatchManagementEnabled()) {
@@ -65,8 +65,9 @@ public class S3BatchManager {
                     appProperties.getAppEnv());
 
             if (channel.isSingle()) {
-                if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {
-                    log.debug("turning off batch webhook {}", channel.getDisplayName());
+                WebhookLeaderState.RunningState state = webhookLeaderState.getState(channel.getName());
+                if (!state.isStopped()) {
+                    log.debug("turning off batch webhook for {}", channel.getDisplayName());
                     s3Batch.delete();
                 }
             } else {

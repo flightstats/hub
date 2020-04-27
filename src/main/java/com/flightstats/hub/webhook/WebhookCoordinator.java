@@ -19,7 +19,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +36,7 @@ public class WebhookCoordinator {
     private final InternalWebhookClient webhookClient;
     private final WebhookStateReaper webhookStateReaper;
     private final ClusterCacheDao clusterCacheDao;
-    private final ActiveWebhooks activeWebhooks;
+    private final WebhookLeaderState webhookLeaderState;
     private final WatchManager watchManager;
     private final Dao<Webhook> webhookDao;
 
@@ -48,7 +47,7 @@ public class WebhookCoordinator {
                               InternalWebhookClient webhookClient,
                               WebhookStateReaper webhookStateReaper,
                               ClusterCacheDao clusterCacheDao,
-                              ActiveWebhooks activeWebhooks,
+                              WebhookLeaderState webhookLeaderState,
                               WebhookProperties webhookProperties,
                               WatchManager watchManager,
                               @Named("Webhook") Dao<Webhook> webhookDao) {
@@ -58,7 +57,7 @@ public class WebhookCoordinator {
         this.webhookClient = webhookClient;
         this.webhookStateReaper = webhookStateReaper;
         this.clusterCacheDao = clusterCacheDao;
-        this.activeWebhooks = activeWebhooks;
+        this.webhookLeaderState = webhookLeaderState;
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
 
@@ -102,25 +101,56 @@ public class WebhookCoordinator {
             // associated with a tag webhook
             return;
         }
+
         String name = daoWebhook.getName();
-        if (activeWebhooks.isActiveWebhook(name)) {
-            log.debug("found existing webhook {}", name);
-            List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
-            if (servers.size() >= 2) {
-                log.warn("found multiple servers leading {}! {}", name, servers);
-                Collections.shuffle(servers);
-                for (int i = 1; i < servers.size(); i++) {
-                    webhookClient.stop(name, servers.get(i));
-                }
-            }
-            if (servers.isEmpty()) {
-                webhookClient.runOnServerWithFewestWebhooks(name);
-            } else if (webhookChanged) {
-                webhookClient.runOnOneServer(name, servers);
-            }
-        } else {
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(name);
+        WebhookActionDirector director = new WebhookActionDirector(daoWebhook, state, webhookChanged);
+
+        if (director.webhookRequiresNoChanges()) {
+            log.debug("no changes required for {}", name);
+        } else if (director.webhookShouldStop()) {
+            log.debug("stopping {}", name);
+            webhookClient.stop(name, state.getRunningServers());
+        } else if (director.webhookShouldStart()) {
             log.debug("found v2 webhook {}", name);
             webhookClient.runOnServerWithFewestWebhooks(name);
+        } else if (director.webhookShouldRestartOnOneServerAndStopAnyOthers()) {
+            log.debug("found existing webhook {} running on {}", name, state.getRunningServers());
+            webhookClient.runOnOnlyOneServer(name, state.getRunningServers());
+        } else {
+            log.warn("the webhook coordinator seems to have a bug; this statement shouldn't be reached");
+        }
+
+    }
+
+    @VisibleForTesting
+    static class WebhookActionDirector {
+        private final WebhookLeaderState.RunningState state;
+        private final boolean hasChanged;
+        private final Webhook webhook;
+
+        WebhookActionDirector(Webhook webhook, WebhookLeaderState.RunningState state, boolean hasChanged) {
+            this.webhook = webhook;
+            this.state = state;
+            this.hasChanged = hasChanged;
+        }
+
+        boolean webhookShouldStop() {
+            return webhook.isPaused() && !state.isStopped();
+        }
+
+        boolean webhookShouldStart() {
+            return !webhook.isPaused() && state.isStopped();
+        }
+
+        boolean webhookRequiresNoChanges() {
+            boolean isUnchangedAndRunning = !webhook.isPaused() && state.isRunningOnSingleServer() && !hasChanged;
+            boolean isStoppedAndPaused = webhook.isPaused() && state.isStopped();
+            return isUnchangedAndRunning || isStoppedAndPaused;
+        }
+
+        boolean webhookShouldRestartOnOneServerAndStopAnyOthers() {
+            return !webhook.isPaused() && (hasChanged || state.isRunningInAbnormalState());
         }
     }
 
@@ -129,7 +159,8 @@ public class WebhookCoordinator {
     }
 
     public void stopLeader(String name) {
-        webhookClient.stop(name, activeWebhooks.getServers(name));
+        WebhookLeaderState.RunningState state = webhookLeaderState.getState(name);
+        webhookClient.stop(name, state.getRunningServers());
         webhookStateReaper.stop(name);
     }
 

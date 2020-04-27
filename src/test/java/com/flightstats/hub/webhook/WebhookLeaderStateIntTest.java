@@ -18,9 +18,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
 import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,7 +35,7 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-class ActiveWebhooksIntTest {
+class WebhookLeaderStateIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
@@ -95,17 +98,26 @@ class ActiveWebhooksIntTest {
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
+        WebhookLeaderState webhookLeaderState = new WebhookLeaderState(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals(3, webhooks.size());
         assertEquals(newHashSet(WEBHOOK_WITH_LOCK, WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE), newHashSet(webhooks));
 
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_A_FEW_LEASES));
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
-        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LOCK));
+        WebhookLeaderState.RunningState state = WebhookLeaderState.RunningState.builder().build();
+        assertEquals(
+                state.withLeadershipAcquired(true).withRunningServers(getServersWithPort(SERVER_IP1, SERVER_IP2)),
+                webhookLeaderState.getState(WEBHOOK_WITH_A_FEW_LEASES));
+        assertEquals(
+                state.withLeadershipAcquired(true).withRunningServers(getServersWithPort(SERVER_IP1)),
+                webhookLeaderState.getState(WEBHOOK_WITH_LEASE));
+        assertEquals(
+                state.withLeadershipAcquired(true).withRunningServers(newHashSet()),
+                webhookLeaderState.getState(WEBHOOK_WITH_LOCK));
 
-        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
+        assertEquals(
+                state.withLeadershipAcquired(false).withRunningServers(newHashSet()),
+                webhookLeaderState.getState(EMPTY_WEBHOOK));
     }
 
     private void createWebhook(String webhook) {
@@ -132,5 +144,11 @@ class ActiveWebhooksIntTest {
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
+
+    private Set<String> getServersWithPort(String... servers) {
+        return Stream.of(servers)
+                .map(server -> format("%s:0", server))
+                .collect(toSet());
     }
 }

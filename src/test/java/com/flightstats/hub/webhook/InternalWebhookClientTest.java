@@ -19,6 +19,7 @@ import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +30,7 @@ class InternalWebhookClientTest {
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
     private static final String SERVER3 = "123.3.1";
+    private static final String SERVER4 = "123.4.1";
 
     @Mock
     private CuratorCluster hubCluster;
@@ -42,6 +44,7 @@ class InternalWebhookClientTest {
     void setup() {
         when(localHostProperties.getUriScheme()).thenReturn("http://");
         internalWebhookClient = new InternalWebhookClient(hubCluster, restClient, localHostProperties);
+        reset(restClient);
     }
 
     @Test
@@ -143,13 +146,96 @@ class InternalWebhookClientTest {
         mockWebhookRunEndpoint(SERVER2, false);
         mockWebhookRunEndpoint(SERVER1, true);
 
-        Optional<String> serverRun = internalWebhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER2, SERVER1, SERVER3));
+        Optional<String> serverRun = internalWebhookClient.runOnOneServer(WEBHOOK_NAME,
+                newArrayList(SERVER2, SERVER1, SERVER3));
 
         assertEquals(Optional.of(SERVER1), serverRun);
 
         verify(restClient).resource(runUrl(SERVER2));
         verify(restClient).resource(runUrl(SERVER1));
         verify(restClient, never()).resource(runUrl(SERVER3));
+    }
+
+    @Test
+    void testRunOnOnlyOneServer_ensuresRunningOnSingleServer() {
+        mockWebhookRunEndpoint(SERVER2, true);
+
+        Optional<String> serverRun = internalWebhookClient.runOnOnlyOneServer(WEBHOOK_NAME,
+                newArrayList(SERVER2));
+
+        assertEquals(Optional.of(SERVER2), serverRun);
+
+        verify(restClient).resource(runUrl(SERVER2));
+        verify(restClient, never()).resource(stopUrl(SERVER2));
+    }
+
+    @Test
+    void testRunOnOnlyOneServer_stopsOtherServers() {
+        mockWebhookRunEndpoint(SERVER2, true);
+        mockWebhookStopEndpoint(SERVER1, false);
+
+        Optional<String> serverRun = internalWebhookClient.runOnOnlyOneServer(WEBHOOK_NAME,
+                newArrayList(SERVER2, SERVER1));
+
+        assertEquals(Optional.of(SERVER2), serverRun);
+
+        verify(restClient).resource(runUrl(SERVER2));
+        verify(restClient, never()).resource(stopUrl(SERVER2));
+
+        verify(restClient).resource(stopUrl(SERVER1));
+        verify(restClient, never()).resource(runUrl(SERVER1));
+    }
+
+    @Test
+    void testRunOnOnlyOneServer_triesMultipleServersUntilOneSucceeds() {
+        mockWebhookRunEndpoint(SERVER2, false);
+        mockWebhookRunEndpoint(SERVER1, true);
+        mockWebhookStopEndpoint(SERVER2, false);
+        mockWebhookStopEndpoint(SERVER3, true);
+
+        Optional<String> serverRun = internalWebhookClient.runOnOnlyOneServer(WEBHOOK_NAME,
+                newArrayList(SERVER2, SERVER1, SERVER3));
+
+        assertEquals(Optional.of(SERVER1), serverRun);
+
+        verify(restClient).resource(runUrl(SERVER2));
+        verify(restClient).resource(runUrl(SERVER1));
+        verify(restClient, never()).resource(runUrl(SERVER3));
+
+        verify(restClient, never()).resource(stopUrl(SERVER1));
+        verify(restClient).resource(stopUrl(SERVER2));
+        verify(restClient).resource(stopUrl(SERVER3));
+    }
+
+    @Test
+    void testRunOnOnlyOneServer_whenRunningServersFailToRun_attemptsToRunOnServerWithFewestWebhooksThatHasNotBeenTried() {
+        when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER4, SERVER2, SERVER3));
+        mockServerWebhookCountEndpoint(SERVER4, 6);
+        mockServerWebhookCountEndpoint(SERVER3, 1);
+        mockFailedServerWebhookCountEndpoint(SERVER2);
+        mockFailedServerWebhookCountEndpoint(SERVER1);
+
+        mockWebhookRunEndpoint(SERVER2, false);
+        mockWebhookRunEndpoint(SERVER1, false);
+        mockWebhookRunEndpoint(SERVER3, true);
+
+        mockWebhookStopEndpoint(SERVER2, false);
+        mockWebhookStopEndpoint(SERVER1, false);
+
+        Optional<String> serverRun = internalWebhookClient.runOnOnlyOneServer(WEBHOOK_NAME,
+                newArrayList(SERVER2, SERVER1));
+
+        assertEquals(Optional.of(SERVER3), serverRun);
+
+        verify(restClient).resource(runUrl(SERVER2));
+        verify(restClient).resource(runUrl(SERVER1));
+        verify(restClient).resource(runUrl(SERVER3));
+        verify(restClient, never()).resource(runUrl(SERVER4));
+
+        verify(restClient, never()).resource(stopUrl(SERVER3));
+        verify(restClient, never()).resource(stopUrl(SERVER4));
+        verify(restClient).resource(stopUrl(SERVER2));
+        verify(restClient).resource(stopUrl(SERVER1));
     }
 
     @Test
@@ -221,17 +307,17 @@ class InternalWebhookClientTest {
         ClientResponse clientResponse = mock(ClientResponse.class);
         WebResource webResource = mock(WebResource.class);
 
-        when(restClient.resource(runUrl(server))).thenReturn(webResource);
-        when(webResource.put(ClientResponse.class)).thenReturn(clientResponse);
         when(clientResponse.getStatus()).thenReturn(success ? 200 : 400);
+        when(webResource.put(ClientResponse.class)).thenReturn(clientResponse);
+        when(restClient.resource(runUrl(server))).thenReturn(webResource);
     }
 
     private void mockWebhookStopEndpoint(String server, boolean success) {
-        ClientResponse response = mock(ClientResponse.class);
-        when(response.getStatus()).thenReturn(success ? 200 : 500);
-
+        ClientResponse clientResponse = mock(ClientResponse.class);
         WebResource webResource = mock(WebResource.class);
-        when(webResource.put(ClientResponse.class)).thenReturn(response);
+
+        when(clientResponse.getStatus()).thenReturn(success ? 200 : 500);
+        when(webResource.put(ClientResponse.class)).thenReturn(clientResponse);
         when(restClient.resource(stopUrl(server))).thenReturn(webResource);
     }
 
