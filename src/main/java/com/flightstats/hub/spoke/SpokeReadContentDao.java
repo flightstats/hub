@@ -133,4 +133,9 @@ public class SpokeReadContentDao implements ContentDao {
         throw new NotImplementedException("SpokeReadContentDao.deleteBefore not implemented");
     }
 
+    @Override
+    public void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName) {
+        throw new NotImplementedException("SpokeReadContentDao.deleteBefore not implemented");
+    }
+
 }

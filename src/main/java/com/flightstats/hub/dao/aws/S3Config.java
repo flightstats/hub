@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 @Slf4j
 public class S3Config {
@@ -86,17 +87,19 @@ public class S3Config {
     private class S3ConfigLockable implements Lockable {
         final Iterable<ChannelConfig> configurations;
 
-        private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
+            private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
         }
 
         @Override
         public void takeLeadership(Leadership leadership) {
-            updateTtlDays();
-            maxItemsEnforcer.updateMaxItems(configurations);
+            Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
+                    .forEach(this::updateTtlDays);
+            Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
+                    .forEach(bucketName ->  maxItemsEnforcer.updateMaxItems(configurations, bucketName));
         }
 
-        private void updateTtlDays() {
+        private void updateTtlDays(String bucketName) {
             log.debug("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
             int maxRules = s3Properties.getBucketPolicyMaxRules(S3_LIFECYCLE_RULES_AVAILABLE);
@@ -110,11 +113,11 @@ public class S3Config {
             log.trace("updating {} ", rules);
 
             if (!rules.isEmpty()) {
-                rules.addAll(getNonHubBucketLifecycleRules());
+                rules.addAll(getNonHubBucketLifecycleRules(bucketName));
 
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
                 SetBucketLifecycleConfigurationRequest request =
-                        new SetBucketLifecycleConfigurationRequest(s3Properties.getBucketName(), lifecycleConfig);
+                        new SetBucketLifecycleConfigurationRequest(bucketName, lifecycleConfig);
                 s3Client.setBucketLifecycleConfiguration(request);
                 log.info("updated {} rules with ttl life cycle ", rules.size());
 
@@ -122,9 +125,9 @@ public class S3Config {
             ActiveTraces.end();
         }
 
-        private List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules() {
+        private List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules(String bucketName) {
             GetBucketLifecycleConfigurationRequest request =
-                    new GetBucketLifecycleConfigurationRequest(s3Properties.getBucketName());
+                    new GetBucketLifecycleConfigurationRequest(bucketName);
             BucketLifecycleConfiguration bucketLifecycleConfiguration =
                     s3Client.getBucketLifecycleConfiguration(request);
             return S3ConfigStrategy.getNonHubBucketLifecycleRules(bucketLifecycleConfiguration);

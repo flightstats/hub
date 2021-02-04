@@ -505,6 +505,14 @@ public class ClusterContentService implements ContentService {
         s3LargePayloadContentDao.deleteBefore(name, limitKey);
     }
 
+
+    @Override
+    public void deleteBefore(String name, ContentKey limitKey, String alternateBucketName) {
+        s3SingleContentDao.deleteBefore(name, limitKey, alternateBucketName);
+        s3BatchContentDao.deleteBefore(name, limitKey, alternateBucketName);
+        s3LargePayloadContentDao.deleteBefore(name, limitKey, alternateBucketName);
+    }
+
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {

@@ -55,4 +55,9 @@ public class ReadOnlyContentDao implements ContentDao {
     public void deleteBefore(String channelName, ContentKey limitKey) {
         throw new UnsupportedOperationException("Unable to deleteBefore due to r/o DAO:  " + channelName);
     }
+
+    @Override
+    public void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName) {
+        throw new UnsupportedOperationException("Unable to deleteBefore due to r/o DAO:  " + channelName);
+    }
 }

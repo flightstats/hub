@@ -184,7 +184,12 @@ public class SingleContentService implements ContentService {
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
-        throw new UnsupportedOperationException("deleteBefore is not supported");
+        throw new UnsupportedOperationException("SingleContentService.deleteBefore is not supported");
+    }
+
+    @Override
+    public void deleteBefore(String name, ContentKey limitKey, String bucketName) {
+        throw new UnsupportedOperationException("SingleContentService.deleteBefore is not supported");
     }
 
 }

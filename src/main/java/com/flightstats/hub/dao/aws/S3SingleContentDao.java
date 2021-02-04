@@ -290,11 +290,15 @@ public class S3SingleContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
+        deleteBefore(channel, limitKey, bucketName);
+    }
+
+    public void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName) {
         try {
-            s3Util.delete(channel + "/", limitKey, bucketName, s3Client);
-            log.debug("completed deletion of {} using limit key {}", channel, limitKey.toUrl());
+            s3Util.delete(channelName + "/", limitKey, alternateBucketName, s3Client);
+            log.debug("completed deletion of {} using limit key {}", channelName, limitKey.toUrl());
         } catch (Exception e) {
-            log.warn("unable to delete {} in {}", channel, bucketName, e);
+            log.warn("unable to delete {} in {}", channelName, alternateBucketName, e);
         }
     }
 

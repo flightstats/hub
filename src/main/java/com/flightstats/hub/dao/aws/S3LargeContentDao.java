@@ -239,11 +239,15 @@ public class S3LargeContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
+        deleteBefore(channel, limitKey, bucketName);
+    }
+
+    public void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName) {
         try {
-            s3Util.delete(channel + "/large/", limitKey, bucketName, s3Client);
-            log.info("completed deletion of " + channel);
+            s3Util.delete(channelName + "/large/", limitKey, alternateBucketName, s3Client);
+            log.info("completed deletion of " + channelName);
         } catch (Exception e) {
-            log.error("unable to delete  {} in {}", channel, bucketName, e);
+            log.error("unable to delete  {} in {}", channelName, alternateBucketName, e);
         }
     }
 

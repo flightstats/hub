@@ -380,12 +380,16 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
+        deleteBefore(channel, limitKey, bucketName);
+    }
+
+    public void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName) {
         try {
-            s3Util.delete(channel + BATCH_ITEMS, limitKey, bucketName, s3Client);
-            s3Util.delete(channel + BATCH_INDEX, limitKey, bucketName, s3Client);
-            log.info("completed deleteBefore of {}", channel);
+            s3Util.delete(channelName + BATCH_ITEMS, limitKey, alternateBucketName, s3Client);
+            s3Util.delete(channelName + BATCH_INDEX, limitKey, alternateBucketName, s3Client);
+            log.info("completed deleteBefore of {}", channelName);
         } catch (Exception e) {
-            log.warn("unable to delete {} in {}", channel, bucketName, e);
+            log.warn("unable to delete {} in {}", channelName, this.bucketName, e);
         }
     }
 

@@ -221,6 +221,11 @@ public class ChannelService {
         contentService.deleteBefore(channel, limitKey);
     }
 
+    public void deleteBefore(String channel, ContentKey limitKey, String bucketName) {
+        channel = contentRetriever.getDisplayName(channel);
+        contentService.deleteBefore(channel, limitKey, bucketName);
+    }
+
     public Optional<Content> get(ItemRequest itemRequest) {
         itemRequest = itemRequest.withChannel(contentRetriever.getDisplayName(itemRequest.getChannel()));
         final DateTime limitTime = getChannelLimitTime(itemRequest.getChannel()).minusMinutes(15);

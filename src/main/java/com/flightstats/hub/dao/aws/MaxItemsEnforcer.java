@@ -34,11 +34,11 @@ public class MaxItemsEnforcer {
         this.channelConfigDao = channelConfigDao;
     }
 
-    void updateMaxItems(Iterable<ChannelConfig> configurations) {
+    void updateMaxItems(Iterable<ChannelConfig> configurations, String bucketName) {
         log.info("iterating channels for max items update");
         for (ChannelConfig config : configurations) {
             if (config.getMaxItems() > 0 && !config.getKeepForever()) {
-                updateMaxItems(config);
+                updateMaxItems(config, bucketName);
             }
         }
     }
@@ -66,7 +66,24 @@ public class MaxItemsEnforcer {
 
     }
 
-    private void updateMaxItems(ChannelConfig config, ContentKey latest) {
+
+    private void updateMaxItems(ChannelConfig config, String bucketName) {
+        String name = config.getDisplayName();
+        log.debug("updating max items for channel {}", name);
+        ActiveTraces.start("S3Config.updateMaxItems", name);
+        Optional<ContentKey> optional = contentRetriever.getLatest(name, false);
+        if (optional.isPresent()) {
+            ContentKey latest = optional.get();
+            if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {
+                updateMaxItems(config, latest, bucketName);
+            }
+        }
+        ActiveTraces.end();
+        log.info("completed max items update for channel {}. updated: {}", name, optional.map(ContentKey::toUrl).orElse("none"));
+
+    }
+
+    private SortedSet<ContentKey> getDeletableKeys(ChannelConfig config, ContentKey latest) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         keys.add(latest);
         String name = config.getDisplayName();
@@ -79,10 +96,24 @@ public class MaxItemsEnforcer {
                 .count((int) (config.getMaxItems() - 1))
                 .build();
         keys.addAll(contentRetriever.query(query));
+        return keys;
+    }
+
+    private void updateMaxItems(ChannelConfig config, ContentKey latest) {
+        SortedSet<ContentKey> keys = getDeletableKeys(config, latest);
         if (keys.size() == config.getMaxItems()) {
             ContentKey limitKey = keys.first();
             log.info("deleting keys before {}", limitKey);
-            channelService.deleteBefore(name, limitKey);
+            channelService.deleteBefore(config.getDisplayName(), limitKey);
+        }
+    }
+
+    private void updateMaxItems(ChannelConfig config, ContentKey latest, String bucketName) {
+        SortedSet<ContentKey> keys = getDeletableKeys(config, latest);
+        if (keys.size() == config.getMaxItems()) {
+            ContentKey limitKey = keys.first();
+            log.info("deleting keys before {}", limitKey);
+            channelService.deleteBefore(config.getDisplayName(), limitKey, bucketName);
         }
     }
 
