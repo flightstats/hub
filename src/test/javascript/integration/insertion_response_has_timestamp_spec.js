@@ -26,7 +26,7 @@ describe(__filename, function () {
         const headers = { 'Content-Type': 'text/plain' };
         const response = await hubClientPost(channelResource, headers, messageText);
         expect(getProp('statusCode', response)).toEqual(201);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], response);
         const timestamp = fromObjectPath(['body', 'timestamp'], response);
         expect(contentType).toEqual('application/json');

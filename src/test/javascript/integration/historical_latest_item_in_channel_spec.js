@@ -39,7 +39,7 @@ describe(__filename, function () {
         const response1 = await hubClientPostTestItem(historicalItem1);
         const response2 = await hubClientPostTestItem(historicalItem2);
         const actual = [response1, response2]
-            .map(res => fromObjectPath(['headers', 'location'], res));
+            .map(res => res.header('location'));
         items.push(...actual);
     });
 
@@ -58,27 +58,27 @@ describe(__filename, function () {
     it("gets latest Mutable in channel ", async () => {
         const url = `${channelResource}/latest?epoch=MUTABLE`;
         const response = await hubClientGet(url, headers);
-        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[1]);
+        expect(response.header('location').toEqual(items[1]);
         expect(getProp('statusCode', response)).toEqual(303);
     });
 
     it('posts item now', async () => {
         const response = await hubClientPostTestItem(channelResource);
-        latest = fromObjectPath(['headers', 'location'], response);
+        latest = response.header('location');;
         items.push(latest);
     });
 
     it("gets latest in Immutable in channel - after now item", async () => {
         const url = `${channelResource}/latest?stable=false`;
         const response = await hubClientGet(url, headers);
-        expect(fromObjectPath(['headers', 'location'], response)).toEqual(latest);
+        expect(response2.header('location'))).toEqual(latest);
         expect(getProp('statusCode', response)).toEqual(303);
     });
 
     it("gets latest Mutable in channel - after now item ", async () => {
         const url = `${channelResource}/latest?epoch=MUTABLE&trace=true`;
         const response = await hubClientGet(url, headers);
-        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[1]);
+        expect(response.header('location').toEqual(items[1]);
         expect(getProp('statusCode', response)).toEqual(303);
     });
 

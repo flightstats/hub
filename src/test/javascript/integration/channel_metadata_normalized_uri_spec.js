@@ -34,7 +34,7 @@ describe(__filename, function () {
         const url = `${channelResource}/`;
         const res = await hubClientGet(url, defaultHeaders);
         const response = await followRedirectIfPresent(res, defaultHeaders);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
         const name = fromObjectPath(['body', 'name'], response);
         const ttlDays = fromObjectPath(['body', 'ttlDays'], response);

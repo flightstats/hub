@@ -26,7 +26,7 @@ describe(__filename, function () {
 
         const response = await hubClientPost(channelUrl, headers, body);
         expect(getProp('statusCode', response)).toEqual(201);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
         expect(contentType).toEqual('application/json');
         expect(ttlDays).toEqual(120);
@@ -35,7 +35,7 @@ describe(__filename, function () {
     it('verifies the channel does exist', async () => {
         const response = await hubClientGet(channelResource, headers);
         expect(getProp('statusCode', response)).toEqual(200);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         expect(contentType).toEqual('application/json');
         const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
         const name = fromObjectPath(['body', 'name'], response);

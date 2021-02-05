@@ -17,7 +17,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            const server = fromObjectPath(['headers', 'server'], response) || '';
+            const server = fromObjectPath(response.header('server')) || '';
             expect(server.substring(0, 3)).toBe('Hub');
             done();
         });

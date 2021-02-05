@@ -45,7 +45,7 @@ describe(testName, function () {
             body: Array(SIZE).join("a"),
         },
         function (err, response, body) {
-            hashItem = fromObjectPath(['headers', 'location'], response);
+            hashItem = response.header('location');;
             expect(err).toBeNull();
             done();
         });

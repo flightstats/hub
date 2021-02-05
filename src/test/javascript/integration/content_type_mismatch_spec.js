@@ -31,7 +31,7 @@ describe(__filename, function () {
 
     it('inserted an item', async () => {
         expect(getProp('statusCode', itemResponse)).toEqual(201);
-        const contentType = fromObjectPath(['headers', 'content-type'], itemResponse);
+        const contentType = itemResponse.header('content-type');
         const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], itemResponse);
         expect(contentType).toEqual('application/json');
         expect(channelLink).toEqual(channelResource);

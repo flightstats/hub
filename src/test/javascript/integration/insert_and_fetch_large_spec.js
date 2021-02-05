@@ -41,7 +41,7 @@ describe(__filename, function () {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
             console.log(getProp('body', response));
-            location = fromObjectPath(['headers', 'location'], response);
+            const location = response.header('location');
             console.log(location);
             done();
         });
@@ -52,8 +52,8 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const xItemLength = fromObjectPath(['headers', 'x-item-length'], response);
+                const contentType = response('content-type');
+                const xItemLength = response.header('x-item-length');
                 const responseBody = getProp('body', response) || '';
                 expect(contentType).toBe('text/plain');
                 expect(responseBody.length).toBe(SIZE - 1);

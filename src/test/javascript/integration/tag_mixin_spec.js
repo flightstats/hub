@@ -59,7 +59,7 @@ describe(__filename, function () {
                 expect(getProp('statusCode', response)).toBe(200);
                 if (getProp('statusCode', response) === 200) {
                     body = parseJson(response, __filename);
-                    const links = fromObjectPath(['headers', 'link'], response) || '{}';
+                    const links = response.header('link') || '{}';
                     parsedLinks = parse(links);
                     const item = uris[index] && linkStripParams(uris[index]);
                     if (parsedLinks) {
@@ -143,7 +143,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(location).toBe(uris[2]);
                 done();
             });
@@ -170,7 +170,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(location).toBe(uris[0]);
                 done();
             });
@@ -255,7 +255,7 @@ describe(__filename, function () {
         request.get({ url, followRedirect: false },
             function (err, response, body) {
                 expect(err).toBeNull();
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(getProp('statusCode', response)).toBe(303);
                 expect(location).toBe(uris[2]);
                 done();
@@ -285,7 +285,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(location).toBe(uris[0]);
                 done();
             });

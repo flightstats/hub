@@ -19,8 +19,8 @@ describe(__filename, function () {
         const body = { name: `    ${channelName}    ` };
 
         const response = await hubClientPost(channelUrl, headers, body);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const contentType = response('content-type');
+        const location = response.header('location');;
         expect(getProp('statusCode', response)).toEqual(201);
         expect(contentType).toEqual('application/json');
         expect(location).toEqual(channelResource);

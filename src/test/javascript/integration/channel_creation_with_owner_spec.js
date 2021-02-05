@@ -26,7 +26,7 @@ describe(__filename, function () {
             'owner': 'pwned',
         };
         const response = await hubClientPost(channelUrl, headers, body);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const owner = fromObjectPath(['body', 'owner'], response);
         expect(getProp('statusCode', response)).toEqual(201);
         expect(contentType).toEqual('application/json');
@@ -35,7 +35,7 @@ describe(__filename, function () {
 
     it('verifies the channel does exist', async () => {
         const response = await hubClientGet(channelResource, headers);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const name = fromObjectPath(['body', 'name'], response);
         const owner = fromObjectPath(['body', 'owner'], response);
         expect(getProp('statusCode', response)).toEqual(200);

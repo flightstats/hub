@@ -27,11 +27,10 @@ describe(__filename, function () {
         const body = { 'name': channelName, 'maxItems': maxItems };
 
         const response = await hubClientPost(channelUrl, headers, body);
-        const responseHeaders = getProp('headers', response);
         const responseBody = getProp('body', response);
         expect(getProp('statusCode', response)).toEqual(201);
         const [contentType, location] = ['content-type', 'location']
-            .map(key => getProp(key, responseHeaders));
+            .map(key => response.header(key));
         const selfLink = fromObjectPath(['_links', 'self', 'href'], responseBody);
         const [
             name,

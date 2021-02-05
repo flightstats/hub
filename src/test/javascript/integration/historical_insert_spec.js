@@ -40,7 +40,7 @@ describe(__filename, function () {
 
     it(`posts historical item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(pointInThePastURL);
-        historicalLocation = fromObjectPath(['headers', 'location'], response);
+        const historicalLocation = response.header('location');
     });
 
     it(`gets historical item from ${historicalLocation}`, function (done) {
@@ -54,7 +54,7 @@ describe(__filename, function () {
 
     it(`posts live item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(channelResource);
-        liveLocation = fromObjectPath(['headers', 'location'], response);
+        liveLocation = response.header('location');
     });
 
     it(`gets live item from ${liveLocation}`, function (done) {
@@ -68,7 +68,7 @@ describe(__filename, function () {
 
     it(`posts historical item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(`${pointInThePastURL}/abcdefg`);
-        hashItem = fromObjectPath(['headers', 'location'], response);
+        hashItem = response.header('location');;
         expect(hashItem).toContain('/abcdefg');
     });
 

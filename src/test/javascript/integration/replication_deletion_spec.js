@@ -40,7 +40,7 @@ describe(__filename, function () {
             expect(err).toBeNull();
 
             // console.log('body', body);
-            const contentType = fromObjectPath(['headers', 'content-type'], response);
+            const contentType = response('content-type');
             expect(contentType).toBe('application/json');
             expect(getProp('statusCode', response)).toBe(403);
             expect(body).toBe(`${channelName} cannot modified while replicating`);

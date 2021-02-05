@@ -79,7 +79,7 @@ describe(__filename, function () {
         const deployResponse = await hubClientGet(`${getHubUrlBase()}/internal/deploy`);
         let nodes = getProp('body', deployResponse) || [];
         expect(requests.length).toEqual(1);
-        const node = fromObjectPath(['headers', 'hub-node'], requests[0]) || "";
+        const node = requests[0].header('hub-node') || "";
         expect(nodes).toContain(node);
     });
 

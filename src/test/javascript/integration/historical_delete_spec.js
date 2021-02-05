@@ -41,7 +41,7 @@ describe(__filename, function () {
         const response = await hubClientPut(url, headers, channelBody);
         expect(getProp('statusCode', response)).toEqual(201);
         const response1 = await hubClientPostTestItem(pointInThePastURL);
-        historicalLocation = fromObjectPath(['headers', 'location'], response1);
+        historicalLocation = response1.header('location');;
     });
 
     it('deletes historical item ', function (done) {
@@ -65,7 +65,7 @@ describe(__filename, function () {
 
     it(`posts live item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(url);
-        liveLocation = fromObjectPath(['headers', 'location'], response);
+        liveLocation = response.header('location');
     });
 
     it('deletes live item ', function (done) {

@@ -69,7 +69,7 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientGet(items[0] + '/next?stable=false', headers, body);
         expect(getProp('statusCode', response)).toEqual(303);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         expect(location).toBe(items[1]);
     });
 

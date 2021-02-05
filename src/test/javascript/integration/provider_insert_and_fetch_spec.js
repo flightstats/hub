@@ -32,7 +32,7 @@ describe(__filename, function () {
         const url = `${channelResource}/latest?stable=false`;
         const res = await hubClientGet(url);
         const response = await followRedirectIfPresent(res);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         expect(getProp('statusCode', response)).toEqual(200);
         expect(contentType).toEqual('text/plain');
         expect(getProp('body', response)).toContain(messageText);

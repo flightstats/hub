@@ -45,7 +45,7 @@ describe(__filename, function () {
         }, function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            expect(fromObjectPath(['headers', 'content-type'], response)).toContain('multipart/mixed');
+            expect(fromObjectPath(response.header('content-type')).toContain('multipart/mixed');
             const responseBody = getProp('body', response);
             expect(responseBody).toContain('\\"data\\"');
             /* eslint-disable no-useless-escape */

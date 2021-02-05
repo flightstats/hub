@@ -32,7 +32,7 @@ describe(__filename, function () {
         const body = { ttlMillis: null };
         const response = await hubClientPatch(channelResource, headers, body);
         expect(getProp('statusCode', response)).toEqual(200);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const name = fromObjectPath(['body', 'name'], response);
         expect(contentType).toEqual('application/json');
         expect(name).toEqual(channelName);

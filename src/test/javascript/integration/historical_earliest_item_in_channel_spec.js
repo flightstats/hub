@@ -40,10 +40,10 @@ describe(__filename, function () {
         const historicalItem1 = `${channelResource}/2013/11/20/12/00/00/000`;
         const historicalItem2 = `${channelResource}/2013/11/20/12/01/00/000`;
         const response1 = await hubClientPostTestItem(historicalItem1);
-        const location1 = fromObjectPath(['headers', 'location'], response1);
+        const location1 = response1.header('location');;
         items.push(location1);
         const response2 = await hubClientPostTestItem(historicalItem2);
-        const nextLocation = fromObjectPath(['headers', 'location'], response2);
+        const nextLocation = response2.header('location');;
         items.push(nextLocation);
     });
 
@@ -63,12 +63,12 @@ describe(__filename, function () {
         const url = `${channelResource}/earliest?epoch=MUTABLE`;
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toEqual(303);
-        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[0]);
+        expect(response2.header('location'))).toEqual(items[0]);
     });
 
     it('posts item now', async () => {
         const response = await hubClientPostTestItem(channelResource);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         items.push(location);
     });
 
@@ -76,14 +76,14 @@ describe(__filename, function () {
         const url = `${channelResource}/earliest?stable=false&trace=true`;
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toEqual(303);
-        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[2]);
+        expect(response2.header('location'))).toEqual(items[2]);
     });
 
     it("gets earliest Mutable in channel - after now item", async () => {
         const url = `${channelResource}/earliest?epoch=MUTABLE`;
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toEqual(303);
-        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[0]);
+        expect(response2.header('location'))).toEqual(items[0]);
     });
 
     it("gets earliest N Mutable in channel ", async () => {

@@ -58,7 +58,7 @@ describe(__filename, function () {
         request.get({url: items[0]},
             function (err, response, body) {
                 expect(err).toBeNull();
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const contentType = response('content-type');
                 expect(getProp('statusCode', response)).toBe(200);
                 expect(getProp('body', response)).toBe('<coffee><roast>french</roast><coffee>');
                 expect(contentType).toBe('application/xml');
@@ -70,7 +70,7 @@ describe(__filename, function () {
         request.get({url: items[1]},
             function (err, response, body) {
                 expect(err).toBeNull();
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const contentType = response('content-type');
                 expect(getProp('statusCode', response)).toBe(200);
                 expect(getProp('body', response)).toBe('{ "type" : "coffee", "roast" : "french" }');
                 expect(contentType).toBe('application/json');
@@ -82,7 +82,7 @@ describe(__filename, function () {
         request.get({url: items[1] + '/previous?trace=true&stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 // console.log('response', response);
                 expect(getProp('statusCode', response)).toBe(303);
                 expect(location).toBe(items[0]);
@@ -95,7 +95,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 console.log('body', body);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(getProp('statusCode', response)).toBe(303);
                 expect(location).toBe(items[1]);
                 done();

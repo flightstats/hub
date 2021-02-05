@@ -66,7 +66,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            location = fromObjectPath(['headers', 'location'], response);
+            const location = response.header('location');
             expect(location).toBeDefined();
             const parse = parseJson(response, __filename);
             const responseBody = getProp('body', response);
@@ -120,7 +120,7 @@ describe(__filename, function () {
 
     function timeVerify (response, param) {
         standardVerify(response);
-        const linkHeader = fromObjectPath(['headers', 'link'], response);
+        const linkHeader = response.header('link');
         expect(linkHeader).toBeDefined();
         expect(linkHeader).toContain('?stable=false' + param);
         expect(linkHeader).toContain('previous');
@@ -192,7 +192,7 @@ describe(__filename, function () {
                 const responseBody = getProp('body', response) || [];
                 expect(responseBody.indexOf(items[i]) > 0).toBe(true);
             }
-            const linkHeader = fromObjectPath(['headers', 'link'], response);
+            const linkHeader = response.header('link');
             expect(linkHeader).toBeDefined();
             expect(linkHeader).toContain(items[1] + '/previous/10?stable=false' + param);
             expect(linkHeader).toContain(items[3] + '/next/10?stable=false' + param);
@@ -206,7 +206,7 @@ describe(__filename, function () {
                 const responseBody = getProp('body', response) || [];
                 expect(responseBody.indexOf(items[i]) > 0).toBe(true);
             }
-            const linkHeader = fromObjectPath(['headers', 'link'], response);
+            const linkHeader = response.header('link');
             expect(linkHeader).toBeDefined();
             expect(linkHeader).toContain(items[0] + '/previous/10?stable=false' + param);
             expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);

@@ -48,7 +48,7 @@ describe(__filename, function () {
     it('posts item to channel', async () => {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         console.log('posted:', location);
         itemURLs.push(location);
         const condition = () => (receivedMessages.length === itemURLs.length);

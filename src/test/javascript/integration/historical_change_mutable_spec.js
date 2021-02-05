@@ -46,12 +46,12 @@ describe(__filename, function () {
     it(`posts historical item to ${channel}`, async () => {
         const url = `${channelLocation}/${moment(mutableTime).subtract(1, 'hour').format('YYYY/MM/DD/HH/mm/ss/SSS')}`;
         const response1 = await hubClientPostTestItem(url);
-        const location = fromObjectPath(['headers', 'location'], response1);
+        const location = response1.header('location');;
         console.log('first - value.response.headers.location', location);
         historicalLocations.push(location);
         const url2 = `${channelLocation}/${moment(mutableTime).format('YYYY/MM/DD/HH/mm/ss/SSS')}`;
         const response2 = await hubClientPostTestItem(url2);
-        const nextLocation = fromObjectPath(['headers', 'location'], response2);
+        const nextLocation = response2.header('location');;
         console.log('second - nextValue.response.headers.location', nextLocation);
         historicalLocations.push(nextLocation);
     });

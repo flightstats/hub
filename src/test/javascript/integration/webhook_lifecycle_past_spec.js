@@ -81,7 +81,7 @@ describe(__filename, function () {
 
         const response = await hubClientPut(url, headers, body);
         const responseBody = getProp('body', response) || {};
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         expect(getProp('statusCode', response)).toBe(201);
         expect(location).toBe(url);
         expect(responseBody.callbackUrl).toBe(callbackUrl);

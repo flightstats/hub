@@ -78,7 +78,7 @@ describe(__filename, function () {
         let nodes = getProp('body', deployResponse) || [];
         const rootResponse = await hubClientGet(hubUrlBase);
         console.log(rootResponse.headers);
-        const node = fromObjectPath(['headers', 'hub-node'], rootResponse);
+        const node = rootResponse.header('hub-node');
         expect(nodes).toContain(node);
     });
 });

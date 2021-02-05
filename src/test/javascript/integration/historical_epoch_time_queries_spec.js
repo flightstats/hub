@@ -75,7 +75,7 @@ describe(__filename, () => {
 
     it(`posts historical item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(pointInThePastURL);
-        historicalLocation = fromObjectPath(['headers', 'location'], response);
+        const historicalLocation = response.header('location');
     });
 
     it(`gets historical item from ${historicalLocation}`, async () => {
@@ -85,7 +85,7 @@ describe(__filename, () => {
 
     it(`posts live item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(channelResource);
-        liveLocation = fromObjectPath(['headers', 'location'], response);
+        liveLocation = response.header('location');
         liveTime = moment((liveLocation || '').substring(channelResource.length), '/YYYY/MM/DD/HH/mm/ss/SSS');
     });
 

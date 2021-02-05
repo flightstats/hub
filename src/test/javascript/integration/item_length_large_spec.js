@@ -60,8 +60,8 @@ describe(__filename, function () {
             return false;
         }
         const result = await getHubItem(itemURL);
-        console.log('headers', getProp('headers', result));
-        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+
+        const xItemLength = result.header('x-item-length');
         const bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
         expect(xItemLength).toBe(bytes.toString());
     }, 5 * 60 * 1000);

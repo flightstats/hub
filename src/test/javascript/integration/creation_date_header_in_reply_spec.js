@@ -37,7 +37,7 @@ describe(__filename, function () {
         if (!itemURL) return fail('itemURL failed initialization in previous test');
         const response = await hubClientGet(itemURL);
         expect(getProp('statusCode', response)).toEqual(200);
-        const creationDate = fromObjectPath(['headers', 'creation-date'], response);
+        const creationDate = response.header('creation-date');
         expect(creationDate).toContain('T');
     });
 

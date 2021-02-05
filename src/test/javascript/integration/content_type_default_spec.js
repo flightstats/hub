@@ -39,7 +39,7 @@ describe(__filename, function () {
     it('verifies the correct Content-Type header is returned', async () => {
         if (!itemURL) return fail('itemURL failed initialization in previous test');
         const response = await hubClientGet(itemURL);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         expect(getProp('statusCode', response)).toEqual(200);
         expect(contentType).toEqual('application/octet-stream');
         expect(getProp('body', response)).toContain(messageText);

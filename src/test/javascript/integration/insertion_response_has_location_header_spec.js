@@ -26,7 +26,7 @@ describe(__filename, function () {
         const headers = { 'Content-Type': 'text/plain' };
         const response = await hubClientPost(channelResource, headers, messageText);
         expect(getProp('statusCode', response)).toEqual(201);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         expect(location).toBeDefined();
     });
 

@@ -68,7 +68,7 @@ describe(__filename, function () {
 
     it(`posts an item to channel ${upperCase}`, async () => {
         const response = await hubClientPostTestItem(`${upperCase}?forceWrite=true`);
-        posted = fromObjectPath(['headers', 'location'], response);
+        posted = response.header('location');;
         expect(getProp('statusCode', response)).toEqual(201);
     });
 

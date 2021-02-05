@@ -31,7 +31,7 @@ describe(__filename, function () {
 
     it('inserts an item', () => {
         expect(getProp('statusCode', itemResponse)).toEqual(201);
-        const contentType = fromObjectPath(['headers', 'content-type'], itemResponse);
+        const contentType = itemResponse.header('content-type');
         const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], itemResponse);
         expect(contentType).toEqual('application/json');
         expect(channelLink).toEqual(channelResource);
@@ -41,8 +41,8 @@ describe(__filename, function () {
         if (!itemURL) return fail('itemURL not defined in beforeAll block');
         const response = await hubClientGet(itemURL);
         expect(getProp('statusCode', response)).toEqual(200);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
-        const user = fromObjectPath(['headers', 'user'], response);
+        const contentType = response('content-type');
+        const user = response.header('user');
         expect(contentType).toEqual('text/plain');
         expect(user).toBeUndefined();
         expect(getProp('body', response)).toContain(messageText);

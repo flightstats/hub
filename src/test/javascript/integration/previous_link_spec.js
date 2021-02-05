@@ -59,7 +59,7 @@ describe(__filename, function () {
     it('gets item from /previous ', async () => {
         const response = await hubClientGet(`${items[2]}/previous?stable=false`, headers, body);
         expect(getProp('statusCode', response)).toEqual(303);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         expect(location).toBe(items[1]);
     });
 

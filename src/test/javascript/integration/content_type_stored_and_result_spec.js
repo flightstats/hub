@@ -30,7 +30,7 @@ describe(__filename, function () {
 
     it('inserted an item', async () => {
         expect(getProp('statusCode', itemResponse)).toEqual(201);
-        const contentType = fromObjectPath(['headers', 'content-type'], itemResponse);
+        const contentType = itemResponse.header('content-type');
         expect(contentType).toEqual('application/json');
         const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], itemResponse);
         expect(channelLink).toEqual(channelResource);
@@ -40,7 +40,7 @@ describe(__filename, function () {
         if (!itemURL) return fail('itemURL failed initialization in previous test');
         const response = await hubClientGet(itemURL);
         expect(getProp('statusCode', response)).toEqual(200);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         expect(contentType).toEqual('application/fractals');
         expect(getProp('body', response)).toContain(messageText);
     });

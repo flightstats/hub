@@ -21,7 +21,7 @@ describe(__filename, function () {
             'keepForever': true,
         };
         const response = await hubClientPost(channelUrl, headers, body);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
         const keepForever = fromObjectPath(['body', 'keepForever'], response);
         expect(getProp('statusCode', response)).toEqual(201);
@@ -32,7 +32,7 @@ describe(__filename, function () {
 
     it('verifies the channel does exist', async () => {
         const response = await hubClientGet(channelResource, headers);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
         const keepForever = fromObjectPath(['body', 'keepForever'], response);
         const name = fromObjectPath(['body', 'name'], response);

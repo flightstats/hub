@@ -32,7 +32,7 @@ describe(__filename, function () {
     it('posts item to channel', async () => {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
-        startingItem = fromObjectPath(['headers', 'location'], response);
+        startingItem = response.header('location');;
     });
 
     it('builds websocket url', function () {
@@ -67,7 +67,7 @@ describe(__filename, function () {
     it('posts item to channel', async () => {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
-        postedItem = fromObjectPath(['headers', 'location'], response);
+        postedItem = response.header('location');;
         const condition = () => (receivedMessages.length === 2);
         await waitForCondition(condition);
     });

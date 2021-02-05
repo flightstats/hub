@@ -32,7 +32,7 @@ describe(__filename, function () {
         const headers = { 'accept-encoding': 'gzip' };
         const response = await hubClientGet(channelResource, headers);
         console.log('response', response);
-        const contentEncoding = fromObjectPath(['headers', 'content-encoding'], response);
+        const contentEncoding = response.header('content-encoding');
         expect(contentEncoding).toEqual('gzip');
     });
 

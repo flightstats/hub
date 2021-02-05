@@ -27,7 +27,7 @@ describe(__filename, function () {
     it('fetches the list of channels', async () => {
         const response = await hubClientGet(channelUrl, headers);
         expect(getProp('statusCode', response)).toEqual(200);
-        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const contentType = response('content-type');
         const links = fromObjectPath(['body', '_links'], response) || {};
         const { channels = [], self = {} } = links;
         expect(contentType).toEqual('application/json');

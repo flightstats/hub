@@ -26,7 +26,7 @@ describe(__filename, function () {
 
     it('creates the first webhook', async () => {
         const response = await hubClientPut(firstWebhookURL, headers, webhookConfig);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         const body = getProp('body', response) || {};
         expect(getProp('statusCode', response)).toEqual(201);
         expect(location).toBe(firstWebhookURL);
@@ -39,7 +39,7 @@ describe(__filename, function () {
 
     it('creates the second webhook', async () => {
         const response = await hubClientPut(secondWebhookURL, headers, webhookConfig);
-        const location = fromObjectPath(['headers', 'location'], response);
+        const location = response.header('location');;
         const body = getProp('body', response) || {};
         expect(getProp('statusCode', response)).toEqual(201);
         expect(location).toBe(secondWebhookURL);

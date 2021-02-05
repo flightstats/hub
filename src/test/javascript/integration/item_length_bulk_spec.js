@@ -59,7 +59,7 @@ describe(__filename, function () {
         try {
             const result = await getHubItem(itemURLs[0]);
             expect(getProp('statusCode', result)).toBe(200);
-            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+            const location = result.header('x-item-length');
             expect(!!xItemLength).toBe(true);
             const bytes = Buffer.from(itemOneContent).length;
             expect(xItemLength).toBe(bytes.toString());
@@ -74,7 +74,7 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         try {
             const result = await getHubItem(itemURLs[1]);
-            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+            const location = result.header('x-item-length');
             expect(!!xItemLength).toBe(true);
             const bytes = Buffer.from(itemTwoContent).length;
             expect(xItemLength).toBe(bytes.toString());

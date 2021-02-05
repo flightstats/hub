@@ -36,7 +36,7 @@ describe(__filename, function () {
 
         const response2 = await hubClientPostTestItem(channelResource);
         expect(getProp('statusCode', response2)).toEqual(201);
-        posted = fromObjectPath(['headers', 'location'], response2);
+        posted = response2.header('location');;
     });
 
     it("gets latest stable in channel ", function (done) {
@@ -53,7 +53,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(location).toBe(posted);
                 done();
             });
@@ -85,7 +85,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(location).toBe(posted);
                 done();
             });

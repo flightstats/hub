@@ -63,7 +63,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            location = fromObjectPath(['headers', 'location'], response);
+            const location = response.header('location');
             console.log('location', location);
             expect(location).toBeDefined();
             console.log(getProp('body', response));
@@ -78,9 +78,7 @@ describe(__filename, function () {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 console.log('verifies content callback body', body);
-                const headers = getProp('headers', response);
-                console.log(headers);
-                const contentType = getProp('content-type', headers);
+                const contentType = response.header('content-type');
                 expect(contentType).toBe('multipart/mixed;boundary=abcdefg');
                 expect(body).toBe(multipart);
                 done();

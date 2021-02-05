@@ -36,7 +36,7 @@ describe(__filename, function () {
         if (!channelCreated) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
-        posted = fromObjectPath(['headers', 'location'], response);
+        posted = response.header('location');;
     });
 
     it('posts another item', async () => {
@@ -61,7 +61,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
-                const location = fromObjectPath(['headers', 'location'], response);
+                const location = response.header('location');;
                 expect(location).toBeDefined();
                 expect(posted).toBeDefined();
                 expect(location).toBe(posted);

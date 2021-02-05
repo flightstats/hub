@@ -5,6 +5,7 @@ const jasmine = new Jasmine();
 global.hubDomain = process.env.hubDomain;
 const specs = process.argv[2] || 'integration/*_spec.js';
 jasmine.loadConfig({
+    random: false,
     spec_dir: '.',
     spec_files: [specs],
     stopSpecOnExpectationFailure: true,

@@ -52,20 +52,20 @@ describe(__filename, function () {
 
     it(`posts historical items to  ${channel}`, async () => {
         const response = await hubClientPostTestItem(getFormattedUrl(earliestTime));
-        items.push(fromObjectPath(['headers', 'location'], response));
+        items.push(response2.header('location')));
         const response1 = await hubClientPostTestItem(getFormattedUrl(earliestTime.add(1, 'years')));
-        items.push(fromObjectPath(['headers', 'location'], response1));
+        items.push(response2.header('location')1));
         const response2 = await hubClientPostTestItem(getFormattedUrl(earliestTime.add(6, 'months')));
-        items.push(fromObjectPath(['headers', 'location'], response2));
+        items.push(response2.header('location')2));
     });
 
     it(`posts live items to ${channel}`, async () => {
         const response = await hubClientPostTestItem(channelResource);
-        items.push(fromObjectPath(['headers', 'location'], response));
+        items.push(response2.header('location')));
         const response1 = await hubClientPostTestItem(channelResource);
-        items.push(fromObjectPath(['headers', 'location'], response1));
+        items.push(response2.header('location')1));
         const response2 = await hubClientPostTestItem(channelResource);
-        items.push(fromObjectPath(['headers', 'location'], response2));
+        items.push(response2.header('location')2));
     });
 
     it(`queries next 7 All ${next7}`, async () => {

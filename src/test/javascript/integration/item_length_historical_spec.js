@@ -48,7 +48,7 @@ describe(__filename, function () {
             return false;
         }
         const result = await getHubItem(itemURL);
-        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+        const location = result.header('x-item-length');
         expect(xItemLength).toBeDefined();
         const bytes = (Buffer.from(itemContent) || '').length;
         expect(xItemLength).toBe(bytes.toString());
