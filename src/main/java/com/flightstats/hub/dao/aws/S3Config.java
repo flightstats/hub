@@ -94,9 +94,10 @@ public class S3Config {
         @Override
         public void takeLeadership(Leadership leadership) {
             Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
-                    .forEach(this::updateTtlDays);
-            Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
-                    .forEach(bucketName ->  maxItemsEnforcer.updateMaxItems(configurations, bucketName));
+                    .forEach(bucketName -> {
+                        updateTtlDays(bucketName);
+                        maxItemsEnforcer.updateMaxItems(configurations, bucketName);
+                    });
         }
 
         private void updateTtlDays(String bucketName) {

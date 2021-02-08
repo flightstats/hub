@@ -199,11 +199,7 @@ class InternalWebhookClientTest {
 
         Optional<String> serverRun = internalWebhookClient.runOnOnlyOneServer(WEBHOOK_NAME,
                 newArrayList(SERVER2, SERVER1, SERVER3));
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e){
-            //
-        }
+        
         assertEquals(Optional.of(SERVER1), serverRun);
 
         verify(restClient).resource(runUrl(SERVER2));

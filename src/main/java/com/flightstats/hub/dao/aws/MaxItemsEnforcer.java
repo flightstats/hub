@@ -83,7 +83,7 @@ public class MaxItemsEnforcer {
 
     }
 
-    private SortedSet<ContentKey> getDeletableKeys(ChannelConfig config, ContentKey latest) {
+    private Optional<ContentKey> getEarliestKeyOfMaximum(ChannelConfig config, ContentKey latest) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         keys.add(latest);
         String name = config.getDisplayName();
@@ -96,25 +96,26 @@ public class MaxItemsEnforcer {
                 .count((int) (config.getMaxItems() - 1))
                 .build();
         keys.addAll(contentRetriever.query(query));
-        return keys;
+        if (keys.size() != config.getMaxItems()) {
+            return Optional.empty();
+        }
+        return Optional.of(keys.first());
     }
 
     private void updateMaxItems(ChannelConfig config, ContentKey latest) {
-        SortedSet<ContentKey> keys = getDeletableKeys(config, latest);
-        if (keys.size() == config.getMaxItems()) {
-            ContentKey limitKey = keys.first();
-            log.info("deleting keys before {}", limitKey);
-            channelService.deleteBefore(config.getDisplayName(), limitKey);
-        }
+        Optional<ContentKey> limitKey = getEarliestKeyOfMaximum(config, latest);
+        limitKey.ifPresent(key -> {
+            log.info("deleting keys before {}", key);
+            channelService.deleteBefore(config.getDisplayName(), key);
+        });
     }
 
     private void updateMaxItems(ChannelConfig config, ContentKey latest, String bucketName) {
-        SortedSet<ContentKey> keys = getDeletableKeys(config, latest);
-        if (keys.size() == config.getMaxItems()) {
-            ContentKey limitKey = keys.first();
-            log.info("deleting keys before {}", limitKey);
-            channelService.deleteBefore(config.getDisplayName(), limitKey, bucketName);
-        }
+        Optional<ContentKey> limitKey = getEarliestKeyOfMaximum(config, latest);
+        limitKey.ifPresent(key -> {
+            log.info("deleting keys before {}", key);
+            channelService.deleteBefore(config.getDisplayName(), key, bucketName);
+        });
     }
 
 }
