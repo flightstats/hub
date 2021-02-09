@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -98,8 +99,10 @@ public class S3Config {
         }
 
         private void updateRulesConfigForBucket(List<BucketLifecycleConfiguration.Rule> rules, String bucket) {
-            rules.addAll(getNonHubBucketLifecycleRules(bucket));
-            BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
+            List<BucketLifecycleConfiguration.Rule> withNonHubRules = Stream.of(rules, getNonHubBucketLifecycleRules(bucket))
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(withNonHubRules);
             SetBucketLifecycleConfigurationRequest request =
                     new SetBucketLifecycleConfigurationRequest(bucket, lifecycleConfig);
             s3Client.setBucketLifecycleConfiguration(request);
