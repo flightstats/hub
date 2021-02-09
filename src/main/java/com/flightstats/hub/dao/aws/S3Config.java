@@ -14,10 +14,10 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -87,41 +87,38 @@ public class S3Config {
     private class S3ConfigLockable implements Lockable {
         final Iterable<ChannelConfig> configurations;
 
-            private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
+        private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
         }
 
         @Override
         public void takeLeadership(Leadership leadership) {
-            Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
-                    .forEach(bucketName -> {
-                        updateTtlDays(bucketName);
-                        maxItemsEnforcer.updateMaxItems(configurations, bucketName);
-                    });
+            updateTtlDays();
+            maxItemsEnforcer.updateMaxItems(configurations);
         }
 
-        private void updateTtlDays(String bucketName) {
+        private void updateRulesConfigForBucket(List<BucketLifecycleConfiguration.Rule> rules, String bucket) {
+            rules.addAll(getNonHubBucketLifecycleRules(bucket));
+            BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
+            SetBucketLifecycleConfigurationRequest request =
+                    new SetBucketLifecycleConfigurationRequest(bucket, lifecycleConfig);
+            s3Client.setBucketLifecycleConfiguration(request);
+            log.info("updated {} rules with ttl life cycle for s3 bucket: {}", rules.size(), bucket);
+        }
+
+        private void updateTtlDays() {
             log.debug("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
             int maxRules = s3Properties.getBucketPolicyMaxRules(S3_LIFECYCLE_RULES_AVAILABLE);
-
-            List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
-
             if (maxRules > 0 && maxRules <= S3_LIFECYCLE_RULES_AVAILABLE) {
-                rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
-            }
-
-            log.trace("updating {} ", rules);
-
-            if (!rules.isEmpty()) {
-                rules.addAll(getNonHubBucketLifecycleRules(bucketName));
-
-                BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
-                SetBucketLifecycleConfigurationRequest request =
-                        new SetBucketLifecycleConfigurationRequest(bucketName, lifecycleConfig);
-                s3Client.setBucketLifecycleConfiguration(request);
-                log.info("updated {} rules with ttl life cycle ", rules.size());
-
+                List<BucketLifecycleConfiguration.Rule> rules = S3ConfigStrategy
+                        .apportion(configurations, new DateTime(), maxRules);
+                log.trace("updating {} ", rules);
+                if (!rules.isEmpty()) {
+                    Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
+                            .filter(StringUtils::isNotBlank)
+                            .forEach(bucket -> this.updateRulesConfigForBucket(rules, bucket));
+                }
             }
             ActiveTraces.end();
         }

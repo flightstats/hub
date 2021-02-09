@@ -38,8 +38,6 @@ public interface ContentDao {
 
     void deleteBefore(String channelName, ContentKey limitKey);
 
-    void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName);
-
     default void writeBatch(String channel, ContentPath path, Collection<ContentKey> keys, byte[] bytes) {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }

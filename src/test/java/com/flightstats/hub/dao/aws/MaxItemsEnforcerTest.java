@@ -5,7 +5,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,14 +78,14 @@ class MaxItemsEnforcerTest {
 
         // given
         List<ChannelConfig> channels = Stream.of(channelConfig1, channelConfig3, channelConfig2).collect(Collectors.toList());
-        maxItemsEnforcer.updateMaxItems(channels, bucket);
+        maxItemsEnforcer.updateMaxItems(channels);
 
         // then
         verify(contentRetriever, times(1)).getLatest(channelToUpdate, false);
         verify(contentRetriever, times(1)).getLatest("channelConfig2", false);
         verify(contentRetriever, never()).getLatest("channelConfig3", false);
         verify(contentRetriever, times(1)).query(any(DirectionQuery.class));
-        verify(channelService, times(1)).deleteBefore(channelToUpdate, keys.first(), bucket);
+        verify(channelService, times(1)).deleteBefore(channelToUpdate, keys.first());
     }
 
     @Test

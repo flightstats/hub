@@ -108,11 +108,6 @@ public class SpokeWriteContentDao implements ContentDao {
     }
 
     @Override
-    public void deleteBefore(String channelName, ContentKey limitKey, String alternateBucketName) {
-        throw new UnsupportedOperationException("SpokeWriteContentDao.deleteBefore is not supported");
-    }
-
-    @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         log.trace("query by time {} ", query);
         ActiveTraces.getLocal().add("SpokeWriteContentDao.queryByTime", query);
@@ -210,5 +205,4 @@ public class SpokeWriteContentDao implements ContentDao {
     public void initialize() {
         //do anything?
     }
-
 }
