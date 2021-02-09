@@ -44,10 +44,6 @@ public interface ContentService {
         //do nothing
     }
 
-    default void deleteBefore(String name, ContentKey limitKey, String bucketName) {
-        //do nothing
-    }
-
     default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         //do nothing
     }
