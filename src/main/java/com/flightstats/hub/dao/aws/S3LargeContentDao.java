@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
+import java.util.stream.Stream;
 
 @SuppressWarnings("Duplicates")
 @Singleton
@@ -51,6 +52,7 @@ public class S3LargeContentDao implements ContentDao {
     private final StatsdReporter statsdReporter;
     private final AppProperties appProperties;
     private final String bucketName;
+    private final String disasterRecoveryBucketName;
     private final int maxChunkInMB;
     private final S3Util s3Util;
 
@@ -64,6 +66,7 @@ public class S3LargeContentDao implements ContentDao {
         this.s3Client = s3Client;
         this.appProperties = appPropertiesIn;
         this.bucketName = s3Properties.getBucketName();
+        this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
         this.maxChunkInMB = s3Properties.getMaxChunkInMB();
         this.s3Util = s3Util;
 
@@ -239,12 +242,16 @@ public class S3LargeContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        try {
-            s3Util.delete(channel + "/large/", limitKey, bucketName, s3Client);
-            log.info("completed deletion of " + channel);
-        } catch (Exception e) {
-            log.error("unable to delete  {} in {}", channel, bucketName, e);
-        }
+        Stream.of(bucketName, disasterRecoveryBucketName)
+                .filter(StringUtils::isNotBlank)
+                .forEach(bucket -> {
+                    try {
+                        s3Util.delete(channel + "/large/", limitKey, bucket, s3Client);
+                        log.info("completed deletion of " + channel);
+                    } catch (Exception e) {
+                        log.error("unable to delete  {} in {}", channel, bucket, e);
+                    }
+                });
     }
 
     @Override

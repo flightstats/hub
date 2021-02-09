@@ -52,6 +52,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -68,6 +69,7 @@ public class S3BatchContentDao implements ContentDao {
 
     private final HubS3Client s3Client;
     private final String bucketName;
+    private final String disasterRecoveryBucketName;
     private final StatsdReporter statsdReporter;
     private final S3Util s3Util;
 
@@ -83,6 +85,7 @@ public class S3BatchContentDao implements ContentDao {
         this.useEncrypted = appProperties.isAppEncrypted();
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
+        this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
         this.s3Util = s3Util;
     }
 
@@ -380,13 +383,18 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        try {
-            s3Util.delete(channel + BATCH_ITEMS, limitKey, bucketName, s3Client);
-            s3Util.delete(channel + BATCH_INDEX, limitKey, bucketName, s3Client);
-            log.info("completed deleteBefore of {}", channel);
-        } catch (Exception e) {
-            log.warn("unable to delete {} in {}", channel, bucketName, e);
-        }
+        Stream.of(bucketName, disasterRecoveryBucketName)
+                .filter(StringUtils::isNotBlank)
+                .forEach(bucket -> {
+                    try {
+                        s3Util.delete(channel + BATCH_ITEMS, limitKey, bucket, s3Client);
+                        s3Util.delete(channel + BATCH_INDEX, limitKey, bucket, s3Client);
+                        log.info("completed deleteBefore of {}", channel);
+                    } catch (Exception e) {
+                        log.warn("unable to delete {} in {}", channel, bucket, e);
+                    }
+
+                });
     }
 
     @Override

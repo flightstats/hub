@@ -104,7 +104,7 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channelName, ContentKey limitKey) {
-        throw new UnsupportedOperationException("deleteBefore is not supported");
+        throw new UnsupportedOperationException("SpokeWriteContentDao.deleteBefore is not supported");
     }
 
     @Override
@@ -205,5 +205,4 @@ public class SpokeWriteContentDao implements ContentDao {
     public void initialize() {
         //do anything?
     }
-
 }

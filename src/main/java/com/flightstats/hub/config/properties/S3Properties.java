@@ -29,6 +29,11 @@ public class S3Properties {
         return propertiesLoader.getProperty("s3.bucket_name", getLegacyBucketName());
     }
 
+    public String getDisasterRecoveryBucketName() {
+        return propertiesLoader.getProperty(
+                "s3.disaster_recovery.bucket_name", "");
+    }
+
     public int getBucketPolicyMaxRules(int defaultValue) {
         return propertiesLoader.getProperty("s3.maxRules", defaultValue);
     }

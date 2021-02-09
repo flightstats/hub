@@ -7,7 +7,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -16,6 +15,7 @@ import javax.inject.Singleton;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Singleton
@@ -36,14 +36,11 @@ public class MaxItemsEnforcer {
 
     void updateMaxItems(Iterable<ChannelConfig> configurations) {
         log.info("iterating channels for max items update");
-        for (ChannelConfig config : configurations) {
-            if (config.getMaxItems() > 0 && !config.getKeepForever()) {
-                updateMaxItems(config);
-            }
-        }
+        StreamSupport.stream(configurations.spliterator(), false)
+                .filter(config -> config.getMaxItems() > 0 && !config.getKeepForever())
+                .forEach(this::updateMaxItems);
     }
 
-    @SneakyThrows
     void updateMaxItems(String channelName) {
         Optional<ChannelConfig> channelConfig = Optional.ofNullable(channelConfigDao.get(channelName));
         channelConfig.filter(config -> config.getMaxItems() > 0 && !config.getKeepForever())
@@ -54,19 +51,14 @@ public class MaxItemsEnforcer {
         String name = config.getDisplayName();
         log.debug("updating max items for channel {}", name);
         ActiveTraces.start("S3Config.updateMaxItems", name);
-        Optional<ContentKey> optional = contentRetriever.getLatest(name, false);
-        if (optional.isPresent()) {
-            ContentKey latest = optional.get();
-            if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {
-                updateMaxItems(config, latest);
-            }
-        }
+        Optional<ContentKey> optionalLatest = contentRetriever.getLatest(name, false);
+        optionalLatest.filter(latest -> latest.getTime().isAfter(TimeUtil.now().minusDays(1)))
+                .ifPresent(latest -> updateMaxItems(config, latest));
         ActiveTraces.end();
-        log.info("completed max items update for channel {}. updated: {}", name, optional.map(ContentKey::toUrl).orElse("none"));
-
+        log.info("completed max items update for channel {}. updated: {}", name, optionalLatest.map(ContentKey::toUrl).orElse("None"));
     }
 
-    private void updateMaxItems(ChannelConfig config, ContentKey latest) {
+    private Optional<ContentKey> getEarliestKeyOfMaximum(ChannelConfig config, ContentKey latest) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         keys.add(latest);
         String name = config.getDisplayName();
@@ -79,11 +71,18 @@ public class MaxItemsEnforcer {
                 .count((int) (config.getMaxItems() - 1))
                 .build();
         keys.addAll(contentRetriever.query(query));
-        if (keys.size() == config.getMaxItems()) {
-            ContentKey limitKey = keys.first();
-            log.info("deleting keys before {}", limitKey);
-            channelService.deleteBefore(name, limitKey);
+        if (keys.size() != config.getMaxItems()) {
+            return Optional.empty();
         }
+        return Optional.of(keys.first());
+    }
+
+    private void updateMaxItems(ChannelConfig config, ContentKey latest) {
+        Optional<ContentKey> limitKey = getEarliestKeyOfMaximum(config, latest);
+        limitKey.ifPresent(key -> {
+            log.info("deleting keys before {}", key);
+            channelService.deleteBefore(config.getDisplayName(), key);
+        });
     }
 
 }

@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -47,7 +48,7 @@ public class S3SingleContentDao implements ContentDao {
     private final boolean useEncrypted;
     private final int s3MaxQueryItems;
     private final String bucketName;
-
+    private final String disasterRecoveryBucketName;
     private final StatsdReporter statsdReporter;
     private final HubS3Client s3Client;
     private final S3Util s3Util;
@@ -64,6 +65,7 @@ public class S3SingleContentDao implements ContentDao {
         this.useEncrypted = appProperties.isAppEncrypted();
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
+        this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
         this.s3Util = s3Util;
     }
 
@@ -290,12 +292,16 @@ public class S3SingleContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        try {
-            s3Util.delete(channel + "/", limitKey, bucketName, s3Client);
-            log.debug("completed deletion of {} using limit key {}", channel, limitKey.toUrl());
-        } catch (Exception e) {
-            log.warn("unable to delete {} in {}", channel, bucketName, e);
-        }
+        Stream.of(bucketName, disasterRecoveryBucketName)
+                .filter(StringUtils::isNotBlank)
+                .forEach(bucket -> {
+                    try {
+                        s3Util.delete(channel + "/", limitKey, bucket, s3Client);
+                        log.debug("completed deletion of {} using limit key {} for bucket: {}", channel, limitKey.toUrl(), bucket);
+                    } catch (Exception e) {
+                        log.warn("unable to delete {} in {}", channel, bucket, e);
+                    }
+                });
     }
 
     @Override

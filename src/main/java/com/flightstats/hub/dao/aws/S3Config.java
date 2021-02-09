@@ -14,13 +14,15 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class S3Config {
@@ -96,35 +98,37 @@ public class S3Config {
             maxItemsEnforcer.updateMaxItems(configurations);
         }
 
+        private void updateRulesConfigForBucket(List<BucketLifecycleConfiguration.Rule> rules, String bucket) {
+            List<BucketLifecycleConfiguration.Rule> withNonHubRules = Stream.of(rules, getNonHubBucketLifecycleRules(bucket))
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(withNonHubRules);
+            SetBucketLifecycleConfigurationRequest request =
+                    new SetBucketLifecycleConfigurationRequest(bucket, lifecycleConfig);
+            s3Client.setBucketLifecycleConfiguration(request);
+            log.info("updated {} rules with ttl life cycle for s3 bucket: {}", rules.size(), bucket);
+        }
+
         private void updateTtlDays() {
             log.debug("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
             int maxRules = s3Properties.getBucketPolicyMaxRules(S3_LIFECYCLE_RULES_AVAILABLE);
-
-            List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
-
             if (maxRules > 0 && maxRules <= S3_LIFECYCLE_RULES_AVAILABLE) {
-                rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
-            }
-
-            log.trace("updating {} ", rules);
-
-            if (!rules.isEmpty()) {
-                rules.addAll(getNonHubBucketLifecycleRules());
-
-                BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
-                SetBucketLifecycleConfigurationRequest request =
-                        new SetBucketLifecycleConfigurationRequest(s3Properties.getBucketName(), lifecycleConfig);
-                s3Client.setBucketLifecycleConfiguration(request);
-                log.info("updated {} rules with ttl life cycle ", rules.size());
-
+                List<BucketLifecycleConfiguration.Rule> rules = S3ConfigStrategy
+                        .apportion(configurations, new DateTime(), maxRules);
+                log.trace("updating {} ", rules);
+                if (!rules.isEmpty()) {
+                    Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
+                            .filter(StringUtils::isNotBlank)
+                            .forEach(bucket -> this.updateRulesConfigForBucket(rules, bucket));
+                }
             }
             ActiveTraces.end();
         }
 
-        private List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules() {
+        private List<BucketLifecycleConfiguration.Rule> getNonHubBucketLifecycleRules(String bucketName) {
             GetBucketLifecycleConfigurationRequest request =
-                    new GetBucketLifecycleConfigurationRequest(s3Properties.getBucketName());
+                    new GetBucketLifecycleConfigurationRequest(bucketName);
             BucketLifecycleConfiguration bucketLifecycleConfiguration =
                     s3Client.getBucketLifecycleConfiguration(request);
             return S3ConfigStrategy.getNonHubBucketLifecycleRules(bucketLifecycleConfiguration);
