@@ -24,7 +24,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
         URI requestUri = request.getUriInfo().getRequestUri();
         log.trace("response {} {} {}", request.getMethod(), requestUri, response.getStatus());
-        boolean trace = Boolean.valueOf(request.getUriInfo().getQueryParameters().getFirst("trace"));
+        boolean trace = Boolean.parseBoolean(request.getUriInfo().getQueryParameters().getFirst("trace"));
         if (trace) {
             Object entity = response.getEntity();
             if (entity == null) {
@@ -38,6 +38,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         }
         Thread thread = Thread.currentThread();
         if (!ActiveTraces.end(trace, response.getStatus())) {
+            log.warn("unable to end trace for payload: {}", response.getEntity());
             log.warn("unable to end trace for {}", requestUri);
         }
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));

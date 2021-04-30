@@ -171,18 +171,19 @@ public class ChannelResource {
                                 @QueryParam("threads") @DefaultValue("3") String threads,
                                 @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) {
-        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertValue", channelName));
-        if (!contentRetriever.isExistingChannel(channelName)) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        long start = System.currentTimeMillis();
-        Content content = Content.builder()
-                .withContentType(contentType)
-                .withContentLength(contentLength)
-                .withStream(data)
-                .withThreads(Integer.parseInt(threads))
-                .build();
+        Content content = Content.builder().build();
         try {
+            permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertValue", channelName));
+            if (!contentRetriever.isExistingChannel(channelName)) {
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
+            }
+            long start = System.currentTimeMillis();
+            content = Content.builder()
+                    .withContentType(contentType)
+                    .withContentLength(contentLength)
+                    .withStream(data)
+                    .withThreads(Integer.parseInt(threads))
+                    .build();
             ContentKey contentKey = channelService.insert(channelName, content);
             log.trace("posted {}", contentKey);
             InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
@@ -205,10 +206,7 @@ public class ChannelResource {
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
-            String key = "";
-            if (content.getContentKey().isPresent()) {
-                key = content.getContentKey().get().toString();
-            }
+            String key = content.getContentKey().map(ContentKey::toString).orElse("");
             log.error("unable to POST to {} key {}", channelName, key, e);
             throw e;
         }
