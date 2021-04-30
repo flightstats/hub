@@ -38,7 +38,6 @@ import java.util.Optional;
 import static com.flightstats.hub.constant.ZookeeperNodes.HISTORICAL_EARLIEST;
 import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATOR_WATCHER_PATH;
-
 import static com.flightstats.hub.metrics.ChannelMetricTag.BULK;
 import static com.flightstats.hub.metrics.ChannelMetricTag.HISTORICAL;
 import static com.flightstats.hub.metrics.ChannelMetricTag.SINGLE;
@@ -138,7 +137,9 @@ public class ChannelService {
         ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
         return inFlightService.inFlight(() -> {
             Traces traces = ActiveTraces.getLocal();
-            traces.add("ContentService.insert");
+            traces.add("ContentService.insert {}", content.getContentKey()
+                    .map(ContentKey::toString)
+                    .orElse("Content Key Unknown"));
             try {
                 content.packageStream();
                 checkZeroBytes(content, channelConfig);
