@@ -16,7 +16,7 @@
     "parse-link-header": "^1.0.1",
     "request": "^2.87.0",
     "request-promise-native": "^1.0.5",
-    "ws": "^5.2.2"
+    "ws": "^7.4.5"
   },
   "devDependencies": {
     "express": "^4.16.3",
