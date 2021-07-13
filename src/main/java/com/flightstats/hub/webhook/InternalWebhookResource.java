@@ -22,10 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.constant.InternalResourceDescription.WEBHOOK_DESCRIPTION;
@@ -188,8 +185,13 @@ public class InternalWebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response running() {
         ObjectNode root = objectMapper.createObjectNode();
-        ArrayNode arrayNode = root.putArray(localHostProperties.getName());
-        localWebhookRunner.getRunning().forEach(arrayNode::add);
+        ObjectNode hostNode = root.putObject(localHostProperties.getName());
+
+        localWebhookRunner.getRunning().entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .forEach(e -> {
+                     ObjectNode webhookNode = hostNode.putObject(e.getKey());
+                     e.getValue().forEach(webhookNode::putPOJO);
+                });
 
         return Response.ok(root).build();
     }

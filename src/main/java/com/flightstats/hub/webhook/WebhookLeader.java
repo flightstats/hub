@@ -19,10 +19,12 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.strategy.WebhookStrategy;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -36,10 +38,10 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED
 import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 
 @Slf4j
-class WebhookLeader implements Lockable {
+class WebhookLeader {
     private static final MetricsType LEADERSHIP_METRIC = MetricsType.WEBHOOK_LEADERSHIP;
 
-    private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
+    private final AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
 
     private final ContentRetriever contentRetriever;
     private final WebhookService webhookService;
@@ -60,6 +62,7 @@ class WebhookLeader implements Lockable {
     private WebhookRetryer retryer;
     private WebhookStrategy webhookStrategy;
     private Webhook webhook;
+    private Long leadershipStartTime;
 
 
     @Inject
@@ -87,7 +90,7 @@ class WebhookLeader implements Lockable {
         this.objectMapper = objectMapper;
     }
 
-    boolean tryLeadership(Webhook webhook) {
+    boolean tryLeadership(Webhook webhook, LeadershipStateListener leadershipStateListener) {
         log.debug("starting webhook: {}", webhook);
         setWebhook(webhook);
         if (webhook.isPaused()) {
@@ -96,13 +99,17 @@ class WebhookLeader implements Lockable {
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
             distributedLockRunner = new DistributedAsyncLockRunner(leaderPath, lockManager);
-            leadershipLock = distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
+            leadershipLock = distributedLockRunner.runWithLock(() -> {
+                leadershipStateListener.leadershipStateUpdated(this, true);
+                runWebhookLeader()
+                leadershipStateListener.leadershipStateUpdated(this, false);
+            }, 1, TimeUnit.SECONDS);
         }
         return leadershipLock.isPresent();
     }
 
-    @Override
-    public void takeLeadership(Leadership leadership) {
+    private void runWebhookLeader(Leadership leadership) {
+        leadershipStartTime = System.currentTimeMillis();
         Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
         String channelName = webhook.getChannelName();
         if (!foundWebhook.isPresent() || !this.contentRetriever.isExistingChannel(channelName)) {
@@ -336,5 +343,18 @@ class WebhookLeader implements Lockable {
         return leadershipLock
                 .map(lock -> lock.getLeadership().hasLeadership())
                 .orElse(false);
+    }
+
+    Map<String,Object> getLocalStatistics() {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+        return builder
+                .put("startTimeMillis", leadershipStartTime)
+                .put("lastUpdated", lastUpdated.get())
+                .put("hasLeadership", hasLeadership())
+                .build();
+    }
+
+    interface LeadershipStateListener {
+        void leadershipStateUpdated(WebhookLeader webhookLeader, boolean hasLeadership);
     }
 }
