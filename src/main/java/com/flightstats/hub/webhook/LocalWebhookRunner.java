@@ -80,7 +80,7 @@ public class LocalWebhookRunner {
                 return true;
             }
             log.info("webhook has changed {} to {}; stopping", runningWebhook, daoWebhook);
-            stop(name);
+            stopWithLock(name);
         }
         log.info("starting {}", name);
         return start(daoWebhook);
