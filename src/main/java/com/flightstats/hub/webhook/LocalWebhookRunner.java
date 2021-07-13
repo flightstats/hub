@@ -4,7 +4,6 @@ import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import javax.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -12,26 +11,24 @@ import de.jkeylockmanager.manager.KeyLockManager;
 import de.jkeylockmanager.manager.KeyLockManagers;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
+import javax.inject.Inject;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
 public class LocalWebhookRunner {
-
-    private final Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
-
     private final Dao<Webhook> webhookDao;
     private final Provider<WebhookLeader> webhookLeaderProvider;
     private final KeyLockManager lockManager;
     private final int shutdownThreadCount;
+    private final LocalLeaders localLeaders;
 
     @Inject
     public LocalWebhookRunner(@Named("Webhook") Dao<Webhook> webhookDao,
@@ -41,6 +38,7 @@ public class LocalWebhookRunner {
         this.webhookLeaderProvider = webhookLeaderProvider;
         this.lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
         this.shutdownThreadCount = webhookProperties.getShutdownThreadCount();
+        this.localLeaders = new LocalLeaders();
     }
 
     public void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
@@ -63,6 +61,10 @@ public class LocalWebhookRunner {
         }
     }
 
+    /**
+     * @return true if the webhook acquired had leadership at any point.
+     * This is not a valid indicator of whether or not the webhook still has leadership.
+     */
     boolean ensureRunning(String name) {
         return lockManager.executeLocked(name, () -> ensureRunningWithLock(name));
     }
@@ -70,16 +72,16 @@ public class LocalWebhookRunner {
     private boolean ensureRunningWithLock(String name) {
         Webhook daoWebhook = webhookDao.get(name);
         log.debug("ensureRunning {}", daoWebhook);
-        if (localLeaders.containsKey(name)) {
+        WebhookLeader existingLeader = localLeaders.getLocalLeaders().get(name);
+        if (null != existingLeader) {
             log.debug("checking for change {}", name);
-            WebhookLeader webhookLeader = localLeaders.get(name);
-            Webhook runningWebhook = webhookLeader.getWebhook();
-            if (webhookLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {
+            Webhook runningWebhook = existingLeader.getWebhook();
+            if (existingLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {
                 log.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
                 return true;
             }
             log.info("webhook has changed {} to {}; stopping", runningWebhook, daoWebhook);
-            stop(name);
+            stopWithLock(name);
         }
         log.info("starting {}", name);
         return start(daoWebhook);
@@ -87,31 +89,58 @@ public class LocalWebhookRunner {
 
     private boolean start(Webhook daoWebhook) {
         WebhookLeader webhookLeader = webhookLeaderProvider.get();
-        boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
-        if (hasLeadership) {
-            localLeaders.put(daoWebhook.getName(), webhookLeader);
-        }
-        return hasLeadership;
+        return webhookLeader.tryLeadership(daoWebhook, localLeaders);
     }
 
     void stopAll() {
-        runAndWait("LocalWebhookRunner.stopAll", localLeaders.keySet(), this::stop);
+        runAndWait("LocalWebhookRunner.stopAll", localLeaders.getLocalLeaders().keySet(), this::stop);
     }
 
     void stop(String name) {
+        lockManager.executeLocked(name, () -> stopWithLock(name));
+    }
+
+    private void stopWithLock(String name) {
         log.info("stopping {} if running local", name);
-        if (localLeaders.containsKey(name)) {
+        WebhookLeader webhookLeader = localLeaders.getLocalLeaders().get(name);
+        if (null != webhookLeader) {
             log.info("stopping local {}", name);
-            localLeaders.get(name).exit();
-            localLeaders.remove(name);
+            webhookLeader.exit();
         }
     }
 
     int getCount() {
-        return localLeaders.size();
+        return localLeaders.getLocalLeaders().size();
     }
 
-    List<String> getRunning() {
-        return new ArrayList<>(localLeaders.keySet());
+    Map<String, Map<String, Object>> getRunning() {
+        return localLeaders.getLocalLeaders().values().stream()
+                .collect(Collectors.toMap(k -> k.getWebhook().getName(), WebhookLeader::getLocalStatistics));
+    }
+
+
+    static class LocalLeaders implements WebhookLeader.LeadershipStateListener {
+        private final Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
+
+        public Map<String, WebhookLeader> getLocalLeaders() {
+            return localLeaders;
+        }
+
+        @Override
+        public void leadershipStateUpdated(WebhookLeader webhookLeader, boolean hasLeadership) {
+            String webhookName = webhookLeader.getWebhook().getName();
+
+            if (hasLeadership) {
+                WebhookLeader existingLeader = localLeaders.put(webhookName, webhookLeader);
+                if (null != existingLeader) {
+                    log.error("Starting a second webhook leader for {}", webhookName);
+                }
+            }
+            else {
+                if(!localLeaders.remove(webhookName, webhookLeader)) {
+                    log.error("Attempted to remove an unexpected webhook leader for {}", webhookName);
+                }
+            }
+        }
     }
 }

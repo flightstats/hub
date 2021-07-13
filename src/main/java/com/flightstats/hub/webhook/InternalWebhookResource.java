@@ -188,8 +188,13 @@ public class InternalWebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response running() {
         ObjectNode root = objectMapper.createObjectNode();
-        ArrayNode arrayNode = root.putArray(localHostProperties.getName());
-        localWebhookRunner.getRunning().forEach(arrayNode::add);
+        ObjectNode hostNode = root.putObject(localHostProperties.getName());
+
+        localWebhookRunner.getRunning().entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .forEach(e -> {
+                     ObjectNode webhookNode = hostNode.putObject(e.getKey());
+                     e.getValue().forEach(webhookNode::putPOJO);
+                });
 
         return Response.ok(root).build();
     }
