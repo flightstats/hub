@@ -351,6 +351,7 @@ class WebhookLeader {
                 .put("startTimeMillis", leadershipStartTime)
                 .put("lastUpdated", lastUpdated.get())
                 .put("hasLeadership", hasLeadership())
+                .put("executorState", Optional.ofNullable(executorService).map(e -> e.isShutdown() ? "SHUTDOWN" : "ACTIVE").orElse("NULL"))
                 .build();
     }
 
