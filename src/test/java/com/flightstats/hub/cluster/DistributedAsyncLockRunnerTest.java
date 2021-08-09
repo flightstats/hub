@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.IntegrationTestSetup;
+import lombok.SneakyThrows;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,8 +103,9 @@ class DistributedAsyncLockRunnerTest {
             this.sleepMillis = sleepMillis;
         }
 
+        @SneakyThrows
         @Override
-        public void takeLeadership(Leadership leadership) throws Exception {
+        public void takeLeadership(Leadership leadership) {
             Thread.sleep(sleepMillis);
             List<String> newLockList = lockList.get();
             newLockList.add(name);

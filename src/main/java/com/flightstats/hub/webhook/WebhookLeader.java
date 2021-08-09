@@ -6,7 +6,6 @@ import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.LeadershipLock;
-import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
@@ -99,9 +98,9 @@ class WebhookLeader {
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
             distributedLockRunner = new DistributedAsyncLockRunner(leaderPath, lockManager);
-            leadershipLock = distributedLockRunner.runWithLock(() -> {
+            leadershipLock = distributedLockRunner.runWithLock(leadership -> {
                 leadershipStateListener.leadershipStateUpdated(this, true);
-                runWebhookLeader()
+                runWebhookLeader(leadership);
                 leadershipStateListener.leadershipStateUpdated(this, false);
             }, 1, TimeUnit.SECONDS);
         }
@@ -353,6 +352,11 @@ class WebhookLeader {
                 .put("hasLeadership", hasLeadership())
                 .put("executorState", Optional.ofNullable(executorService).map(e -> e.isShutdown() ? "SHUTDOWN" : "ACTIVE").orElse("NULL"))
                 .build();
+    }
+
+    @Override
+    public String toString() {
+        return webhook.getName() + "/" + leadershipStartTime + "@" + hashCode();
     }
 
     interface LeadershipStateListener {

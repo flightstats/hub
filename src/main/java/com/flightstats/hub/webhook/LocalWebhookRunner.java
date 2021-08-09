@@ -2,6 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Provider;
@@ -13,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 public class LocalWebhookRunner {
     private final Dao<Webhook> webhookDao;
     private final Provider<WebhookLeader> webhookLeaderProvider;
+    private final StatsdReporter statsdReporter;
     private final KeyLockManager lockManager;
     private final int shutdownThreadCount;
     private final LocalLeaders localLeaders;
@@ -33,9 +37,11 @@ public class LocalWebhookRunner {
     @Inject
     public LocalWebhookRunner(@Named("Webhook") Dao<Webhook> webhookDao,
                               Provider<WebhookLeader> webhookLeaderProvider,
-                              WebhookProperties webhookProperties) {
+                              WebhookProperties webhookProperties,
+                              StatsdReporter statsdReporter) {
         this.webhookDao = webhookDao;
         this.webhookLeaderProvider = webhookLeaderProvider;
+        this.statsdReporter = statsdReporter;
         this.lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
         this.shutdownThreadCount = webhookProperties.getShutdownThreadCount();
         this.localLeaders = new LocalLeaders();
@@ -72,19 +78,23 @@ public class LocalWebhookRunner {
     private boolean ensureRunningWithLock(String name) {
         Webhook daoWebhook = webhookDao.get(name);
         log.debug("ensureRunning {}", daoWebhook);
-        WebhookLeader existingLeader = localLeaders.getLocalLeaders().get(name);
-        if (null != existingLeader) {
+
+        return localLeaders.getLocalLeader(name).map(existingLeader -> {
             log.debug("checking for change {}", name);
             Webhook runningWebhook = existingLeader.getWebhook();
             if (existingLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {
                 log.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
                 return true;
             }
-            log.info("webhook has changed {} to {}; stopping", runningWebhook, daoWebhook);
-            stopWithLock(name);
-        }
-        log.info("starting {}", name);
-        return start(daoWebhook);
+            log.info("webhook has changed {} to {}; stopping {}", runningWebhook, daoWebhook, runningWebhook);
+            stopWithLock(existingLeader);
+
+            log.info("restarting {}", name);
+            return start(daoWebhook);
+        }).orElseGet(() -> {
+            log.info("starting {}", name);
+            return start(daoWebhook);
+        });
     }
 
     private boolean start(Webhook daoWebhook) {
@@ -93,7 +103,10 @@ public class LocalWebhookRunner {
     }
 
     void stopAll() {
-        runAndWait("LocalWebhookRunner.stopAll", localLeaders.getLocalLeaders().keySet(), this::stop);
+        List<String> webhookNames = localLeaders.getLocalLeaders().stream()
+                .map(v -> v.getWebhook().getName())
+                .collect(Collectors.toList());
+        runAndWait("LocalWebhookRunner.stopAll", webhookNames, this::stop);
     }
 
     void stop(String name) {
@@ -102,11 +115,12 @@ public class LocalWebhookRunner {
 
     private void stopWithLock(String name) {
         log.info("stopping {} if running local", name);
-        WebhookLeader webhookLeader = localLeaders.getLocalLeaders().get(name);
-        if (null != webhookLeader) {
-            log.info("stopping local {}", name);
-            webhookLeader.exit();
-        }
+        localLeaders.getLocalLeader(name).ifPresent(this::stopWithLock);
+    }
+
+    private void stopWithLock(WebhookLeader webhookLeader) {
+        log.info("stopping local {}", webhookLeader);
+        webhookLeader.exit();
     }
 
     int getCount() {
@@ -114,16 +128,20 @@ public class LocalWebhookRunner {
     }
 
     Map<String, Map<String, Object>> getRunning() {
-        return localLeaders.getLocalLeaders().values().stream()
+        return localLeaders.getLocalLeaders().stream()
                 .collect(Collectors.toMap(k -> k.getWebhook().getName(), WebhookLeader::getLocalStatistics));
     }
 
 
-    static class LocalLeaders implements WebhookLeader.LeadershipStateListener {
+    class LocalLeaders implements WebhookLeader.LeadershipStateListener {
         private final Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
 
-        public Map<String, WebhookLeader> getLocalLeaders() {
-            return localLeaders;
+        public Optional<WebhookLeader> getLocalLeader(String webhookName) {
+            return Optional.ofNullable(localLeaders.get(webhookName));
+        }
+
+        public Collection<WebhookLeader> getLocalLeaders() {
+            return localLeaders.values();
         }
 
         @Override
@@ -133,7 +151,8 @@ public class LocalWebhookRunner {
             if (hasLeadership) {
                 WebhookLeader existingLeader = localLeaders.put(webhookName, webhookLeader);
                 if (null != existingLeader) {
-                    log.error("Starting a second webhook leader for {}", webhookName);
+                    log.error("Starting a second webhook leader for {}", existingLeader);
+                    statsdReporter.incrementCounter("webhook.multileader", "name:" + webhookName);
                 }
             }
             else {
