@@ -2,6 +2,6 @@ package com.flightstats.hub.cluster;
 
 public interface Lockable {
 
-    void takeLeadership(Leadership leadership) throws Exception;
+    void takeLeadership(Leadership leadership);
 
 }
