@@ -152,12 +152,13 @@ public class LocalWebhookRunner {
                 WebhookLeader existingLeader = localLeaders.put(webhookName, webhookLeader);
                 if (null != existingLeader) {
                     log.error("Starting a second webhook leader for {}", existingLeader);
-                    statsdReporter.incrementCounter("webhook.multileader", "name:" + webhookName);
+                    statsdReporter.incrementCounter("webhook.leader.over", "name:" + webhookName);
                 }
             }
             else {
                 if(!localLeaders.remove(webhookName, webhookLeader)) {
                     log.error("Attempted to remove an unexpected webhook leader for {}", webhookName);
+                    statsdReporter.incrementCounter("webhook.leader.under", "name:" + webhookName);
                 }
             }
         }
