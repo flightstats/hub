@@ -18,11 +18,11 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.strategy.WebhookStrategy;
-import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -345,14 +345,13 @@ class WebhookLeader {
     }
 
     Map<String,Object> getLocalStatistics() {
-        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-        return builder
-                .put("startTimeMillis", leadershipStartTime)
-                .put("lastUpdatedUrl", Optional.ofNullable(lastUpdated.get()).map(ContentPath::toUrl).orElse(null))
-                .put("lastUpdatedMillis", Optional.ofNullable(lastUpdated.get()).map(c -> c.getTime().getMillis()).orElse(null))
-                .put("hasLeadership", hasLeadership())
-                .put("executorState", Optional.ofNullable(executorService).map(e -> e.isShutdown() ? "SHUTDOWN" : "ACTIVE").orElse(null))
-                .build();
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("startTimeMillis", leadershipStartTime);
+        stats.put("lastUpdatedUrl", Optional.ofNullable(lastUpdated.get()).map(ContentPath::toUrl).orElse(null));
+        stats.put("lastUpdatedMillis", Optional.ofNullable(lastUpdated.get()).map(c -> c.getTime().getMillis()).orElse(null));
+        stats.put("hasLeadership", hasLeadership());
+        stats.put("executorState", Optional.ofNullable(executorService).map(e -> e.isShutdown() ? "SHUTDOWN" : "ACTIVE").orElse(null));
+        return stats;
     }
 
     @Override
