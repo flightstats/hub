@@ -348,7 +348,8 @@ class WebhookLeader {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
         return builder
                 .put("startTimeMillis", leadershipStartTime)
-                .put("lastUpdated", Optional.ofNullable(lastUpdated.get()).map(ContentPath::toUrl).orElse(null))
+                .put("lastUpdatedUrl", Optional.ofNullable(lastUpdated.get()).map(ContentPath::toUrl).orElse(null))
+                .put("lastUpdatedMillis", Optional.ofNullable(lastUpdated.get()).map(c -> c.getTime().getMillis()).orElse(null))
                 .put("hasLeadership", hasLeadership())
                 .put("executorState", Optional.ofNullable(executorService).map(e -> e.isShutdown() ? "SHUTDOWN" : "ACTIVE").orElse(null))
                 .build();
