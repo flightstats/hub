@@ -5,10 +5,12 @@ import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.util.IO;
 import org.joda.time.DateTime;
 
 import javax.ws.rs.NotFoundException;
@@ -22,8 +24,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Direct interactions with the file system
@@ -50,13 +61,13 @@ public class FileSpokeStore {
         return insert(path, new ByteArrayInputStream(payload));
     }
 
+    @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        log.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
-        try (FileOutputStream output = new FileOutputStream(file)) {
-            long copy = ByteStreams.copy(input, output);
-            boolean setExecutable = file.setExecutable(true);
-            log.trace("copied {} {} {}", file, copy, setExecutable);
+        try (FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
+             FileLock ignored = fileChannel.lock()) {
+            fileChannel.write(ByteBuffer.allocateDirect(input.read()));
+            log.trace("insert {} {}", file, file.getParentFile().mkdirs());
             return true;
         } catch (IOException e) {
             log.error("unable to write to {}", path, e);
@@ -64,23 +75,26 @@ public class FileSpokeStore {
         }
     }
 
+    @SneakyThrows
     public byte[] read(String path) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        read(path, baos);
-        return baos.toByteArray();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        read(path, byteArrayOutputStream);
+        return byteArrayOutputStream.toByteArray();
     }
 
+    @SneakyThrows
     public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
-        log.trace("reading {}", file);
         if (!file.exists()) {
             throw new NotFoundException("not found " + path);
         }
-        if (!file.canExecute()) {
-            log.warn("incomplete file {}", path);
-            throw new NotFoundException("incomplete file " + path);
-        }
-        try (FileInputStream input = new FileInputStream(file)) {
+        try (FileInputStream input = new FileInputStream(file);
+             FileLock ignored = input.getChannel().lock()) {
+            if (!file.canRead()) {
+                log.error("Permission denied reading File: {}", path);
+                throw new AccessDeniedException("Permission denied reading File" + path);
+            }
+            log.trace("reading {}", file);
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
             log.error("file not found {}", path);
