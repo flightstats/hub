@@ -51,10 +51,6 @@ public class FileSpokeStore {
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
-        File file = spokeFilePathPart("hub-startup/" + new ContentKey().toUrl());
-        if (file.canExecute()) {
-            log.warn("**** Spoke file permissions may allow incomplete reads ****");
-        }
     }
 
     public boolean insert(String path, byte[] payload) {
@@ -64,13 +60,14 @@ public class FileSpokeStore {
     @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
+        file.getParentFile().mkdirs();
         try (FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
              FileLock ignored = fileChannel.lock()) {
             fileChannel.write(ByteBuffer.allocateDirect(input.read()));
-            log.trace("insert {} {}", file, file.getParentFile().mkdirs());
+            log.trace("Insert: {}", file);
             return true;
         } catch (IOException e) {
-            log.error("unable to write to {}", path, e);
+            log.error("Unable to write to Path {}, Error: {}", path, e.getMessage(), e);
             return false;
         }
     }
