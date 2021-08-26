@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.util.IO;
 import org.joda.time.DateTime;
 
 import javax.ws.rs.NotFoundException;
@@ -20,21 +19,16 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Direct interactions with the file system
@@ -85,12 +79,13 @@ public class FileSpokeStore {
         if (!file.exists()) {
             throw new NotFoundException("not found " + path);
         }
-        try (FileInputStream input = new FileInputStream(file);
-             FileLock ignored = input.getChannel().lock()) {
-            if (!file.canRead()) {
-                log.error("Permission denied reading File: {}", path);
-                throw new AccessDeniedException("Permission denied reading File" + path);
-            }
+        if (!file.canRead()) {
+            log.error("Permission denied reading File: {}", path);
+            throw new AccessDeniedException("Permission denied reading File" + path);
+        }
+        try (FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
+             FileInputStream input = new FileInputStream(file);
+             FileLock ignored = fileChannel.tryLock()) {
             log.trace("reading {}", file);
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
