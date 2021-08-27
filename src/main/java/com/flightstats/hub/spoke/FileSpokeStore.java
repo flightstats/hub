@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
@@ -39,6 +40,7 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 public class FileSpokeStore {
     private final String spokePath;
     private final int spokeTtlMinutes;
+    private final static String SPOKE_TMP_PATH = ".tmp.spoke";
     private final ConcurrentHashMap<String, Boolean> filesArtificiallyLocked = new ConcurrentHashMap<>();
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
@@ -57,8 +59,8 @@ public class FileSpokeStore {
     @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        File tmpFile = new File(file.getPath());
-        file.getParentFile().mkdirs();
+        File tmpFile = new File(SPOKE_TMP_PATH + file.getPath());
+        Stream.of(file, tmpFile).forEach(f -> f.getParentFile().mkdirs());
         log.trace("insert {}", file);
         filesArtificiallyLocked.put(path, true);
         try (FileOutputStream output = new FileOutputStream(tmpFile)) {
