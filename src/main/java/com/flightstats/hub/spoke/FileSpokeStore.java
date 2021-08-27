@@ -59,7 +59,7 @@ public class FileSpokeStore {
     @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        File tmpFile = new File(SPOKE_TMP_PATH + file.getPath());
+        File tmpFile = spokeFilePathPart(SPOKE_TMP_PATH + path);
         Stream.of(file, tmpFile).forEach(f -> f.getParentFile().mkdirs());
         log.trace("insert {}", file);
         filesArtificiallyLocked.put(path, true);
