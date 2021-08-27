@@ -23,13 +23,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
 /**
  * Direct interactions with the file system
@@ -56,11 +57,13 @@ public class FileSpokeStore {
     @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
+        File tmpFile = new File(file.getPath());
         file.getParentFile().mkdirs();
         log.trace("insert {}", file);
         filesArtificiallyLocked.put(path, true);
-        try (FileOutputStream output = new FileOutputStream(file)) {
+        try (FileOutputStream output = new FileOutputStream(tmpFile)) {
             long copy = ByteStreams.copy(input, output);
+            Files.move(tmpFile.toPath(), file.toPath(), ATOMIC_MOVE);
             log.trace("copied {} {}", file, copy);
             return true;
         } catch (IOException e) {
