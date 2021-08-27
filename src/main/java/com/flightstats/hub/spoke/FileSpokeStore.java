@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,13 +56,14 @@ public class FileSpokeStore {
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
         file.getParentFile().mkdirs();
-        try (FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
-             FileLock ignored = fileChannel.lock()) {
-            fileChannel.write(ByteBuffer.allocateDirect(input.read()));
-            log.trace("Insert: {}", file);
+        log.trace("insert {}", file);
+        try (FileOutputStream output = new FileOutputStream(file);
+             FileLock ignored = new RandomAccessFile(file, "rw").getChannel().tryLock()) {
+            long copy = ByteStreams.copy(input, output);
+            log.trace("copied {} {}", file, copy);
             return true;
         } catch (IOException e) {
-            log.error("Unable to write to Path {}, Error: {}", path, e.getMessage(), e);
+            log.error("unable to write to {}", path, e);
             return false;
         }
     }
