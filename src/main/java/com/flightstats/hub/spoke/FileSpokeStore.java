@@ -24,12 +24,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Direct interactions with the file system
@@ -38,6 +38,7 @@ import java.util.Collection;
 public class FileSpokeStore {
     private final String spokePath;
     private final int spokeTtlMinutes;
+    private final ConcurrentHashMap<String, Boolean> filesArtificiallyLocked = new ConcurrentHashMap<>();
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
         this.spokePath = StringUtils.appendIfMissing(spokePath, "/");
@@ -57,14 +58,16 @@ public class FileSpokeStore {
         File file = spokeFilePathPart(path);
         file.getParentFile().mkdirs();
         log.trace("insert {}", file);
-        try (FileOutputStream output = new FileOutputStream(file);
-             FileLock ignored = new RandomAccessFile(file, "rw").getChannel().tryLock()) {
+        filesArtificiallyLocked.put(path, true);
+        try (FileOutputStream output = new FileOutputStream(file)) {
             long copy = ByteStreams.copy(input, output);
             log.trace("copied {} {}", file, copy);
             return true;
         } catch (IOException e) {
             log.error("unable to write to {}", path, e);
             return false;
+        } finally {
+            filesArtificiallyLocked.put(path, false);
         }
     }
 
@@ -85,9 +88,11 @@ public class FileSpokeStore {
             log.error("Permission denied reading File: {}", path);
             throw new AccessDeniedException("Permission denied reading File" + path);
         }
-        try (FileChannel fileChannel = new RandomAccessFile(file, "rw").getChannel();
-             FileInputStream input = new FileInputStream(file);
-             FileLock ignored = fileChannel.tryLock()) {
+        if (filesArtificiallyLocked.getOrDefault(path, false)) {
+            log.error("File is locked by write operator");
+            throw new OverlappingFileLockException();
+        }
+        try (FileInputStream input = new FileInputStream(file)) {
             log.trace("reading {}", file);
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
