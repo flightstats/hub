@@ -28,6 +28,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -41,7 +42,7 @@ public class FileSpokeStore {
     private final String spokePath;
     private final int spokeTtlMinutes;
     private final static String SPOKE_TMP_PATH = ".tmp.spoke";
-    private final ConcurrentHashMap<String, Boolean> filesArtificiallyLocked = new ConcurrentHashMap<>();
+    private final Set<String> filesArtificiallyLocked = ConcurrentHashMap.newKeySet();
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
         this.spokePath = StringUtils.appendIfMissing(spokePath, "/");
@@ -62,17 +63,22 @@ public class FileSpokeStore {
         File tmpFile = spokeFilePathPart(SPOKE_TMP_PATH + path);
         Stream.of(file, tmpFile).forEach(f -> f.getParentFile().mkdirs());
         log.trace("insert {}", file);
-        filesArtificiallyLocked.put(path, true);
+        filesArtificiallyLocked.add(path);
         try (FileOutputStream output = new FileOutputStream(tmpFile)) {
             long copy = ByteStreams.copy(input, output);
-            Files.move(tmpFile.toPath(), file.toPath(), ATOMIC_MOVE);
             log.trace("copied {} {}", file, copy);
+        } catch (IOException e) {
+            log.error("Error writing to spoke path (tmp file phase) {}", tmpFile.getPath(), e);
+            return false;
+        }
+        try {
+            Files.move(tmpFile.toPath(), file.toPath(), ATOMIC_MOVE);
             return true;
         } catch (IOException e) {
-            log.error("unable to write to {}", path, e);
+            log.error("Error moving file to spoke channel destination after write");
             return false;
         } finally {
-            filesArtificiallyLocked.put(path, false);
+            filesArtificiallyLocked.remove(path);
         }
     }
 
@@ -93,7 +99,7 @@ public class FileSpokeStore {
             log.error("Permission denied reading File: {}", path);
             throw new AccessDeniedException("Permission denied reading File" + path);
         }
-        if (filesArtificiallyLocked.getOrDefault(path, false)) {
+        if (filesArtificiallyLocked.contains(path)) {
             log.error("File is locked by write operator");
             throw new OverlappingFileLockException();
         }
