@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import static com.flightstats.hub.constant.ContentConstant.SPOKE_TMP_SUFFIX;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
 /**
@@ -41,7 +42,6 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 public class FileSpokeStore {
     private final String spokePath;
     private final int spokeTtlMinutes;
-    private final static String SPOKE_TMP_PATH = ".tmp.spoke";
     private final Set<String> filesArtificiallyLocked = ConcurrentHashMap.newKeySet();
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
@@ -60,7 +60,7 @@ public class FileSpokeStore {
     @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        File tmpFile = spokeFilePathPart(SPOKE_TMP_PATH + path);
+        File tmpFile = spokeFilePathPart(path + SPOKE_TMP_SUFFIX);
         Stream.of(file, tmpFile).forEach(f -> f.getParentFile().mkdirs());
         log.trace("insert {}", file);
         filesArtificiallyLocked.add(path);
