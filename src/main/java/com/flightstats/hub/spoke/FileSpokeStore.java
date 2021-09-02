@@ -64,14 +64,14 @@ public class FileSpokeStore {
         Stream.of(file, tmpFile).forEach(f -> f.getParentFile().mkdirs());
         log.trace("insert {}", file);
         filesArtificiallyLocked.add(path);
-        try (FileOutputStream output = new FileOutputStream(tmpFile)) {
-            long copy = ByteStreams.copy(input, output);
-            log.trace("copied {} {}", file, copy);
-        } catch (IOException e) {
-            log.error("Error writing to spoke path (tmp file phase) {}", tmpFile.getPath(), e);
-            return false;
-        }
         try {
+            try (FileOutputStream output = new FileOutputStream(tmpFile)) {
+                long copy = ByteStreams.copy(input, output);
+                log.trace("copied {} {}", file, copy);
+            } catch (IOException e) {
+                log.error("Error writing to spoke path (tmp file phase) {}", tmpFile.getPath(), e);
+                return false;
+            }
             Files.move(tmpFile.toPath(), file.toPath(), ATOMIC_MOVE);
             return true;
         } catch (IOException e) {
