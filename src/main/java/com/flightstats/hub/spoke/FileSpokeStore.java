@@ -5,6 +5,7 @@ import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -22,8 +23,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+
+import static com.flightstats.hub.constant.ContentConstant.SPOKE_TMP_SUFFIX;
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
 /**
  * Direct interactions with the file system
@@ -32,6 +42,7 @@ import java.util.Collection;
 public class FileSpokeStore {
     private final String spokePath;
     private final int spokeTtlMinutes;
+    private final Set<String> filesArtificiallyLocked = ConcurrentHashMap.newKeySet();
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
         this.spokePath = StringUtils.appendIfMissing(spokePath, "/");
@@ -40,47 +51,60 @@ public class FileSpokeStore {
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
-        File file = spokeFilePathPart("hub-startup/" + new ContentKey().toUrl());
-        if (file.canExecute()) {
-            log.warn("**** Spoke file permissions may allow incomplete reads ****");
-        }
     }
 
     public boolean insert(String path, byte[] payload) {
         return insert(path, new ByteArrayInputStream(payload));
     }
 
+    @SneakyThrows
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        log.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
-        try (FileOutputStream output = new FileOutputStream(file)) {
-            long copy = ByteStreams.copy(input, output);
-            boolean setExecutable = file.setExecutable(true);
-            log.trace("copied {} {} {}", file, copy, setExecutable);
+        File tmpFile = spokeFilePathPart(path + SPOKE_TMP_SUFFIX);
+        Stream.of(file, tmpFile).forEach(f -> f.getParentFile().mkdirs());
+        log.trace("insert {}", file);
+        filesArtificiallyLocked.add(path);
+        try {
+            try (FileOutputStream output = new FileOutputStream(tmpFile)) {
+                long copy = ByteStreams.copy(input, output);
+                log.trace("copied {} {}", file, copy);
+            } catch (IOException e) {
+                log.error("Error writing to spoke path (tmp file phase) {}", tmpFile.getPath(), e);
+                return false;
+            }
+            Files.move(tmpFile.toPath(), file.toPath(), ATOMIC_MOVE);
             return true;
         } catch (IOException e) {
-            log.error("unable to write to {}", path, e);
+            log.error("Error moving file to spoke channel destination after write");
             return false;
+        } finally {
+            filesArtificiallyLocked.remove(path);
         }
     }
 
+    @SneakyThrows
     public byte[] read(String path) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        read(path, baos);
-        return baos.toByteArray();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        read(path, byteArrayOutputStream);
+        return byteArrayOutputStream.toByteArray();
     }
 
+    @SneakyThrows
     public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
-        log.trace("reading {}", file);
         if (!file.exists()) {
             throw new NotFoundException("not found " + path);
         }
-        if (!file.canExecute()) {
-            log.warn("incomplete file {}", path);
-            throw new NotFoundException("incomplete file " + path);
+        if (!file.canRead()) {
+            log.error("Permission denied reading File: {}", path);
+            throw new AccessDeniedException("Permission denied reading File" + path);
+        }
+        if (filesArtificiallyLocked.contains(path)) {
+            log.error("File is locked by write operator");
+            throw new OverlappingFileLockException();
         }
         try (FileInputStream input = new FileInputStream(file)) {
+            log.trace("reading {}", file);
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
             log.error("file not found {}", path);
