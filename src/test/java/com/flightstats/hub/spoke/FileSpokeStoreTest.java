@@ -61,11 +61,13 @@ class FileSpokeStoreTest {
     void testAdjacentPaths() {
         String previousSecond = "testAdjacentPaths/2014/11/18/00/57/23/015/1";
         String path1 = "testAdjacentPaths/2014/11/18/00/57/24/015/1";
+        String path1Tmp = "testAdjacentPaths/2014/11/18/00/57/24/015/1.spoke.tmp";
         String path2 = "testAdjacentPaths/2014/11/18/00/57/24/015/2";
         String path3 = "testAdjacentPaths/2014/11/18/00/57/24/015/3";
         String nextSecond = "testAdjacentPaths/2014/11/18/00/57/25/015/1";
 
         spokeStore.insert(path1, BYTES);
+        spokeStore.insert(path1Tmp, BYTES);
         spokeStore.insert(path2, BYTES);
         spokeStore.insert(path3, BYTES);
         spokeStore.insert(previousSecond, BYTES);
@@ -118,6 +120,7 @@ class FileSpokeStoreTest {
             spokeStore.insert("testLastFile/" + new ContentKey(time, "B").toUrl(), BYTES);
             time = time.plusMillis(1);
             spokeStore.insert("testLastFile/" + new ContentKey(time, "C").toUrl(), BYTES);
+            spokeStore.insert("testLastFile/" + new ContentKey(time, "C.spoke.tmp").toUrl(), BYTES);
         }
         ContentKey limitKey = new ContentKey(time.minusMinutes(1), "A");
         String found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
@@ -214,8 +217,10 @@ class FileSpokeStoreTest {
         spokeStore.insert(name + "/" + contentKeyA.toUrl(), BYTES);
         ContentKey contentKeyB = new ContentKey(startTime.plusMinutes(1), "B");
         spokeStore.insert(name + "/" + contentKeyB.toUrl(), BYTES);
+        ContentKey contentKeyCTmp = new ContentKey(startTime.plusMinutes(2), "C.spoke.tmp");
         ContentKey contentKeyC = new ContentKey(startTime.plusMinutes(2), "C");
         spokeStore.insert(name + "/" + contentKeyC.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyCTmp.toUrl(), BYTES);
         ContentKey contentKeyD = new ContentKey(startTime.plusMinutes(3), "D");
         spokeStore.insert(name + "/" + contentKeyD.toUrl(), BYTES);
 

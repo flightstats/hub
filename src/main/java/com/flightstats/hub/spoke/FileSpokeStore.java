@@ -28,8 +28,11 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.flightstats.hub.constant.ContentConstant.SPOKE_TMP_SUFFIX;
@@ -178,14 +181,19 @@ public class FileSpokeStore {
         }
         try {
             Collection<File> files;
-            if (resolution.equals("second")) {
+            if (Optional.ofNullable(resolution).orElse("FALSE").equals("second")) {
                 // filter all files in the minute folder that start with seconds
                 FileFilter fileFilter = new WildcardFileFilter(SpokePathUtil.second(key) + "*");
-                files = Arrays.asList(directory.listFiles(fileFilter));
+
+                files = Arrays.asList(Optional.ofNullable(directory.listFiles(fileFilter)).orElse(new File[]{}));
             } else {
                 files = FileUtils.listFiles(new File(path), null, true);
             }
-            for (File aFile : files) {
+            Collection<File> permanentFiles = files
+                    .stream()
+                    .filter(this::doesNotEndWith)
+                    .collect(Collectors.toList());
+            for (File aFile : permanentFiles) {
                 String filePath = aFile.getPath();
                 log.trace("filePath {}", filePath);
                 String keyFromPath = spokeKeyFromPath(aFile.getAbsolutePath());
@@ -227,7 +235,11 @@ public class FileSpokeStore {
         log.trace("looking at {} {}", fullHoursPath, minutes);
         for (int i = minutes.length - 1; i >= 0; i--) {
             String minute = minutes[i];
-            String[] fileNames = new File(fullHoursPath + "/" + minute).list();
+            String[] fileNames = Arrays.stream(Optional
+                            .ofNullable(new File(fullHoursPath + "/" + minute).list())
+                            .orElse(new String[]{}))
+                    .filter(this::doesNotEndWith)
+                    .toArray(String[]::new);
             Arrays.sort(fileNames);
             for (int j = fileNames.length - 1; j >= 0; j--) {
                 String spokeKeyFromPath = spokeKeyFromPath(hoursPath + "/" + minute + "/" + fileNames[j]);
@@ -246,6 +258,15 @@ public class FileSpokeStore {
         return getLatest(channel, limitPath, previous);
     }
 
+    private boolean doesNotEndWith(File file) {
+        return doesNotEndWith(file.getName());
+    }
+
+    private boolean doesNotEndWith(String pathName) {
+        return !pathName.endsWith(SPOKE_TMP_SUFFIX);
+    }
+
+
     /**
      * This may return more than the request count, as this does not do any sorting.
      */
@@ -262,20 +283,22 @@ public class FileSpokeStore {
             String minuteUrl = minutePath.toUrl();
             String minute = channelPath + minuteUrl;
             log.trace("minute {}", minute);
-            String[] items = new File(minute).list();
-            if (items != null) {
-                for (String item : items) {
-                    String keyFromPath = spokeKeyFromPath(minuteUrl + "/" + item);
-                    if (firstMinute) {
-                        ContentKey key = ContentKey.fromUrl(keyFromPath).get();
-                        if (key.compareTo(start) > 0) {
-                            found++;
-                            writeKey(output, channel + "/" + keyFromPath);
-                        }
-                    } else {
+            String[] items = Arrays.stream(
+                            Optional.ofNullable(new File(minute).list())
+                                    .orElse(new String[]{}))
+                    .filter(this::doesNotEndWith)
+                    .toArray(String[]::new);
+            for (String item : items) {
+                String keyFromPath = spokeKeyFromPath(minuteUrl + "/" + item);
+                if (firstMinute) {
+                    ContentKey key = ContentKey.fromUrl(keyFromPath).get();
+                    if (key.compareTo(start) > 0) {
                         found++;
                         writeKey(output, channel + "/" + keyFromPath);
                     }
+                } else {
+                    found++;
+                    writeKey(output, channel + "/" + keyFromPath);
                 }
             }
             minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
