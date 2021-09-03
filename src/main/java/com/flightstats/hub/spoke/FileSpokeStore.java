@@ -28,10 +28,13 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,6 +46,7 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
  */
 @Slf4j
 public class FileSpokeStore {
+    private static final String SECOND_RESOLUTION = "second";
     private final String spokePath;
     private final int spokeTtlMinutes;
     private final Set<String> filesArtificiallyLocked = ConcurrentHashMap.newKeySet();
@@ -118,12 +122,16 @@ public class FileSpokeStore {
 
     public String readKeysInBucket(String path) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        keysInBucket(path, baos);
+        readKeysInBucket(path, baos);
         return baos.toString();
     }
 
-    void readKeysInBucket(String path, OutputStream output) {
-        keysInBucket(path, output);
+    @VisibleForTesting
+    Collection<String> getKeysInBucketArray(String key) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        readKeysInBucket(key, baos);
+        String[] split = baos.toString().split(",");
+        return Arrays.asList(split);
     }
 
     public boolean delete(String path) throws Exception {
@@ -135,7 +143,7 @@ public class FileSpokeStore {
         return FileUtils.deleteQuietly(spokeFilePathPart(path));
     }
 
-    // given a url containing a key, return the file format
+    // given an url containing a key, return the file format
     // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
     @VisibleForTesting
     File spokeFilePathPart(String urlPathPart) {
@@ -170,7 +178,7 @@ public class FileSpokeStore {
         return path;
     }
 
-    private void keysInBucket(String key, OutputStream output) {
+    public void readKeysInBucket(String key, OutputStream output) {
         String path = spokeFilePathPart(key).getAbsolutePath();
         log.trace("path {}", path);
         String resolution = SpokePathUtil.smallestTimeResolution(key);
@@ -180,28 +188,30 @@ public class FileSpokeStore {
             return;
         }
         try {
-            Collection<File> files;
-            if (Optional.ofNullable(resolution).orElse("FALSE").equals("second")) {
+            if (SECOND_RESOLUTION.equals(resolution)) {
                 // filter all files in the minute folder that start with seconds
                 FileFilter fileFilter = new WildcardFileFilter(SpokePathUtil.second(key) + "*");
-
-                files = Arrays.asList(Optional.ofNullable(directory.listFiles(fileFilter)).orElse(new File[]{}));
+                List<File> files = Arrays.asList(Optional.ofNullable(directory.listFiles(fileFilter)).orElse(new File[]{}));
+                writeFilesToOutput(files, output);
             } else {
-                files = FileUtils.listFiles(new File(path), null, true);
-            }
-            Collection<File> permanentFiles = files
-                    .stream()
-                    .filter(this::doesNotEndWith)
-                    .collect(Collectors.toList());
-            for (File aFile : permanentFiles) {
-                String filePath = aFile.getPath();
-                log.trace("filePath {}", filePath);
-                String keyFromPath = spokeKeyFromPath(aFile.getAbsolutePath());
-                writeKey(output, keyFromPath);
+                writeFilesToOutput(FileUtils.listFiles(new File(path), null, true), output);
             }
         } catch (Exception e) {
             log.error("error with " + path, e);
         }
+    }
+
+    private void writeFilesToOutput(Collection<File> files, OutputStream outputStream) {
+        files.stream()
+                .filter(f -> !isTempFile(f))
+                .forEach(file -> {
+                    try {
+                        log.trace("file path: {}", file.getPath());
+                        writeKey(outputStream, spokeKeyFromPath(file.getAbsolutePath()));
+                    } catch (IOException e) {
+                        log.error("Error writing file to output ", e);
+                    }
+                });
     }
 
     private void writeKey(OutputStream output, String keyFromPath) throws IOException {
@@ -209,17 +219,10 @@ public class FileSpokeStore {
         output.write(",".getBytes());
     }
 
-    @VisibleForTesting
-    Collection<String> keysInBucket(String key) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        keysInBucket(key, baos);
-        String[] split = baos.toString().split(",");
-        return Arrays.asList(split);
-    }
-
     public String getLatest(String channel, String limitPath) {
         log.trace("latest {} {}", channel, limitPath);
-        ContentKey limitKey = ContentKey.fromUrl(limitPath).get();
+        ContentKey limitKey = ContentKey.fromUrl(limitPath)
+                .orElseThrow(() -> new RuntimeException("Could not parse ContentKey: " + limitPath));
         return getLatest(channel, limitPath, limitKey.getTime());
     }
 
@@ -227,22 +230,21 @@ public class FileSpokeStore {
         log.trace("latest {} {} {}", channel, limitPath, hourToSearch);
         String hoursPath = TimeUtil.hours(hourToSearch);
         String fullHoursPath = spokePath + channel + "/" + hoursPath;
-        String[] minutes = new File(fullHoursPath).list();
-        if (minutes == null) {
-            minutes = new String[0];
-        }
-        Arrays.sort(minutes);
-        log.trace("looking at {} {}", fullHoursPath, minutes);
-        for (int i = minutes.length - 1; i >= 0; i--) {
-            String minute = minutes[i];
-            String[] fileNames = Arrays.stream(Optional
+        List<String> minutes = Arrays.stream(Optional.ofNullable(new File(fullHoursPath).list()).orElse(new String[]{}))
+                .sorted()
+                .collect(Collectors.toList());
+        log.trace("looking at {} {}", fullHoursPath, minutes.toArray());
+        Collections.reverse(minutes);
+        for (String minute: minutes) {
+            List<String> fileNames = Arrays.stream(Optional
                             .ofNullable(new File(fullHoursPath + "/" + minute).list())
                             .orElse(new String[]{}))
-                    .filter(this::doesNotEndWith)
-                    .toArray(String[]::new);
-            Arrays.sort(fileNames);
-            for (int j = fileNames.length - 1; j >= 0; j--) {
-                String spokeKeyFromPath = spokeKeyFromPath(hoursPath + "/" + minute + "/" + fileNames[j]);
+                    .filter(f -> !isTempFile(f))
+                    .sorted()
+                    .collect(Collectors.toList());
+            Collections.reverse(fileNames);
+            for (String fileName: fileNames) {
+                String spokeKeyFromPath = spokeKeyFromPath(hoursPath + "/" + minute + "/" + fileName);
                 log.trace("looking at file {} ", spokeKeyFromPath);
                 if (spokeKeyFromPath.compareTo(limitPath) < 0) {
                     return channel + "/" + spokeKeyFromPath;
@@ -258,12 +260,12 @@ public class FileSpokeStore {
         return getLatest(channel, limitPath, previous);
     }
 
-    private boolean doesNotEndWith(File file) {
-        return doesNotEndWith(file.getName());
+    private boolean isTempFile(File file) {
+        return isTempFile(file.getName());
     }
 
-    private boolean doesNotEndWith(String pathName) {
-        return !pathName.endsWith(SPOKE_TMP_SUFFIX);
+    private boolean isTempFile(String pathName) {
+        return pathName.endsWith(SPOKE_TMP_SUFFIX);
     }
 
 
@@ -274,36 +276,42 @@ public class FileSpokeStore {
         DateTime now = TimeUtil.now();
         String channelPath = spokePath + channel + "/";
         log.trace("next {} {} {}", channel, startKey, now);
-        ContentKey start = ContentKey.fromUrl(startKey).get();
-        int found = 0;
+        ContentKey start = ContentKey
+                .fromUrl(startKey)
+                .orElseThrow(() -> new RuntimeException("Could not parse ContentKey: " + startKey));
+        AtomicInteger found = new AtomicInteger();
+        AtomicBoolean firstMinute = new AtomicBoolean(true);
         MinutePath minutePath = new MinutePath(start.getTime());
-        boolean firstMinute = true;
         do {
             //todo gfm - while this fast for short time ranges, it is quite slow over years
             String minuteUrl = minutePath.toUrl();
             String minute = channelPath + minuteUrl;
             log.trace("minute {}", minute);
-            String[] items = Arrays.stream(
-                            Optional.ofNullable(new File(minute).list())
-                                    .orElse(new String[]{}))
-                    .filter(this::doesNotEndWith)
-                    .toArray(String[]::new);
-            for (String item : items) {
-                String keyFromPath = spokeKeyFromPath(minuteUrl + "/" + item);
-                if (firstMinute) {
-                    ContentKey key = ContentKey.fromUrl(keyFromPath).get();
-                    if (key.compareTo(start) > 0) {
-                        found++;
-                        writeKey(output, channel + "/" + keyFromPath);
-                    }
-                } else {
-                    found++;
-                    writeKey(output, channel + "/" + keyFromPath);
-                }
-            }
+            Arrays.stream(Optional.ofNullable(new File(minute).list())
+                            .orElse(new String[]{}))
+                    .filter(f -> !isTempFile(f))
+                    .forEach(item -> {
+                        String keyFromPath = spokeKeyFromPath(minuteUrl + "/" + item);
+                        String fullKey = channel + "/" + keyFromPath;
+                        if (firstMinute.get()) {
+                            ContentKey.fromUrl(keyFromPath).filter((key) -> key.compareTo(start) > 0)
+                                    .ifPresent((key) -> writeNext(found, output, fullKey));
+                        } else {
+                            writeNext(found, output, fullKey);
+                        }
+                    });
             minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
-            firstMinute = false;
-        } while (found < count && minutePath.getTime().isBefore(now));
+            firstMinute.getAndSet(false);
+        } while (found.get() < count && minutePath.getTime().isBefore(now));
+    }
+
+    private void writeNext(AtomicInteger found, OutputStream outputStream, String key) {
+        try {
+            found.getAndIncrement();
+            writeKey(outputStream, key);
+        } catch (IOException e) {
+            log.error("Error writing read data to output stream ", e);
+        }
     }
 
     void enforceTtl(String channel, DateTime dateTime) {

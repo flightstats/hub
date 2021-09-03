@@ -81,7 +81,7 @@ class FileSpokeStoreTest {
 
 
         // filesInBucket tests
-        Collection<String> keys = spokeStore.keysInBucket("/testAdjacentPaths/2014/11/18/00/57");
+        Collection<String> keys = spokeStore.getKeysInBucketArray("/testAdjacentPaths/2014/11/18/00/57");
         assertEquals(7, keys.size());
 
         log.info("files " + keys);
@@ -90,7 +90,7 @@ class FileSpokeStoreTest {
         assertTrue(keys.contains(path3));
 
         // filesInBucket second query
-        keys = spokeStore.keysInBucket("/testAdjacentPaths/2014/11/18/00/57/24");
+        keys = spokeStore.getKeysInBucketArray("/testAdjacentPaths/2014/11/18/00/57/24");
         assertEquals(5, keys.size());
 
     }
