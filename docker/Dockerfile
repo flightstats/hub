@@ -1,5 +1,4 @@
 FROM openjdk:8
-USER hub
 
 RUN groupadd -g 2001 hub
 RUN useradd -u 2001 -g 2001 hub
