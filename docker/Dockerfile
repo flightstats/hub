@@ -13,6 +13,7 @@ ADD configs /etc/hub
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
+RUN chown hub: /opt/hub/bin
 RUN chmod +x /opt/hub/bin/*
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
