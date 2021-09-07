@@ -13,10 +13,11 @@ ADD configs /etc/hub
 
 RUN groupadd -g 2001 hub
 RUN useradd -u 2001 -g 2001 hub
-USER hub
+
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
-RUN chmod +x /opt/hub/bin/*
+RUN chgrp hub /opt/hub/bin
+RUN chmod g+x /opt/hub/bin
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
