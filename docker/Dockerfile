@@ -11,8 +11,15 @@ ENV MIN_HEAP=1g \
 
 ADD configs /etc/hub
 
+RUN groupadd -g 2001 hub
+RUN useradd -u 2001 -g 2001 -s /bin/bash hub
+
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
-RUN chmod +x /opt/hub/bin/*
+RUN chown -Rv hub:hub /opt/hub
+RUN chmod 770 -Rv /opt/hub/bin
+USER hub
+
+
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
