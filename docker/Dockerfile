@@ -1,4 +1,5 @@
 FROM openjdk:8
+USER hub
 
 RUN apt-get update && apt-get install -y bash ntp curl && \
     mkdir -p /mnt/log && \
@@ -13,7 +14,6 @@ ADD configs /etc/hub
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
-RUN chown hub:hub /opt/hub/bin
 RUN chmod +x /opt/hub/bin/*
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
