@@ -17,8 +17,12 @@ RUN useradd -u 2001 -g 2001 hub
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
-RUN chown hub:hub /opt/hub/bin/*
-RUN chmod g+w /opt/hub/bin/*
+RUN chown -v hub:hub /opt/hub/bin/*
+RUN chmod u+w -v /opt/hub/bin/*
+RUN chmod g+w -v /opt/hub/bin/*
+RUN sudo chmod u+w -v /opt/hub/bin/*
+RUN sudo chmod g+w -v /opt/hub/bin/*
+
 USER hub
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
