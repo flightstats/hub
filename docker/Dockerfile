@@ -16,10 +16,8 @@ RUN useradd -u 2001 -g 2001 -s /bin/bash hub
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
-RUN chown -v hub:hub /opt/hub/bin
-RUN chown -v hub:hub /opt/hub/bin/*
-RUN chmod 770 -v /opt/hub/bin
-RUN chmod 770 -v /opt/hub/bin/*
+RUN chown -Rv hub:hub /opt/hub
+RUN chmod 770 -Rv /opt/hub/bin
 USER hub
 
 
