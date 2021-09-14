@@ -14,8 +14,8 @@ ADD configs /etc/hub
 ARG USER_ID
 ARG USER_NAME
 
-RUN groupadd -g $USER_ID $USER_NAME
-RUN useradd -u $USER_ID -g $USER_ID -s /bin/bash $USER_NAME
+RUN groupadd -f -g $USER_ID $USER_NAME
+RUN id -u $USER_NAME || useradd -u $USER_ID -g $USER_ID -s /bin/bash $USER_NAME
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
