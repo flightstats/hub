@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const {
     createChannel,
     fromObjectPath,
@@ -10,82 +11,63 @@ const {
 const {
     getChannelUrl,
 } = require('../lib/config');
-
-const channelUrl = getChannelUrl();
 /**
  * POST bulk items, GET each one, and verify the "X-Item-Length"
  * header is present with the correct values
  */
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+let originalTimeout;
 
 describe(__filename, function () {
-    const channelName = randomChannelName();
-    const channelEndpoint = `${channelUrl}/${channelName}/bulk`;
-    const bulkHeaders = { 'Content-Type': 'multipart/mixed; boundary=oxoxoxo' };
-    const itemOneContent = '{"foo":"bar"}';
-    const itemTwoContent = 'foo, bar?';
-    const bulkContent = [
-        '--oxoxoxo\r\n',
-        'Content-Type: application/json\r\n',
-        `\r\n${itemOneContent}\r\n`,
-        '--oxoxoxo\r\n',
-        'Content-Type: text/plain\r\n',
-        `\r\n${itemTwoContent}\r\n`,
-        '--oxoxoxo--',
-    ].join('');
-    let itemURLs = [];
-    let createdChannel = false;
-
-    beforeAll(async () => {
+    beforeEach(function() {
+        originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000;
+    });
+    it('posts items in bulk', async () => {
+        // given
+        const channelEndpoint = `${channelUrl}/${channelName}/bulk`;
+        const bulkHeaders = { 'Content-Type': 'multipart/mixed; boundary=oxoxoxo' };
+        const boundary = '--oxoxoxo';
+        const contentType = 'Content-Type: application/octet-stream';
+        const items = [...Array(80).keys()].map(() => crypto.randomBytes(500 * 1024).toString('base64'));
+        const bulkContent = [
+            ...items.map((item, index) => `${boundary}\r\n${contentType}\r\n\r\n${item}\r\n`),
+            `${boundary}--`
+        ].join('')
+        // create channel
         const channel = await createChannel(channelName, null, 'bulk inserts');
         if (getProp('statusCode', channel) === 201) {
             console.log(`created channel for ${__filename}`);
-            createdChannel = true;
+        } else {
+            return fail('channel not created in before block');
         }
-    });
-
-    it('posts items in bulk', async () => {
-        if (!createdChannel) return fail('channel not created in before block');
-        const response = await hubClientPost(channelEndpoint, bulkHeaders, bulkContent);
-        const body = getProp('body', response);
-        console.log('body', body);
-        const uris = fromObjectPath(['_links', 'uris'], body);
-        expect(uris).toBeDefined();
-        itemURLs = fromObjectPath(['_links', 'uris'], body) || [];
-        expect(itemURLs.length).toBe(2);
-    });
-
-    it('verifies first item has correct length info', async () => {
-        if (!createdChannel) return fail('channel not created in before block');
         try {
-            const result = await getHubItem(itemURLs[0]);
-            expect(getProp('statusCode', result)).toBe(200);
-            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
-            expect(!!xItemLength).toBe(true);
-            const bytes = Buffer.from(itemOneContent).length;
-            expect(xItemLength).toBe(bytes.toString());
-            const data = getProp('body', result) || {};
-            expect(`${data}`).toEqual(itemOneContent);
+            // when
+            // post item
+            const postResponse = await hubClientPost(channelEndpoint, bulkHeaders, bulkContent);
+            const postBody = getProp('body', postResponse);
+            console.log('body', postBody);
+            const itemURLs = fromObjectPath(['_links', 'uris'], postBody) || [];
+
+            // then
+            itemURLs.forEach(async (item, index) => {
+                const result = await getHubItem(item);
+                expect(getProp('statusCode', result)).toBe(200);
+                const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+                expect(xItemLength).toBeTruthy();
+                const bytes = Buffer.from(items[index]).length;
+                expect(xItemLength).toBe(bytes.toString());
+                const data = getProp('body', result) || {};
+                expect(`${data}`).toEqual(items[index]);
+                console.log('data', data.toString());
+            });
         } catch (ex) {
-            expect(ex).toBeNull();
+            return fail(`test failed with error: ${ex}`);
         }
     });
-
-    it('verifies second item has correct length info', async () => {
-        if (!createdChannel) return fail('channel not created in before block');
-        try {
-            const result = await getHubItem(itemURLs[1]);
-            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
-            expect(!!xItemLength).toBe(true);
-            const bytes = Buffer.from(itemTwoContent).length;
-            expect(xItemLength).toBe(bytes.toString());
-            const data = getProp('body', result) || {};
-            expect(`${data}`).toEqual(itemTwoContent);
-        } catch (ex) {
-            expect(ex).toBeNull();
-        }
-    });
-
-    afterAll(async () => {
+    afterEach(async () => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
         await hubClientDelete(`${channelUrl}/${channelName}`);
     });
 });
