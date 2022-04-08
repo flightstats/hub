@@ -20,6 +20,8 @@ RUN useradd -u $USER_ID -g $USER_ID -s /bin/bash $USER_NAME
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
 RUN chown -Rv $USER_NAME:$USER_NAME /opt/hub
+RUN chown -Rv $USER_NAME:$USER_NAME /etc/hub
+RUN chown -Rv $USER_NAME:$USER_NAME /mnt/spoke
 RUN chmod 770 -Rv /opt/hub/bin
 USER $USER_NAME
 
