@@ -9,6 +9,7 @@ import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,12 @@ class VerifierRangeLookupTest {
         Optional<Method> currentTest = testInfo.getTestMethod();
         String nameBase = currentTest.isPresent() ? currentTest.get().getName() : "DEFAULTCHANNEL";
         channelName = (nameBase + StringUtils.randomAlphaNumeric(6)).toLowerCase();
-        log.info("channel name " + channelName);
+        log.debug("channel name " + channelName);
+    }
+
+    @AfterEach
+    void tearDown() {
+        channelService.delete(channelName);
     }
 
     @Test
@@ -56,7 +62,7 @@ class VerifierRangeLookupTest {
         ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channelConfig);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channelConfig);
-        log.info("{} {}", channelName, range);
+        log.debug("{} {}", channelName, range);
         assertEquals(channelConfig, range.getChannelConfig());
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
         assertEquals(new MinutePath(offsetTime.minusMinutes(1)), range.getStartPath());
@@ -70,7 +76,7 @@ class VerifierRangeLookupTest {
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
-        log.info("{} {}", channelName, range);
+        log.debug("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
         assertEquals(lastVerified, range.getStartPath());
     }
@@ -80,7 +86,7 @@ class VerifierRangeLookupTest {
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
-        log.info("{} {}", channelName, range);
+        log.debug("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
         assertEquals(new MinutePath(range.getEndPath().getTime().minusMinutes(offsetMinutes)), range.getStartPath());
     }
@@ -92,7 +98,7 @@ class VerifierRangeLookupTest {
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
-        log.info("{} {}", channelName, range);
+        log.debug("{} {}", channelName, range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.getEndPath());
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(offsetMinutes + 1)), range.getStartPath());
     }
@@ -104,9 +110,9 @@ class VerifierRangeLookupTest {
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
-        log.info("{} {}", channelName, range);
+        log.debug("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
-        log.info("expected {} {}", new MinutePath(now.minusMinutes(58)), range.getStartPath());
+        log.debug("expected {} {}", new MinutePath(now.minusMinutes(58)), range.getStartPath());
         //assertEquals(new MinutePath(now.minusMinutes(58)), range.startPath);
     }
 
