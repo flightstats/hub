@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -84,7 +85,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testDelete_cleansUpZookeeperNodesRelatedToState() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -96,7 +97,7 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
@@ -105,7 +106,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -116,7 +117,7 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
@@ -125,7 +126,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
@@ -136,7 +137,7 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
@@ -145,7 +146,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded(TestInfo testInfo) throws Exception {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
@@ -156,7 +157,7 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
@@ -165,7 +166,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+    void testDelete_cleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -176,7 +177,7 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
@@ -185,7 +186,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testDelete_doesNothing_whenLeadershipDisabled() throws Exception {
+    void testDelete_doesNothing_whenLeadershipDisabled(TestInfo testInfo) throws Exception {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         // GIVEN
         addLastCompleted(webhookName);
@@ -198,7 +199,7 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedExists(webhookName);
         assertErrorExists(webhookName);
@@ -207,7 +208,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testStop_cleansUpOnlyZookeeperLeadershipState() throws Exception {
+    void testStop_cleansUpOnlyZookeeperLeadershipState(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -219,7 +220,7 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
 
@@ -229,7 +230,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoWebhookErrors() throws Exception {
+    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoWebhookErrors(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -240,7 +241,7 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
         assertErrorDeleted(webhookName);
@@ -250,7 +251,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoWebhookInProcess() throws Exception {
+    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoWebhookInProcess(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
@@ -269,7 +270,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoContentWasAdded() throws Exception {
+    void testStop_cleansUpZookeeperWebhookLeaderState_whenNoContentWasAdded(TestInfo testInfo) throws Exception {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
@@ -280,7 +281,7 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
         assertLastCompletedDeleted(webhookName);
@@ -290,7 +291,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testStop_cleansUpNothing_whenNoWebhookLeader() throws Exception {
+    void testStop_cleansUpNothing_whenNoWebhookLeader(TestInfo testInfo) throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -301,7 +302,7 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
         assertLastCompletedExists(webhookName);
@@ -310,7 +311,7 @@ class RunningStateReaperTest {
     }
 
     @Test
-    void testStop_doesNothing_whenLeadershipDisabled() throws Exception {
+    void testStop_doesNothing_whenLeadershipDisabled(TestInfo testInfo) throws Exception {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         // GIVEN
         addLastCompleted(webhookName);
@@ -323,7 +324,7 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THE
-        log.info(webhookName);
+        log.info(testInfo.getDisplayName());
         log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
 
         assertLastCompletedExists(webhookName);
