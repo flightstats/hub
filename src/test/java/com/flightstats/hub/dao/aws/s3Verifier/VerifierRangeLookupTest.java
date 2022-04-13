@@ -54,12 +54,13 @@ class VerifierRangeLookupTest {
 
     @AfterEach
     void tearDown() {
-        channelService.delete(channelName);
+        boolean delete = channelService.delete(channelName);
+        log.info("{}: {}", channelName, delete);
     }
 
     @Test
     void testSingleNormalDefault() {
-        ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).build();
+        ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).storage("SINGLE").build();
         channelService.createChannel(channelConfig);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channelConfig);
         log.debug("{} {}", channelName, range);
@@ -73,7 +74,7 @@ class VerifierRangeLookupTest {
     void testSingleNormal() {
         MinutePath lastVerified = new MinutePath(offsetTime);
         clusterCacheDao.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
-        ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
+        ChannelConfig channel = ChannelConfig.builder().name(channelName).storage("SINGLE").build();
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         log.debug("{} {}", channelName, range);
@@ -107,7 +108,7 @@ class VerifierRangeLookupTest {
     void testSingleNormalLagging() {
         MinutePath lastVerified = new MinutePath(now.minusMinutes(ttlMinutes));
         clusterCacheDao.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
-        ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
+        ChannelConfig channel = ChannelConfig.builder().name(channelName).storage("SINGLE").build();
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         log.debug("{} {}", channelName, range);
