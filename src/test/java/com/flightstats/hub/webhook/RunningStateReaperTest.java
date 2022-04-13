@@ -96,6 +96,8 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
@@ -114,6 +116,8 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
@@ -132,6 +136,8 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
@@ -150,6 +156,8 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
@@ -168,6 +176,8 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
@@ -188,6 +198,8 @@ class RunningStateReaperTest {
         reaper.delete(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertLastCompletedExists(webhookName);
         assertErrorExists(webhookName);
         assertWebhookInProcessExists(webhookName);
@@ -207,6 +219,8 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
 
         assertLastCompletedExists(webhookName);
@@ -226,6 +240,8 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
         assertErrorDeleted(webhookName);
 
