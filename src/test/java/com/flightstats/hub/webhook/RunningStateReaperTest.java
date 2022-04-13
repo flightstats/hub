@@ -9,6 +9,7 @@ import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.stream.Collectors;
+
 import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
 import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +39,7 @@ import static org.mockito.Mockito.when;
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Slf4j
 class RunningStateReaperTest {
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
     private static final ContentKey key = new ContentKey(start, "B");
@@ -260,6 +264,8 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
         assertLastCompletedDeleted(webhookName);
 
@@ -279,6 +285,8 @@ class RunningStateReaperTest {
         reaper.stop(webhookName);
 
         // THEN
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
         assertWebhookLeaderDeleted(webhookName);
         assertLastCompletedExists(webhookName);
         assertErrorExists(webhookName);
@@ -298,7 +306,10 @@ class RunningStateReaperTest {
         WebhookStateReaper reaper = new WebhookStateReaper(clusterCacheDao, contentKeysInFlight, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.stop(webhookName);
 
-        // THEN
+        // THE
+        log.info(webhookName);
+        log.info(webhookLeaderLocks.getWebhooks().stream().map(String::toString).collect(Collectors.joining(",")));
+
         assertLastCompletedExists(webhookName);
         assertErrorExists(webhookName);
         assertWebhookInProcessExists(webhookName);
