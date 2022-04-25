@@ -39,8 +39,9 @@ JAVA_OPTS="
  -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n
  -Djboss.platform.mbeanserver
  -Dcom.sun.management.jmxremote=true
- -Dcom.sun.management.jmxremote.local.only=false
- -Djava.rmi.server.hostname=$HOST_IP
+ -Dcom.sun.management.jmxremote.local.only=true
+ -Dcom.sun.management.jmxremote.host=localhost
+ -Djava.rmi.server.hostname=localhost
  -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
  -Dcom.sun.management.jmxremote.rmi.port=$JMXREMOTE_PORT
  -Dcom.sun.management.jmxremote.ssl=false
