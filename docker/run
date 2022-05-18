@@ -45,7 +45,8 @@ JAVA_OPTS="
  -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
  -Dcom.sun.management.jmxremote.rmi.port=$JMXREMOTE_PORT
  -Dcom.sun.management.jmxremote.ssl=false
- -Dcom.sun.management.jmxremote.authenticate=false
+ -Dcom.sun.management.jmxremote.authenticate=true
+ -Dcom.sun.management.jmxremote.password.file=/etc/hub/jmxremote.password
  -XX:+PrintTenuringDistribution
  -Djava.awt.headless=true
  -Dsun.net.inetaddr.ttl=0
