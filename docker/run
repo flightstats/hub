@@ -36,7 +36,7 @@ JAVA_OPTS="
  -XX:+HeapDumpOnOutOfMemoryError
  -XX:HeapDumpPath=/mnt/log
  -XX:+ExitOnOutOfMemoryError
- -agentlib:address=localhost:$DEBUG_PORT,server=y,suspend=n
+ -agentlib:jdwp=transport=dt_socket,address=localhost:$DEBUG_PORT,server=y,suspend=n
  -Djboss.platform.mbeanserver
  -Dcom.sun.management.jmxremote.local.only=true
  -Dcom.sun.management.jmxremote.host=localhost
