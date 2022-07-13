@@ -91,6 +91,7 @@ dependencies {
     compile 'org.eclipse.jetty:jetty-servlet:9.4.8.v20171121'
     compile 'org.eclipse.jetty:jetty-servlets:9.4.8.v20171121'
     compile 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.4.8.v20171121'
+    compile 'org.eclipse.jetty:jetty-jmx:9.4.8.v20171121'
 
     compile 'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26'
     compile 'org.glassfish.jersey.core:jersey-common:2.26'

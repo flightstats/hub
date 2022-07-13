@@ -95,4 +95,8 @@ public class AppProperties {
         return propertiesLoader.getProperty("app.keyStorePath", "/etc/ssl/");
     }
 
+    public int getMaxJettyThreadPoolSize() {
+        // this magic number comes from the default constructor of QueuedThreadPool
+        return propertiesLoader.getProperty("jetty.maxThreadPoolSize", 200);
+    }
 }
