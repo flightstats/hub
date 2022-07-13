@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 @Slf4j
 public class ChunkOutputStream extends OutputStream {
-    private final static ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("ChunkOutputStream-%d").build()
+    private final static ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("ChunkOutputStream-%d").build();
 
     private static final int MEGABYTES = 1024 * 1024;
 
