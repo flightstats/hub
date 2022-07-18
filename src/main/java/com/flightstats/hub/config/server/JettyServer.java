@@ -21,6 +21,7 @@ import com.google.common.io.Resources;
 import javax.inject.Inject;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -30,6 +31,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.glassfish.hk2.api.ServiceLocatorFactory;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
@@ -43,6 +45,7 @@ import org.glassfish.jersey.server.filter.EncodingFilter;
 import javax.websocket.server.ServerContainer;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -70,8 +73,14 @@ public class JettyServer {
 
     public Server start() throws Exception {
         log.info("Hub server starting with hub.type {}", appProperties.getHubType());
+        log.info("Maximum jetty thread pool size: {}", appProperties.getMaxJettyThreadPoolSize());
 
-        Server server = new Server();
+        QueuedThreadPool jettyThreadPool = new QueuedThreadPool(appProperties.getMaxJettyThreadPoolSize());
+        Server server = new Server(jettyThreadPool);
+
+        MBeanContainer mbeanContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
+        server.addBean(mbeanContainer);
+
         HttpConfiguration httpConfig = new HttpConfiguration();
         SslContextFactory sslContextFactory = getSslContextFactory();
         if (null != sslContextFactory) {

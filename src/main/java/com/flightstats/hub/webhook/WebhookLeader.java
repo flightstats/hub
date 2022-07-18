@@ -18,6 +18,7 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.strategy.WebhookStrategy;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -123,7 +124,7 @@ class WebhookLeader {
         }
         log.info("taking leadership {} {}", webhook.getName(), leadership.hasLeadership());
         statsdReporter.incrementEventStart(LEADERSHIP_METRIC, "name:" + webhook.getName());
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("WebhookLeader-" + webhook.getName() + "-%d").build());
         semaphore = new Semaphore(webhook.getParallelCalls());
         retryer = WebhookRetryer.builder()
                 .readTimeoutSeconds(webhook.getCallbackTimeoutSeconds())

@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -12,10 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Function;
 
 @Slf4j
 public class ChunkOutputStream extends OutputStream {
+    private final static ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("ChunkOutputStream-%d").build();
 
     private static final int MEGABYTES = 1024 * 1024;
 
@@ -33,7 +36,7 @@ public class ChunkOutputStream extends OutputStream {
         this.chunkFunction = chunkFunction;
 
         this.chunk = new Chunk(count, getSize(count));
-        service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(threads));
+        service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(threads, threadFactory));
         log.info("creating ChunkOutputStream with {} threads", threads);
     }
 

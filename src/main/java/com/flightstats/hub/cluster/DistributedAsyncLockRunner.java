@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -26,7 +27,7 @@ public class DistributedAsyncLockRunner {
     public DistributedAsyncLockRunner(String lockPath, DistributedLeaderLockManager leadershipLockManager) {
         this.lockPath = lockPath;
         this.leadershipLockManager = leadershipLockManager;
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("AsyncLockRunner-" + lockPath).build());
     }
 
     public void setLockPath(String lockPath) {
