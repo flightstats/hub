@@ -98,7 +98,7 @@ public class InternalWebhookResource {
             webhookService.getAll().forEach(webhook -> {
                 final WebhookStatus status = webhookService.getStatus(webhook);
                 final ContentPath contentPath = status.getLastCompleted();
-                if (contentPath.getTime().isAfter(staleCutoff)) return;
+                if (null != contentPath && contentPath.getTime().isAfter(staleCutoff)) return;
 
                 final URI webhookURI = constructWebhookURI(webhook);
                 staleWebhooks.put(contentPath.getTime(), webhookURI);
