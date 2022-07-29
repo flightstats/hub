@@ -17,7 +17,7 @@ Promise.prototype.finally = function (callback) {
 };
 
 exports.randomChannelName = function randomChannelName() {
-    return "TeSt_" + Math.random().toString().replace(".", "_");
+    return "test_automatedjs_" + Math.random().toString().replace(".", "_");
 };
 
 exports.randomNumberBetweenInclusive = function randomNumberBetweenInclusive(min, max) {

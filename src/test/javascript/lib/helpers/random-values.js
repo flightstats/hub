@@ -1,6 +1,6 @@
 const DEFAULT_LIMIT = 60 * 1000;
 
-const randomChannelName = () => `TeSt_${Math.random().toString().replace(".", "_")}`;
+const randomChannelName = () => `test_automatedjs_${Math.random().toString().replace(".", "_")}`;
 
 const alpha = 'abcdefghijklmnopqrstuvwxyz';
 
