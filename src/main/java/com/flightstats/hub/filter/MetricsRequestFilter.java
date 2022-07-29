@@ -61,9 +61,11 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             if (!isBlank(channel)) {
                 tags.put("channel", channel);
             }
-            String tag = RequestUtils.getTag(request);
-            if (!isBlank(tag)) {
-                tags.put("tag", tag);
+            else {
+                String tag = RequestUtils.getTag(request);
+                if (!isBlank(tag)) {
+                    tags.put("channel", "tag/" + tag);
+                }
             }
 
             if (isBlank(endpoint)) {
