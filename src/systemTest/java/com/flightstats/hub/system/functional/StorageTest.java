@@ -3,8 +3,8 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
-import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
 import com.flightstats.hub.system.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.inject.Inject;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 
 @Slf4j
 class StorageTest extends TestSuiteClassWrapper {
@@ -35,14 +35,14 @@ class StorageTest extends TestSuiteClassWrapper {
 
     @BeforeEach
     void setup() {
-        channelName = randomAlphaNumeric(10);
+        channelName = randomChannelName();
     }
 
     private void createAndAddItemsToChannel(ChannelType type) {
         Awaitility.await().pollInterval(Duration.FIVE_HUNDRED_MILLISECONDS)
                 .atMost(Duration.FIVE_SECONDS)
                 .until(() -> {
-                    channelName = randomAlphaNumeric(10);
+                    channelName = randomChannelName();
                     ChannelConfig channel = ChannelConfig.builder()
                             .name(channelName)
                             .storage(type.toString()).build();

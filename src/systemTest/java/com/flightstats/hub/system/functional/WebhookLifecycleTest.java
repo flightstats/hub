@@ -5,8 +5,8 @@ import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +17,10 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class WebhookLifecycleTest extends TestSuiteClassWrapper {
@@ -40,8 +40,8 @@ class WebhookLifecycleTest extends TestSuiteClassWrapper {
 
     @BeforeEach
     void before() {
-        this.channelName = randomAlphaNumeric(10);
-        this.webhookName = randomAlphaNumeric(10);
+        this.channelName = randomChannelName();
+        this.webhookName = randomChannelName();
     }
 
     private Webhook buildWebhook() {

@@ -4,10 +4,10 @@ import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.service.ChannelConfigService;
-import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
+import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.WebhookService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,10 +15,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.inject.Inject;
-
 import java.util.List;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -63,8 +62,8 @@ class WebhookPauseTest extends TestSuiteClassWrapper {
 
     @BeforeEach
     void setup() {
-        channelName = randomAlphaNumeric(10);
-        webhookName = randomAlphaNumeric(10);
+        channelName = randomChannelName();
+        webhookName = randomChannelName();
         channelConfigService.createWithDefaults(channelName);
     }
 

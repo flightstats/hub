@@ -4,9 +4,9 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelItemWithBody;
 import com.flightstats.hub.model.TimeQueryResult;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
-import com.flightstats.hub.system.service.ChannelConfigService;
 import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.AfterAll;
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
@@ -23,7 +22,7 @@ import java.util.stream.IntStream;
 
 import static com.flightstats.hub.model.ChannelItemQueryDirection.next;
 import static com.flightstats.hub.model.ChannelItemQueryDirection.previous;
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,7 +39,7 @@ class DirectionalQueriesTest extends TestSuiteClassWrapper {
 
     @BeforeAll
     void before() {
-        historicalChannelName = randomAlphaNumeric(10);
+        historicalChannelName = randomChannelName();
         ChannelConfig config = ChannelConfig.builder()
                 .name(historicalChannelName)
                 .mutableTime(mutableTimeEnd)

@@ -1,14 +1,12 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
-import javax.inject.Inject;
-
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +19,10 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import javax.inject.Inject;
 import java.util.Collections;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
@@ -47,7 +46,7 @@ class WebhookErrorTest extends TestSuiteClassWrapper {
 
     @BeforeAll
     void hubSetup() {
-        nameSeed = randomAlphaNumeric(5);
+        nameSeed = randomChannelName(5);
     }
 
     @BeforeEach
