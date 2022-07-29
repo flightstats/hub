@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/src/main/test/javascript/"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      # Separate sections of the branch name with a hyphen
+      separator: "-"
+  - package-ecosystem: "bundler"
+    directory: "/docs/"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      # Separate sections of the branch name with a hyphen
+      separator: "-"
