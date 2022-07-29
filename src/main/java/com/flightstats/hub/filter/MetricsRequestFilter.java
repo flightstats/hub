@@ -76,11 +76,12 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 log.info("call to shutdown, ignoring statsd time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
-                if (!statsdFilter.isTestChannel(channel)) {
+                String metric = isInternal
+                        ? ( isChannel ? "internal.channel" : "internal.nonchannel" )
+                        : ( isChannel ? "api.channel" : "api.nonchannel" );
+
+                if (!statsdFilter.isTestChannel(channel) && !statsdFilter.isIgnoredRequestMetric(metric)) {
                     log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
-                    String metric = isInternal
-                            ? ( isChannel ? "internal.channel" : "internal.nonchannel" )
-                            : ( isChannel ? "api.channel" : "api.nonchannel" );
                     statsdReporter.time("request." + metric, requestState.getStart(), tagArray);
                 }
             }

@@ -15,8 +15,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -33,6 +35,8 @@ public class StatsDFilter {
     private final Dao<ChannelConfig> channelConfigDao;
     private final Dao<Webhook> webhookConfigDao;
 
+    private final Set<String> requestMetricsToIgnore;
+
     @Inject
     public StatsDFilter(
             DatadogMetricsProperties datadogMetricsProperties,
@@ -43,6 +47,11 @@ public class StatsDFilter {
         this.tickMetricsProperties = tickMetricsProperties;
         this.channelConfigDao = channelConfigDao;
         this.webhookConfigDao = webhookConfigDao;
+
+        String[] ignoredRequestMetrics = StringUtils.split(datadogMetricsProperties.getRequestMetricsToIgnore());
+        requestMetricsToIgnore = (null != ignoredRequestMetrics && ignoredRequestMetrics.length > 0)
+                ? new HashSet<>(Arrays.asList(ignoredRequestMetrics))
+                : Collections.emptySet();
     }
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
@@ -55,6 +64,10 @@ public class StatsDFilter {
 
     public boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
+    }
+
+    public boolean isIgnoredRequestMetric(String metric) {
+        return requestMetricsToIgnore.contains(metric);
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
