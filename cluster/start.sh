@@ -54,14 +54,7 @@ cat > ${JAVA_OPTS_FILE} <<JAVA_OPTS
  -XX:NewSize=100m
  -XX:+UseG1GC
  -XX:MaxGCPauseMillis=100
- -agentlib:jdwp=transport=dt_socket,address=3333,server=y,suspend=n
-
- -Dcom.sun.management.jmxremote
- -Dcom.sun.management.jmxremote.port=8888
- -Dcom.sun.management.jmxremote.ssl=false
- -Dcom.sun.management.jmxremote.authenticate=false
  -Dlogback.configurationFile=${APP_HOME}/conf/logback.xml
-
 
  -XX:+PrintGCDetails
  -XX:+PrintTenuringDistribution
