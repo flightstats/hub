@@ -52,18 +52,22 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             ContainerRequestContext request = requestState.getRequest();
             long time = System.currentTimeMillis() - requestState.getStart();
             String endpoint = getRequestTemplate(request);
+            boolean isInternal = endpoint.startsWith("/internal");
 
             Map<String, String> tags = new HashMap<>();
             tags.put("method", request.getMethod());
             tags.put("call", tags.get("method") + endpoint);
 
             String channel = RequestUtils.getChannelName(request);
+            String tag = RequestUtils.getTag(request);
+            boolean isChannel = true;
             if (!isBlank(channel)) {
                 tags.put("channel", channel);
             }
-            String tag = RequestUtils.getTag(request);
-            if (!isBlank(tag)) {
-                tags.put("tag", tag);
+            else if (!isBlank(tag)) {
+                tags.put("channel", "tag/" + tag);
+            } else {
+                isChannel = false;
             }
 
             if (isBlank(endpoint)) {
@@ -72,9 +76,13 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 log.info("call to shutdown, ignoring statsd time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
-                if (!statsdFilter.isTestChannel(channel)) {
+                String metric = isInternal
+                        ? ( isChannel ? "internal.channel" : "internal.nonchannel" )
+                        : ( isChannel ? "api.channel" : "api.nonchannel" );
+
+                if (!statsdFilter.isTestChannel(channel) && !statsdFilter.isIgnoredRequestMetric(metric)) {
                     log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
-                    statsdReporter.requestTime(requestState.getStart(), tagArray);
+                    statsdReporter.time("request." + metric, requestState.getStart(), tagArray);
                 }
             }
             log.trace("request {}, time: {}", tags.get("endpoint"), time);

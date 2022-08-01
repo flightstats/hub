@@ -10,7 +10,7 @@ let request = require('request');
  */
 
 let hubURL = process.argv[2] || 'hub.dls.dev.flightstats.io';
-let namePrefix = process.argv[3] || 'TeSt_0_';
+let namePrefix = process.argv[3] || 'test_automatedjs_0_';
 let objectType = process.argv[4] || 'channel';
 let objectTypePlural = `${objectType}s`;
 

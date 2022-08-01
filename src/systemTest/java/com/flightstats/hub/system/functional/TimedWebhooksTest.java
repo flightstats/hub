@@ -6,8 +6,8 @@ import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
-import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelConfigService;
+import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.WebhookService;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -17,14 +17,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.inject.Inject;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
-import static java.util.stream.Collectors.toList;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static junit.framework.Assert.assertTrue;
 
 @Slf4j
@@ -59,8 +57,8 @@ class TimedWebhooksTest extends TestSuiteClassWrapper {
     private boolean channelAndWebhookFactory(WebhookType type) {
         try {
             for (int i = 0; i < CHANNEL_COUNT; i++) {
-                String channelName = randomAlphaNumeric(10);
-                String webhookName = randomAlphaNumeric(10);
+                String channelName = randomChannelName();
+                String webhookName = randomChannelName();
                 channelConfigService.createWithDefaults(channelName);
                 Webhook webhook = modelBuilder
                         .webhookBuilder()

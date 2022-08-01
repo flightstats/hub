@@ -59,10 +59,6 @@ public class StatsdReporter {
         reportWithBothClients(statsDClient -> statsDClient.gauge(name, value, tags));
     }
 
-    public void requestTime(long start, String... tags) {
-        reportWithBothClients((statsDClient) -> statsDClient.time("request", System.currentTimeMillis() - start, tags));
-    }
-
     public void time(String name, long start, String... tags) {
         reportWithBothClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
     }

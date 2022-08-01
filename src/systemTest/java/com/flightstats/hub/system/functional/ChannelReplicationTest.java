@@ -2,9 +2,9 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.system.extension.TestSuiteClassWrapper;
+import com.flightstats.hub.system.service.ChannelConfigService;
 import com.flightstats.hub.system.service.ChannelItemCreator;
 import com.flightstats.hub.system.service.ChannelItemRetriever;
-import com.flightstats.hub.system.service.ChannelConfigService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -40,8 +40,8 @@ class ChannelReplicationTest extends TestSuiteClassWrapper {
     @BeforeEach
     @SneakyThrows
     void before() {
-        replicationSourceChannelName = randomAlphaNumeric(10) + REPL_SOURCE;
-        replicationDestChannelName = randomAlphaNumeric(10) + REPL_DEST;
+        replicationSourceChannelName = randomChannelName() + REPL_SOURCE;
+        replicationDestChannelName = randomChannelName() + REPL_DEST;
         String replicationSource = channelConfigService.getChannelUrl(replicationSourceChannelName);
         ChannelConfig destination = ChannelConfig.builder()
                 .name(replicationDestChannelName)

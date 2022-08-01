@@ -13,13 +13,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -39,7 +38,7 @@ class ChannelLatestUpdatedStateTest extends TestSuiteClassWrapper {
 
     @BeforeEach
     void setup() {
-        channelName = randomAlphaNumeric(10);
+        channelName = randomChannelName();
     }
 
     @AfterEach

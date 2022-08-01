@@ -28,4 +28,8 @@ public class DatadogMetricsProperties {
     }
 
     public boolean isPrimary() { return propertiesLoader.getProperty("metrics.datadog.primary", true); }
+
+    public String getRequestMetricsToIgnore() {
+        return propertiesLoader.getProperty("metrics.data_dog.request.ignore", "");
+    }
 }

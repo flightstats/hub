@@ -19,13 +19,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.inject.Inject;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static org.hamcrest.core.Is.is;
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -69,7 +68,7 @@ class ChannelMaxItemsEnforcementTest extends TestSuiteClassWrapper {
     }
 
     private void createChannelWithMaxItems(ChannelType type) {
-        channelName = randomAlphaNumeric(10);
+        channelName = randomChannelName();
         ChannelConfig channelConfig = ChannelConfig.builder()
                 .name(channelName)
                 .storage(type.name())
