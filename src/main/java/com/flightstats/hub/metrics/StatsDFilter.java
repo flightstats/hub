@@ -4,6 +4,7 @@ import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.util.RequestMetric;
 import com.flightstats.hub.webhook.Webhook;
 import javax.inject.Inject;
 import com.google.inject.Singleton;
@@ -66,8 +67,8 @@ public class StatsDFilter {
         return channel.toLowerCase().startsWith("test_");
     }
 
-    public boolean isIgnoredRequestMetric(String metric) {
-        return requestMetricsToIgnore.contains(metric);
+    public Set<String> getRequestMetricsToIgnore() {
+        return requestMetricsToIgnore;
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
