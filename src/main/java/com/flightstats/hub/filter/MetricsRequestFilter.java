@@ -2,6 +2,7 @@ package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsdReporter;
+import com.flightstats.hub.util.RequestMetric;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
@@ -51,45 +52,18 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
 
             ContainerRequestContext request = requestState.getRequest();
             long time = System.currentTimeMillis() - requestState.getStart();
-            String endpoint = getRequestTemplate(request);
-            boolean isInternal = endpoint.startsWith("/internal");
+            RequestMetric metric = new RequestMetric(request);
 
-            Map<String, String> tags = new HashMap<>();
-            tags.put("method", request.getMethod());
-            tags.put("call", tags.get("method") + endpoint);
-
-            String channel = RequestUtils.getChannelName(request);
-            String tag = RequestUtils.getTag(request);
-            boolean isChannel = true;
-            if (!isBlank(channel)) {
-                tags.put("channel", channel);
+            if (metric.shouldReport(statsdFilter.getRequestMetricsToIgnore(), statsdFilter::isTestChannel)) {
+                String[] tagArray = getTagArray(metric.getTags());
+                log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
+                statsdReporter.time("request." + metric, requestState.getStart(), tagArray);
             }
-            else if (!isBlank(tag)) {
-                tags.put("channel", "tag/" + tag);
-            } else {
-                isChannel = false;
-            }
-
-            if (isBlank(endpoint)) {
-                log.trace("no endpoint, path: {}", request.getUriInfo().getPath());
-            } else if (tags.get("call").endsWith("/shutdown")) {
-                log.info("call to shutdown, ignoring statsd time {}", time);
-            } else {
-                String[] tagArray = getTagArray(tags);
-                String metric = isInternal
-                        ? ( isChannel ? "internal.channel" : "internal.nonchannel" )
-                        : ( isChannel ? "api.channel" : "api.nonchannel" );
-
-                if (!statsdFilter.isTestChannel(channel) && !statsdFilter.isIgnoredRequestMetric(metric)) {
-                    log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
-                    statsdReporter.time("request." + metric, requestState.getStart(), tagArray);
-                }
-            }
-            log.trace("request {}, time: {}", tags.get("endpoint"), time);
+            log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
             int returnCode = requestState.getResponse().getStatus();
             if (returnCode > 400 && returnCode != 404) {
-                tags.put("errorCode", String.valueOf(returnCode));
-                String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
+                metric.getTags().put("errorCode", String.valueOf(returnCode));
+                String[] tagArray = getTagArray(metric.getTags(), "errorCode", "call", "channel");
                 log.trace("data sent: {}", Arrays.toString(tagArray));
                 statsdReporter.count("errors", 1, tagArray);
             }
@@ -111,19 +85,6 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 })
                 .map(entry -> entry.getKey() + ":" + entry.getValue())
                 .toArray(String[]::new);
-    }
-
-    @VisibleForTesting
-    static String getRequestTemplate(ContainerRequestContext request) {
-        UriRoutingContext uriInfo = (UriRoutingContext) request.getUriInfo();
-        ArrayList<UriTemplate> templateList = new ArrayList<>(uriInfo.getMatchedTemplates());
-        Collections.reverse(templateList);
-        return templateList
-                .stream()
-                .map(UriTemplate::getTemplate)
-                .map(template -> template.replaceAll(CHARACTERS_TO_REMOVE, ""))
-                .map(template -> template.replaceAll(CHARACTERS_TO_REPLACE, "_"))
-                .collect(Collectors.joining(""));
     }
 
     @Override
