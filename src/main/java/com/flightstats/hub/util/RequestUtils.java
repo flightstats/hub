@@ -2,7 +2,6 @@ package com.flightstats.hub.util;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.ws.rs.container.ContainerRequestContext;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Matcher;
@@ -34,19 +33,6 @@ public class RequestUtils {
         } catch (Exception e) {
         }
         return result;
-    }
-
-    public static String getChannelName(ContainerRequestContext request) {
-        String name = request.getUriInfo().getPathParameters().getFirst("channel");
-        if (name == null) name = request.getHeaders().getFirst("channelName");
-        if (name == null) name = "";
-        return name;
-    }
-
-    public static String getTag(ContainerRequestContext request) {
-        String tag = request.getUriInfo().getPathParameters().getFirst("tag");
-        if (tag == null) tag = "";
-        return tag;
     }
 
     private static boolean isValidTopicUrl(String url, String topic) {

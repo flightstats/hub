@@ -21,8 +21,6 @@ import java.util.Map;
 @Provider
 public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
-    private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
-    private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
 
     private final StatsdReporter statsdReporter;
     private final StatsDFilter statsdFilter;
