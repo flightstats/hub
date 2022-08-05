@@ -64,6 +64,22 @@ public class RequestMetricTest {
     }
 
     @Test
+    void testGetTagsInternalChannel() {
+        RequestMetric.Request request = RequestMetric.Request.builder()
+                .method("GET")
+                .endpoint("/internal/_channel_")
+                .channel("some_channel")
+                .build();
+
+        HashMap<String, String> expectedTags = new HashMap<>();
+        expectedTags.put("method", "GET");
+        expectedTags.put("call", "GET/internal/_channel_");
+
+        RequestMetric metric = new RequestMetric(request);
+        assertEquals(expectedTags, metric.getTags());
+    }
+
+    @Test
     void testGetTagsNoEndpoint() {
         RequestMetric.Request request = RequestMetric.Request.builder()
                 .method("GET")
