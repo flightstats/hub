@@ -27,7 +27,10 @@ public class RequestMetric {
         tags.put("method", request.getMethod());
         tags.put("call", getCall());
 
-        getChannelTag().ifPresent(name -> tags.put("channel", name));
+        if (!request.isInternal()) {
+            getChannelTag().ifPresent(name -> tags.put("channel", name));
+        }
+
         return tags;
     }
 
