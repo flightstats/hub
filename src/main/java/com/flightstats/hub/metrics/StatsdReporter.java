@@ -2,11 +2,13 @@ package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
 
+@Slf4j
 public class StatsdReporter {
 
     private StatsDFilter statsDFilter;
@@ -61,6 +63,10 @@ public class StatsdReporter {
 
     public void time(String name, long start, String... tags) {
         reportWithBothClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
+    }
+
+    public void timeTest(String name, long start, String... tags) {
+        log.info(String.format("Test time: %s - %s ms, %s", name, System.currentTimeMillis() - start, tags));
     }
 
     public void time(String channel, String name, long start, String... tags) {
