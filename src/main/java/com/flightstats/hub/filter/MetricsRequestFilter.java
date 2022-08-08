@@ -3,6 +3,7 @@ package com.flightstats.hub.filter;
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.RequestMetric;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -38,29 +39,40 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 return;
             }
 
-            ContainerRequestContext request = requestState.getRequest();
-            long time = System.currentTimeMillis() - requestState.getStart();
-            RequestMetric metric = new RequestMetric(request);
-
-            if (metric.shouldReport(statsdFilter.getRequestMetricsToIgnore(), statsdFilter::isTestChannel)) {
-                String[] tagArray = getTagArray(metric.getTags());
-                log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
-                metric.getMetricName().ifPresent(metricName ->
-                        statsdReporter.timeTest("request." + metricName, requestState.getStart(), tagArray));
-            }
-            log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
-            int returnCode = requestState.getResponse().getStatus();
-            if (returnCode > 400 && returnCode != 404) {
-                metric.getTags().put("errorCode", String.valueOf(returnCode));
-                String[] tagArray = getTagArray(metric.getTags(), "errorCode", "call", "channel");
-                log.trace("data sent: {}", Arrays.toString(tagArray));
-                statsdReporter.count("errors", 1, tagArray);
-            }
+            reportTime(requestState.getRequestMetric(), requestState.getStart());
+            reportError(requestState);
         } catch (Exception e) {
             log.error("metrics request error", e);
         } finally {
             threadLocal.remove();
         }
+    }
+
+    @VisibleForTesting
+    void reportTime(RequestMetric metric, long startTime) {
+        long time = System.currentTimeMillis() - startTime;
+        log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
+        if (!metric.shouldReport(statsdFilter.getRequestMetricsToIgnore(), statsdFilter::isTestChannel)) {
+            return;
+        }
+
+        String[] tagArray = getTagArray(metric.getTags());
+        log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
+        metric.getMetricName().ifPresent(metricName ->
+                statsdReporter.timeTest(metricName, startTime, tagArray));
+    }
+
+    @VisibleForTesting
+    void reportError(RequestState requestState) {
+        if (!requestState.isErrorStatusCode()) {
+            return;
+        }
+
+        RequestMetric metric = requestState.getRequestMetric();
+        metric.getTags().put("errorCode", String.valueOf(requestState.getStatusCode()));
+        String[] tagArray = getTagArray(metric.getTags(), "errorCode", "call", "channel");
+        log.trace("data sent: {}", Arrays.toString(tagArray));
+        statsdReporter.count("errors", 1, tagArray);
     }
 
     private String[] getTagArray(Map<String, String> tags, String... tagsOnly) {
@@ -93,25 +105,45 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
         threadLocal.set(new RequestState(request));
     }
 
-    private class RequestState {
+    @VisibleForTesting
+    static class RequestState {
         private final long start = System.currentTimeMillis();
         private final ContainerRequestContext request;
+        private final RequestMetric requestMetric;
         private ContainerResponseContext response;
 
         RequestState(ContainerRequestContext request) {
             this.request = request;
+            this.requestMetric = new RequestMetric(request);
+        }
+
+        RequestState(ContainerRequestContext request, RequestMetric requestMetric) {
+            this.request = request;
+            this.requestMetric = requestMetric;
         }
 
         public long getStart() {
-            return this.start;
+            return start;
         }
 
         public ContainerRequestContext getRequest() {
-            return this.request;
+            return request;
         }
 
         public ContainerResponseContext getResponse() {
-            return this.response;
+            return response;
+        }
+
+        public RequestMetric getRequestMetric() {
+            return requestMetric;
+        }
+
+        public boolean isErrorStatusCode() {
+            return getStatusCode() > 400 && getStatusCode() != 404;
+        }
+
+        public int getStatusCode() {
+            return getResponse().getStatus();
         }
 
         public void setResponse(ContainerResponseContext response) {
