@@ -176,6 +176,7 @@ class HubRequestTest {
 
     private static Stream<Arguments> provideCasesForIsShutdown() {
         return Stream.of(
+                Arguments.of(null, false),
                 Arguments.of("/", false),
                 Arguments.of("/shutdown", true),
                 Arguments.of("shutdown", false),
@@ -187,14 +188,16 @@ class HubRequestTest {
     @ParameterizedTest
     @MethodSource("provideCasesForIsShutdown")
     void testRequestIsShutdown(String inputUrl, boolean expected) {
+        Optional<String> endpoint = Optional.ofNullable(inputUrl);
         HubRequest request = HubRequest.builder()
-                .endpoint(inputUrl)
+                .endpoint(endpoint)
                 .build();
         assertEquals(expected, request.isShutdown());
     }
 
     private static Stream<Arguments> provideCasesForIsInternal() {
         return Stream.of(
+                Arguments.of(null, false),
                 Arguments.of("/", false),
                 Arguments.of("/internal", true),
                 Arguments.of("internal", false),
@@ -206,8 +209,9 @@ class HubRequestTest {
     @ParameterizedTest
     @MethodSource("provideCasesForIsInternal")
     void testRequestIsInternal(String inputUrl, boolean expected) {
+        Optional<String> endpoint = Optional.ofNullable(inputUrl);
         HubRequest request = HubRequest.builder()
-                .endpoint(inputUrl)
+                .endpoint(endpoint)
                 .build();
         assertEquals(expected, request.isInternal());
     }
@@ -215,9 +219,9 @@ class HubRequestTest {
     private static Stream<Arguments> provideCasesForIsChannelRelated() {
         HubRequest.HubRequestBuilder builder = HubRequest.builder();
         return Stream.of(
-                Arguments.of(builder.channel("someChannel").build(), true),
-                Arguments.of(builder.tag("someTag").build(), true),
-                Arguments.of(builder.channel("someChannel").tag("someTag").build(), true)
+                Arguments.of(builder.channel(Optional.of("someChannel")).build(), true),
+                Arguments.of(builder.tag(Optional.of("someTag")).build(), true),
+                Arguments.of(builder.channel(Optional.of("someChannel")).tag(Optional.of("someTag")).build(), true)
         );
     }
 

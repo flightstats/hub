@@ -2,6 +2,7 @@ package com.flightstats.hub.filter;
 
 import com.flightstats.hub.util.HubRequest;
 import com.flightstats.hub.util.RequestMetric;
+import lombok.Builder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -9,31 +10,56 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptySet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RequestMetricTest {
+    @Builder
+    private static class Request {
+        String method;
+        String path;
+        String endpoint;
+        String channel;
+        String tag;
+
+        HubRequest asHubRequest() {
+            return HubRequest.builder()
+                    .method(method)
+                    .path(path)
+                    .endpoint(Optional.ofNullable(endpoint))
+                    .channel(Optional.ofNullable(channel))
+                    .tag(Optional.ofNullable(tag))
+                    .build();
+        }
+    }
+
+    private static HubRequest buildRequest(Function<Request.RequestBuilder, Request.RequestBuilder> buildIt) {
+        Request.RequestBuilder builder = Request.builder();
+        return buildIt.apply(builder).build().asHubRequest();
+    }
+
     private static Stream<Arguments> provideCasesForTags() {
         String method = "GET";
         String endpoint = "/_channel_/_Y_/_M_";
         return Stream.of(
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .method(method)
                                 .endpoint(endpoint)
-                                .channel("someChannel").build(),
+                                .channel("someChannel")),
                         "someChannel"),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .method(method)
                                 .endpoint(endpoint)
-                                .tag("someTag").build(),
+                                .tag("someTag")),
                         "tag/someTag"),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .method(method)
                                 .endpoint(endpoint)
                                 .tag("someTag")
-                                .channel("someChannel").build(),
+                                .channel("someChannel")),
                         "someChannel")
         );
     }
@@ -52,10 +78,9 @@ public class RequestMetricTest {
 
     @Test
     void testGetTagsNoChannel() {
-        HubRequest request = HubRequest.builder()
+        HubRequest request = buildRequest(builder -> builder
                 .method("GET")
-                .endpoint("/internal/webhook")
-                .build();
+                .endpoint("/internal/webhook"));
 
         HashMap<String, String> expectedTags = new HashMap<>();
         expectedTags.put("method", "GET");
@@ -67,11 +92,10 @@ public class RequestMetricTest {
 
     @Test
     void testGetTagsInternalChannel() {
-        HubRequest request = HubRequest.builder()
+        HubRequest request = buildRequest(builder -> builder
                 .method("GET")
                 .endpoint("/internal/_channel_")
-                .channel("some_channel")
-                .build();
+                .channel("some_channel"));
 
         HashMap<String, String> expectedTags = new HashMap<>();
         expectedTags.put("method", "GET");
@@ -96,36 +120,37 @@ public class RequestMetricTest {
         assertEquals(expectedTags, metric.getTags());
     }
 
+
     private static Stream<Arguments> provideCasesForMetricName() {
         return Stream.of(
-                Arguments.of(HubRequest.builder()
-                                .endpoint("/shutdown").build(),
+                Arguments.of(buildRequest(request -> request
+                                .endpoint("/shutdown")),
                         Optional.empty()),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .path("no endpoint?")
-                                .tag("someTag").build(),
+                                .tag("someTag")),
                         Optional.empty()),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/internal/_channel_/latest")
-                                .channel("channel1").build(),
+                                .channel("channel1")),
                         Optional.of("request.internal.channel")),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/internal/_tag_/latest")
-                                .tag("tag1").build(),
+                                .tag("tag1")),
                         Optional.of("request.internal.channel")),
-                Arguments.of(HubRequest.builder()
-                                .endpoint("/internal/health").build(),
+                Arguments.of(buildRequest(request -> request
+                                .endpoint("/internal/health")),
                         Optional.of("request.internal.nonchannel")),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/_channel_/latest")
-                                .channel("channel1").build(),
+                                .channel("channel1")),
                         Optional.of("request.api.channel")),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/_tag_/latest")
-                                .tag("tag1").build(),
+                                .tag("tag1")),
                         Optional.of("request.api.channel")),
-                Arguments.of(HubRequest.builder()
-                                .endpoint("/health").build(),
+                Arguments.of(buildRequest(request -> request
+                                .endpoint("/health")),
                         Optional.of("request.api.nonchannel"))
         );
     }
@@ -139,24 +164,24 @@ public class RequestMetricTest {
 
     private static Stream<Arguments> provideCasesForShouldReport() {
         return Stream.of(
-                Arguments.of(HubRequest.builder()
-                                .endpoint("/shutdown").build(),
+                Arguments.of(buildRequest(request -> request
+                                .endpoint("/shutdown")),
                         false),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .path("no endpoint?")
-                                .tag("someTag").build(),
+                                .tag("someTag")),
                         false),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/internal/_channel_/latest")
-                                .channel("IGNORE_ME_I_TEST_THINGS").build(),
+                                .channel("IGNORE_ME_I_TEST_THINGS")),
                         false),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/internal/_channel_/latest")
-                                .channel("channel1").build(),
+                                .channel("channel1")),
                         true),
-                Arguments.of(HubRequest.builder()
+                Arguments.of(buildRequest(request -> request
                                 .endpoint("/_tag_/latest")
-                                .tag("tag1").build(),
+                                .tag("tag1")),
                         true)
         );
     }

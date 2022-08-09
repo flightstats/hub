@@ -5,6 +5,7 @@ import lombok.Value;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,23 +16,14 @@ import java.util.stream.Stream;
 @Builder
 @Value
 public class HubRequest {
-    String endpoint;
+    @Builder.Default
+    Optional<String> endpoint = Optional.empty();
     String path;
     String method;
-    String channel;
-    String tag;
-
-    public Optional<String> getEndpoint() {
-        return convertToOptional(endpoint);
-    }
-
-    public Optional<String> getChannel() {
-        return convertToOptional(channel);
-    }
-
-    public Optional<String> getTag() {
-        return convertToOptional(tag);
-    }
+    @Builder.Default
+    Optional<String> channel = Optional.empty();
+    @Builder.Default
+    Optional<String> tag = Optional.empty();
 
     public boolean isInternal() {
         return getEndpoint().map(endpoint -> endpoint.startsWith("/internal")).orElse(false);
@@ -43,10 +35,6 @@ public class HubRequest {
 
     public boolean isChannelRelated() {
         return getChannel().isPresent() || getTag().isPresent();
-    }
-
-    private Optional<String> convertToOptional(String string) {
-        return Optional.ofNullable(string).filter(value -> !value.isEmpty());
     }
 
     public static class RequestBuilder {
@@ -69,30 +57,37 @@ public class HubRequest {
                     .build();
         }
 
-        public String getEndpoint() {
+        public Optional<String> getEndpoint() {
             UriRoutingContext uriInfo = (UriRoutingContext) request.getUriInfo();
             ArrayList<UriTemplate> templateList = new ArrayList<>(uriInfo.getMatchedTemplates());
             Collections.reverse(templateList);
-            return templateList
+            String endpoint = templateList
                     .stream()
                     .map(UriTemplate::getTemplate)
                     .map(template -> template.replaceAll(CHARACTERS_TO_REMOVE, ""))
                     .map(template -> template.replaceAll(CHARACTERS_TO_REPLACE, "_"))
                     .collect(Collectors.joining(""));
+            return convertToOptional(endpoint);
         }
 
-        public String getChannel() {
+        public Optional<String> getChannel() {
             return Stream.of(getPathParameter("channel"), getHeader("channelName"))
-                    .filter(value -> value != null && !value.isEmpty())
-                    .findFirst().orElse("");
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst();
         }
 
-        private String getPathParameter(String key) {
-            return request.getUriInfo().getPathParameters().getFirst(key);
+        private Optional<String> getPathParameter(String key) {
+            return convertToOptional(request.getUriInfo().getPathParameters().getFirst(key));
         }
 
-        private String getHeader(String key) {
-            return request.getHeaders().getFirst(key);
+        private Optional<String> getHeader(String key) {
+            return convertToOptional(request.getHeaders().getFirst(key));
         }
+
+        private Optional<String> convertToOptional(String string) {
+            return Optional.ofNullable(string).filter(value -> !value.isEmpty());
+        }
+
     }
 }
