@@ -48,14 +48,6 @@ public class RequestMetric {
         return Optional.of(String.format("request.%s.%s", requestScope, channelDifferentiator));
     }
 
-    public boolean shouldReport(Set<String> metricsToIgnore, Function<String, Boolean> testChannelCheck) {
-        boolean isMetricToIgnore = getMetricName().map(metricsToIgnore::contains).orElse(true);
-        boolean isTestChannel = request.getChannel().map(testChannelCheck).orElse(false);
-
-        return !isMetricToIgnore && !isTestChannel;
-    }
-
-
     private Optional<String> getChannelTag() {
         Optional<String> tagAsChannel = request.getTag().map(tag -> "tag/" + tag);
         return Stream.of(request.getChannel(), tagAsChannel)

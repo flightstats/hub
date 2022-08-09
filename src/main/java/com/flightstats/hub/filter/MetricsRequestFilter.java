@@ -52,7 +52,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
     void reportTime(RequestMetric metric, long startTime) {
         long time = System.currentTimeMillis() - startTime;
         log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
-        if (!metric.shouldReport(statsdFilter.getRequestMetricsToIgnore(), statsdFilter::isTestChannel)) {
+        if (statsdFilter.isIgnoredRequestMetric(metric)) {
             return;
         }
 

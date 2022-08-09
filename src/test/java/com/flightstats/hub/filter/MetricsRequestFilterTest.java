@@ -31,9 +31,8 @@ public class MetricsRequestFilterTest {
     void testReportTimeShouldReport() {
         StatsdReporter mockStatsdReporter = mock(StatsdReporter.class);
         StatsDFilter mockFilter = mock(StatsDFilter.class);
-
         RequestMetric mockMetric = mock(RequestMetric.class);
-        when(mockMetric.shouldReport(anySet(), any())).thenReturn(true);
+        when(mockFilter.isIgnoredRequestMetric(mockMetric)).thenReturn(false);
 
         HashMap<String, String> tags = new HashMap<>();
         tags.put("channel", "channel1");
@@ -47,37 +46,14 @@ public class MetricsRequestFilterTest {
         verify(mockStatsdReporter).timeTest("request.api.channel", 1000, "channel:channel1");
     }
 
-    @Test
-    void testReportTimeShouldSkipIfMetricsNameIsBlankForSomeReason() {
-        StatsdReporter mockStatsdReporter = mock(StatsdReporter.class);
-        StatsDFilter mockFilter = mock(StatsDFilter.class);
-
-        RequestMetric mockMetric = mock(RequestMetric.class);
-        when(mockMetric.shouldReport(anySet(), any())).thenReturn(true);
-
-        HashMap<String, String> tags = new HashMap<>();
-        tags.put("channel", "channel1");
-        when(mockMetric.getTags()).thenReturn(tags);
-
-        when(mockMetric.getMetricName()).thenReturn(Optional.empty());
-
-        MetricsRequestFilter metricsRequestFilter = new MetricsRequestFilter(mockStatsdReporter, mockFilter);
-        metricsRequestFilter.reportTime(mockMetric, 1000);
-
-        verify(mockStatsdReporter, times(0)).timeTest(anyString(), anyLong(), any());
-    }
 
     @Test
     void testReportTimeShouldSkip() {
         StatsDFilter mockFilter = mock(StatsDFilter.class);
-        Set<String> metricsToSkip = new HashSet<>();
-        metricsToSkip.add("request.api.channel");
-        when(mockFilter.getRequestMetricsToIgnore()).thenReturn(metricsToSkip);
-
         StatsdReporter mockStatsdReporter = mock(StatsdReporter.class);
 
         RequestMetric mockMetric = mock(RequestMetric.class);
-        when(mockMetric.shouldReport(metricsToSkip, mockFilter::isTestChannel)).thenReturn(false);
+        when(mockFilter.isIgnoredRequestMetric(mockMetric)).thenReturn(true);
 
         MetricsRequestFilter metricsRequestFilter = new MetricsRequestFilter(mockStatsdReporter, mockFilter);
         metricsRequestFilter.reportTime(mockMetric, 1000);
@@ -130,6 +106,7 @@ public class MetricsRequestFilterTest {
                 Arguments.of(500, true)
         );
     }
+
     @ParameterizedTest
     @MethodSource("getTestCasesForIsErrorStatusCode")
     void testRequestStateIsErrorStatusCode(int statusCode, boolean expected) {

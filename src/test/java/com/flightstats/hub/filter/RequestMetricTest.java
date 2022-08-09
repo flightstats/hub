@@ -185,11 +185,4 @@ public class RequestMetricTest {
                         true)
         );
     }
-
-    @ParameterizedTest
-    @MethodSource("provideCasesForShouldReport")
-    void testShouldReport(HubRequest request, boolean expectedShouldReport) {
-        RequestMetric metric = new RequestMetric(request);
-        assertEquals(expectedShouldReport, metric.shouldReport(emptySet(), channel -> channel.startsWith("IGNORE_ME_")));
-    }
 }

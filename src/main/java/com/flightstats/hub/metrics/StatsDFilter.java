@@ -6,7 +6,9 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.RequestMetric;
 import com.flightstats.hub.webhook.Webhook;
+
 import javax.inject.Inject;
+
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;
@@ -67,8 +69,10 @@ public class StatsDFilter {
         return channel.toLowerCase().startsWith("test_");
     }
 
-    public Set<String> getRequestMetricsToIgnore() {
-        return requestMetricsToIgnore;
+    public boolean isIgnoredRequestMetric(RequestMetric metric) {
+        return metric.getMetricName()
+                .map(requestMetricsToIgnore::contains)
+                .orElse(true);
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
