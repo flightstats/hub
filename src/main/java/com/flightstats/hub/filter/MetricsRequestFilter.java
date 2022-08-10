@@ -59,7 +59,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
         String[] tagArray = getTagArray(metric.getTags());
         log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
         metric.getMetricName().ifPresent(metricName ->
-                statsdReporter.timeTest(metricName, startTime, tagArray));
+                statsdReporter.time(metricName, startTime, tagArray));
     }
 
     @VisibleForTesting

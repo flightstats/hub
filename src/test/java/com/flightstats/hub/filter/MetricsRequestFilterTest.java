@@ -43,7 +43,7 @@ public class MetricsRequestFilterTest {
         MetricsRequestFilter metricsRequestFilter = new MetricsRequestFilter(mockStatsdReporter, mockFilter);
         metricsRequestFilter.reportTime(mockMetric, 1000);
 
-        verify(mockStatsdReporter).timeTest("request.api.channel", 1000, "channel:channel1");
+        verify(mockStatsdReporter).time("request.api.channel", 1000, "channel:channel1");
     }
 
 
@@ -58,7 +58,7 @@ public class MetricsRequestFilterTest {
         MetricsRequestFilter metricsRequestFilter = new MetricsRequestFilter(mockStatsdReporter, mockFilter);
         metricsRequestFilter.reportTime(mockMetric, 1000);
 
-        verify(mockStatsdReporter, times(0)).timeTest(anyString(), anyLong(), any());
+        verify(mockStatsdReporter, times(0)).time(anyString(), anyLong(), any());
     }
 
     @Test

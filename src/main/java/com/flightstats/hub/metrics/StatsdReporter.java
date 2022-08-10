@@ -67,11 +67,6 @@ public class StatsdReporter {
         reportWithBothClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
     }
 
-    public void timeTest(String name, long start, String... tags) {
-        String stringifiedTags = String.join(", ", tags);
-        log.info(String.format("Test time: %s - %s ms, %s", name, System.currentTimeMillis() - start, stringifiedTags));
-    }
-
     public void time(String channel, String name, long start, String... tags) {
         if (statsDFilter.isTestChannel(channel)) return;
 
