@@ -4,6 +4,7 @@ import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.util.RequestMetric;
 import com.flightstats.hub.webhook.Webhook;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
@@ -16,11 +17,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -218,5 +222,38 @@ class StatsDFilterTest {
     @Test
     void testStatsdFilterParseName_ignore() {
         assertEquals("", statsDFilter.parseName.apply("noPart"));
+    }
+
+    @Test
+    void testIsIgnoredRequestMetric_ignored() {
+        RequestMetric metric = mock(RequestMetric.class);
+        when(metric.getMetricName()).thenReturn(Optional.of("request.api.channel"));
+
+        when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+
+        assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
+    }
+
+    @Test
+    void testIsIgnoredRequestMetric_notIgnored() {
+        RequestMetric metric = mock(RequestMetric.class);
+        when(metric.getMetricName()).thenReturn(Optional.of("request.internal.channel"));
+
+        when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+
+        assertFalse(statsDFilter.isIgnoredRequestMetric(metric));
+    }
+
+    @Test
+    void testIgnoreRequestMetric_ignoreIfMetricsNameIsBlankForSomeReason() {
+        RequestMetric metric = mock(RequestMetric.class);
+        when(metric.getMetricName()).thenReturn(Optional.empty());
+
+        when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+
+        assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
     }
 }

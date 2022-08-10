@@ -7,6 +7,8 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import java.util.Collections;
+
 import static com.flightstats.hub.util.RequestUtils.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -28,57 +30,6 @@ class RequestUtilsTest {
         assertEquals("foobar", getTag("http://location:8080/tag/foobar"));
         assertEquals("foobar", getTag("http://location:8080/tag/foobar/"));
         assertEquals("foobar", getTag("http://hub.prod/tag/foobar/"));
-    }
-
-    @Test
-    void testGetChannelNameFromRequest() {
-        MultivaluedMap<String, String> emptyMap = new MultivaluedHashMap<>();
-        MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
-        MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
-
-        ContainerRequestContext noChannels = mockRequest(emptyMap, emptyMap);
-        assertEquals("", getChannelName(noChannels));
-
-        parameters.put("channel", singletonList("foo"));
-        ContainerRequestContext fooPath = mockRequest(parameters, emptyMap);
-        assertEquals("foo", getChannelName(fooPath));
-
-        headers.put("channelName", singletonList("bar"));
-        ContainerRequestContext fooHeader = mockRequest(emptyMap, headers);
-        assertEquals("bar", getChannelName(fooHeader));
-
-        headers.put("channelName", asList("baz", "zab"));
-        ContainerRequestContext firstHeader = mockRequest(emptyMap, headers);
-        assertEquals("baz", getChannelName(firstHeader));
-
-        ContainerRequestContext headerAndPath = mockRequest(parameters, headers);
-        assertEquals("foo", getChannelName(headerAndPath));
-    }
-
-    @Test
-    void testGetTagFromRequest() {
-        MultivaluedMap<String, String> emptyMap = new MultivaluedHashMap<>();
-        MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
-
-        ContainerRequestContext noTags = mockRequest(emptyMap, emptyMap);
-        assertEquals("", getTag(noTags));
-
-        parameters.put("tag", singletonList("foo"));
-        ContainerRequestContext fooTag = mockRequest(parameters, emptyMap);
-        assertEquals("foo", getTag(fooTag));
-
-        parameters.put("tag", asList("bar", "baz"));
-        ContainerRequestContext firstTag = mockRequest(parameters, emptyMap);
-        assertEquals("bar", getTag(firstTag));
-    }
-
-    private ContainerRequestContext mockRequest(MultivaluedMap<String, String> pathParameters, MultivaluedMap<String, String> headers) {
-        ContainerRequestContext request = mock(ContainerRequestContext.class);
-        UriInfo uriInfo = mock(UriInfo.class);
-        when(request.getUriInfo()).thenReturn(uriInfo);
-        when(uriInfo.getPathParameters()).thenReturn(pathParameters);
-        when(request.getHeaders()).thenReturn(headers);
-        return request;
     }
 
     @Test

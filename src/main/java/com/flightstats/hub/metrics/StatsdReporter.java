@@ -2,11 +2,15 @@ package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@Slf4j
 public class StatsdReporter {
 
     private StatsDFilter statsDFilter;
