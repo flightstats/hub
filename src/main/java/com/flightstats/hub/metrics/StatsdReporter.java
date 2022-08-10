@@ -7,6 +7,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class StatsdReporter {
@@ -66,7 +68,8 @@ public class StatsdReporter {
     }
 
     public void timeTest(String name, long start, String... tags) {
-        log.info(String.format("Test time: %s - %s ms, %s", name, System.currentTimeMillis() - start, tags));
+        String stringifiedTags = String.join(", ", tags);
+        log.info(String.format("Test time: %s - %s ms, %s", name, System.currentTimeMillis() - start, stringifiedTags));
     }
 
     public void time(String channel, String name, long start, String... tags) {
