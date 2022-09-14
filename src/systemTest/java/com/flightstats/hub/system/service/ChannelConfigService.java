@@ -47,7 +47,7 @@ public class ChannelConfigService {
     public void create(ChannelConfig channel) {
         Call<Object> call = channelResourceClient.create(configWithOwner(channel));
         Response<Object> response = call.execute();
-        log.info("channel creation response {}, channelName, {}", response, channel.getName());
+        log.debug("channel creation response {}, channelName, {}", response, channel.getName());
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 
@@ -62,7 +62,7 @@ public class ChannelConfigService {
     public void update(ChannelConfig channel) {
         Call<Object> call = channelResourceClient.update(channel.getName(), configWithOwner(channel));
         Response<Object> response = call.execute();
-        log.info("channel update response {}, channelName, {}", response, channel.getName());
+        log.debug("channel update response {}, channelName, {}", response, channel.getName());
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 

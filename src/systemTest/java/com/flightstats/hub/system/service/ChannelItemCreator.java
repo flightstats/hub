@@ -73,7 +73,7 @@ public class ChannelItemCreator {
                 itemIdentifier);
 
         Response<ChannelItem> response = call.execute();
-        log.info("channel item creation response {} ", response);
+        log.debug("channel item creation response {} ", response);
         assertEquals(CREATED.getStatusCode(), response.code());
         assertNotNull(response);
         assertNotNull(response.body());

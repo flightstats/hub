@@ -40,7 +40,7 @@ public class WebhookService {
 
     @SneakyThrows
     private int upsert(Webhook webhook) {
-        log.debug("Upsert webhook name {} ", webhook.getName());
+        log.info("Upsert webhook name {} ", webhook.getName());
 
         Response<Webhook> response = webhookResourceClient.create(webhook.getName(), webhook).execute();
         return response.code();
