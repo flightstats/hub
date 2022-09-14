@@ -57,7 +57,7 @@ public class ChannelItemCreator {
     public ChannelItemWithBody addItem(String channelName, Object data) {
         Call<ChannelItem> call = channelItemResourceClient.add(channelName, data);
         Response<ChannelItem> response = call.execute();
-        log.info("channel item creation response {} ", response);
+        log.debug("channel item creation response {} ", response);
         assertEquals(CREATED.getStatusCode(), response.code());
         assertNotNull(response);
         assertNotNull(response.body());

@@ -46,6 +46,7 @@ public class CallbackService {
     @SneakyThrows
     public boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
         String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
+        log.info(itemPath);
         return getCallbackErrorsInHub(webhookName)
                 .stream()
                 .anyMatch((path) -> path.contains(itemPath));

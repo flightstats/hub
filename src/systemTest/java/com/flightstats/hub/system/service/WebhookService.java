@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 public class WebhookService {
 
-    private WebhookResourceClient webhookResourceClient;
+    private final WebhookResourceClient webhookResourceClient;
 
     @Inject
     public WebhookService(HubClientFactory hubClientFactory) {
@@ -42,9 +42,7 @@ public class WebhookService {
     private int upsert(Webhook webhook) {
         log.debug("Upsert webhook name {} ", webhook.getName());
 
-        Call<Webhook> call = webhookResourceClient.create(webhook.getName(), webhook);
-        Response<Webhook> response = call.execute();
-        log.debug("webhook creation response {} ", response.body());
+        Response<Webhook> response = webhookResourceClient.create(webhook.getName(), webhook).execute();
         return response.code();
     }
 
