@@ -1,6 +1,5 @@
 package com.flightstats.hub.system.extension;
 
-import com.flightstats.hub.system.config.PropertiesLoaderOverride;
 import com.flightstats.hub.system.config.GuiceModule;
 import com.flightstats.hub.system.config.PropertiesLoader;
 import com.google.inject.Guice;
@@ -16,8 +15,7 @@ public class SingletonTestInjectionExtension implements TestInstancePostProcesso
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
 
     private Properties getProperties(Object testInstance) {
-        Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
-        return new PropertiesLoaderOverride(properties).get(testInstance);
+        return new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
     }
 
     @Override
