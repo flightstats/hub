@@ -1,26 +1,20 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.filter.MetricsRequestFilter;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+@Slf4j
 public class HttpAndWSHandler extends HandlerCollection {
 
-    private final MetricsRequestFilter metricsRequestFilter;
     private Handler httpHandler;
     private Handler wsHandler;
-
-    @Inject
-    public HttpAndWSHandler(MetricsRequestFilter metricsRequestFilter) {
-        this.metricsRequestFilter = metricsRequestFilter;
-    }
 
     public void addHttpHandler(Handler httpHandler) {
         this.httpHandler = httpHandler;
@@ -40,7 +34,6 @@ public class HttpAndWSHandler extends HandlerCollection {
                 wsHandler.handle(target, baseRequest, request, response);
             } else {
                 httpHandler.handle(target, baseRequest, request, response);
-                metricsRequestFilter.finalStats();
             }
         }
     }

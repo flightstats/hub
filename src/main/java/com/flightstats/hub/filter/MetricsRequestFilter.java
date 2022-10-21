@@ -6,7 +6,9 @@ import com.flightstats.hub.util.RequestMetric;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -20,6 +22,7 @@ import java.util.Map;
  */
 @Slf4j
 @Provider
+@Priority(Priorities.USER)
 public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
 
@@ -94,6 +97,8 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             RequestState requestState = threadLocal.get();
             if (null != requestState) {
                 requestState.setResponse(response);
+                // unsure why there was decoupling here. Pretty sure there was a good reason...
+                finalStats();
             }
         } catch (Exception e) {
             log.error("DataDog request error", e);
