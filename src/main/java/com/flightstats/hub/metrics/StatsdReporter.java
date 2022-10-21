@@ -64,7 +64,7 @@ public class StatsdReporter {
     }
 
     public void time(String name, long start, String... tags) {
-        reportWithBothClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
+        reportWithBothClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, 0.5, tags));
     }
 
     public void time(String channel, String name, long start, String... tags) {
@@ -73,6 +73,7 @@ public class StatsdReporter {
         reportWithBothClients(statsDClient -> statsDClient.time(
                 name,
                 statsDFormatter.startTimeMillis(start),
+                0.5,
                 statsDFormatter.formatChannelTags(channel, tags)
         ));
     }
