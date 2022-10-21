@@ -361,9 +361,7 @@ public class S3BatchContentDao implements ContentDao {
     private SortedSet<MinutePath> listMinutePaths(String channel, ListObjectsRequest request, Traces traces, boolean iterate) {
         SortedSet<MinutePath> paths = new TreeSet<>();
         traces.add("S3BatchContentDao.listMinutePaths ", request.getPrefix(), request.getMarker(), iterate);
-        long start = System.currentTimeMillis();
         ObjectListing listing = s3Client.listObjects(request);
-        statsdReporter.time(channel, "s3.list", start, "type:batch");
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             String key = summary.getKey();

@@ -161,9 +161,6 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                         response = write_client.resource(uri).put(ClientResponse.class, payload);
                         traces.add(server, response.getEntity(String.class));
                         if (response.getStatus() == 201) {
-                            if (firstComplete.compareAndSet(false, true)) {
-                                statsdReporter.time(channel, "heisenberg", traces.getStart());
-                            }
                             quorumLatch.countDown();
                             log.trace("server {} path {} response {}", server, path, response);
                         } else {
@@ -185,7 +182,6 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
-        statsdReporter.time(channel, "consistent", traces.getStart());
         return quorumLatch.getCount() != quorum;
     }
 

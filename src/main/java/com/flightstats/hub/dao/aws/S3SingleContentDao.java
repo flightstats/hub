@@ -232,10 +232,7 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     private ObjectListing getObjectListing(ListObjectsRequest request, String channel) {
-        long start = System.currentTimeMillis();
-        ObjectListing objects = s3Client.listObjects(request);
-        statsdReporter.time(channel, "s3.list", start, "type:single");
-        return objects;
+        return s3Client.listObjects(request);
     }
 
     private boolean shouldContinue(int maxItems, ContentKey limitKey, SortedSet<ContentKey> keys, ObjectListing listing, ContentKey marker) {
