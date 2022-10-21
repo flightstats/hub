@@ -94,6 +94,8 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             RequestState requestState = threadLocal.get();
             if (null != requestState) {
                 requestState.setResponse(response);
+                // unsure why there was decoupling here. Pretty sure there was a good reason...
+                finalStats();
             }
         } catch (Exception e) {
             log.error("DataDog request error", e);

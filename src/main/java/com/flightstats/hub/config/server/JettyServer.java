@@ -9,7 +9,6 @@ import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.SystemProperties;
 import com.flightstats.hub.filter.CORSFilter;
-import com.flightstats.hub.filter.MetricsRequestFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
@@ -52,19 +51,16 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class JettyServer {
 
-    private final MetricsRequestFilter metricsRequestFilter;
     private final SystemProperties systemProperties;
     private final AppProperties appProperties;
     private final LocalHostProperties localHostProperties;
     private final Injector injector;
 
     @Inject
-    public JettyServer(MetricsRequestFilter metricsRequestFilter,
-                       SystemProperties systemProperties,
+    public JettyServer(SystemProperties systemProperties,
                        AppProperties appProperties,
                        LocalHostProperties localHostProperties,
                        Injector injector) {
-        this.metricsRequestFilter = metricsRequestFilter;
         this.systemProperties = systemProperties;
         this.appProperties = appProperties;
         this.localHostProperties = localHostProperties;
@@ -114,7 +110,7 @@ public class JettyServer {
         wsContainer.addEndpoint(WebSocketHashEndpoint.class);
 
         // use handler collection to choose the proper context
-        HttpAndWSHandler handler = new HttpAndWSHandler(metricsRequestFilter);
+        HttpAndWSHandler handler = new HttpAndWSHandler();
         handler.addHttpHandler(httpContainer);
         handler.addWSHandler(wsContext);
         server.setHandler(handler);
