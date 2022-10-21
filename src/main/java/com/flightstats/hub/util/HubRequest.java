@@ -2,6 +2,7 @@ package com.flightstats.hub.util;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 
 @Builder
 @Value
+@Slf4j
 public class HubRequest {
     @Builder.Default
     Optional<String> endpoint = Optional.empty();
