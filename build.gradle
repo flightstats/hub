@@ -138,7 +138,7 @@ dependencies {
     }
 
     compile 'org.apache.commons:commons-lang3:3.7'
-    compile group: 'org.apache.commons', name: 'commons-text', version: '1.2'
+    compile group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
     compile 'commons-io:commons-io:2.6'
     compile('com.github.rholder:guava-retrying:2.0.0') {
         exclude group: 'com.google.guava'
