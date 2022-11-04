@@ -148,7 +148,6 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
     private boolean insertToStore(SpokeStore spokeStore, String path, byte[] payload, Collection<String> servers, Traces traces, String spokeApi, String channel) {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
-        AtomicBoolean firstComplete = new AtomicBoolean();
         for (final String server : servers) {
             executorService.submit(new Runnable() {
                 @Override
