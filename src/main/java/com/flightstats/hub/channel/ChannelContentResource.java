@@ -428,7 +428,6 @@ public class ChannelContentResource {
 
         builder.header("X-Item-Length", itemLength);
 
-        statsdReporter.time(channel, "get", start);
         return builder.build();
     }
 
