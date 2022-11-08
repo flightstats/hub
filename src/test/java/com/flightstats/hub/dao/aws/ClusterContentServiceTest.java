@@ -40,7 +40,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -121,7 +121,7 @@ class ClusterContentServiceTest {
         assertEquals(contentKey, arg.getValue().getContentKey());
         assertEquals(channelName, arg.getValue().getChannel());
 
-        verifyZeroInteractions(mockS3LargeDao);
+        verifyNoMoreInteractions(mockS3LargeDao);
     }
 
     @Test
@@ -132,7 +132,7 @@ class ClusterContentServiceTest {
         when(channelConfig.isBatch()).thenReturn(true);
 
         ccs.insert(channelName, content);
-        verifyZeroInteractions(s3WriteQueue);
+        verifyNoMoreInteractions(s3WriteQueue);
     }
 
     @Test
@@ -189,7 +189,7 @@ class ClusterContentServiceTest {
         assertTrue(latest.isPresent());
         assertEquals(ContentKey.NONE, latest.get());
         verify(contentRetriever, times(0)).getLatest(any());
-        verifyZeroInteractions(mockS3SingleDao);
+        verifyNoMoreInteractions(mockS3SingleDao);
     }
 
     @Test
@@ -203,7 +203,7 @@ class ClusterContentServiceTest {
         assertEquals(ContentKey.NONE, latest.get());
         verify(contentRetriever, times(0)).getLatest(any());
         verify(latestContentCache, times(1)).setEmpty(channelName);
-        verifyZeroInteractions(mockS3SingleDao);
+        verifyNoMoreInteractions(mockS3SingleDao);
     }
 
     @Test
@@ -229,7 +229,7 @@ class ClusterContentServiceTest {
         Optional<ContentKey> latest = ccs.findLatestKey(query, channelName, Optional.of(cachedLatestKey));
         assertTrue(latest.isPresent());
         assertEquals(spokeLatestKey, latest.get());
-        verifyZeroInteractions(contentRetriever);
+        verifyNoMoreInteractions(contentRetriever);
     }
 
     @Test
@@ -242,7 +242,7 @@ class ClusterContentServiceTest {
         Optional<ContentKey> latest = ccs.findLatestKey(query, channelName, Optional.of(cachedLatestKey));
         assertTrue(latest.isPresent());
         assertEquals(cachedLatestKey, latest.get());
-        verifyZeroInteractions(contentRetriever);
+        verifyNoMoreInteractions(contentRetriever);
     }
 
     @Test
