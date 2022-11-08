@@ -9,25 +9,25 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WebhookLeaderStateRunningStateTest {
     @ParameterizedTest
     @MethodSource("buildTestData")
     void testRunning(TestData testData) {
-        assertEquals(testData.getTestName(), testData.isRunning(), testData.getState().isRunningOnSingleServer());
+        assertEquals(testData.isRunning(), testData.getState().isRunningOnSingleServer());
     }
 
     @ParameterizedTest
     @MethodSource("buildTestData")
     void testStopped(TestData testData) {
-        assertEquals(testData.getTestName(), testData.isStopped(), testData.getState().isStopped());
+        assertEquals(testData.isStopped(), testData.getState().isStopped());
     }
 
     @ParameterizedTest
     @MethodSource("buildTestData")
     void testAbnormalState(TestData testData) {
-        assertEquals(testData.getTestName(), testData.isInAbnormalState(), testData.getState().isRunningInAbnormalState());
+        assertEquals(testData.isInAbnormalState(), testData.getState().isRunningInAbnormalState());
     }
 
     private static Stream<TestData> buildTestData() {
