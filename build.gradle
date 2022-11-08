@@ -131,7 +131,7 @@ dependencies {
     compile('org.apache.curator:curator-recipes:4.0.0') {
         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
     }
-    compile('org.apache.zookeeper:zookeeper:3.5.9')
+    compile('org.apache.zookeeper:zookeeper:3.8.0')
     //todo curator-test 4.0.0 has a compile issue with QuorumPeerConfig
     compile('org.apache.curator:curator-test:2.12.0') {
         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
