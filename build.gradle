@@ -158,7 +158,7 @@ dependencies {
 
     testCompile 'org.mockito:mockito-junit-jupiter:4.8.0'
 
-    systemTestImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+    systemTestImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
     systemTestCompileOnly 'org.projectlombok:lombok:1.18.6'
     systemTestAnnotationProcessor 'org.projectlombok:lombok:1.18.6'
 
