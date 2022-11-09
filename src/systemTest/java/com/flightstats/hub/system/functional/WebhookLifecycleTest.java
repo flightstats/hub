@@ -19,8 +19,8 @@ import java.util.List;
 
 import static com.flightstats.hub.system.SystemTestUtils.randomChannelName;
 import static java.util.stream.Collectors.toList;
-import static junit.framework.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class WebhookLifecycleTest extends TestSuiteClassWrapper {
