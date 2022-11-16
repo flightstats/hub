@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static junit.framework.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -200,7 +200,7 @@ class WebhookCoordinatorTest {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         getWebhookCoordinator();
         Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
-        services.forEach((type, svcs) -> assertTrue(type + " has services registered", svcs.isEmpty()));
+        services.forEach((type, svcs) -> assertTrue(svcs.isEmpty()));
     }
 
     private Webhook getUnpausedWebhook() {

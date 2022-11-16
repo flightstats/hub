@@ -25,7 +25,7 @@ import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class S3VerifierUnitTest {
@@ -75,7 +75,7 @@ class S3VerifierUnitTest {
 
         s3Verifier.verifyChannel(verifierRange);
 
-        verifyZeroInteractions(clusterCacheDao);
+        verifyNoMoreInteractions(clusterCacheDao);
     }
 
     @Test

@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class WebhookCoordinatorActionDirectorTest {
     @ParameterizedTest
@@ -19,7 +19,7 @@ public class WebhookCoordinatorActionDirectorTest {
     void testShouldStart(TestData testData) {
         WebhookCoordinator.WebhookActionDirector director = testData.getDirector();
 
-        assertEquals(testData.getTestName(), testData.isExpectedToStart(), director.webhookShouldStart());
+        assertEquals(testData.isExpectedToStart(), director.webhookShouldStart());
     }
 
     @ParameterizedTest
@@ -27,7 +27,7 @@ public class WebhookCoordinatorActionDirectorTest {
     void testShouldStop(TestData testData) {
         WebhookCoordinator.WebhookActionDirector director = testData.getDirector();
 
-        assertEquals(testData.getTestName(), testData.isExpectedToStop(), director.webhookShouldStop());
+        assertEquals(testData.isExpectedToStop(), director.webhookShouldStop());
     }
 
     @ParameterizedTest
@@ -35,7 +35,7 @@ public class WebhookCoordinatorActionDirectorTest {
     void testShouldDoNothing(TestData testData) {
         WebhookCoordinator.WebhookActionDirector director = testData.getDirector();
 
-        assertEquals(testData.getTestName(), testData.isExpectedToDoNothing(), director.webhookRequiresNoChanges());
+        assertEquals(testData.isExpectedToDoNothing(), director.webhookRequiresNoChanges());
     }
 
     @ParameterizedTest
@@ -43,7 +43,7 @@ public class WebhookCoordinatorActionDirectorTest {
     void testShouldRestartOnJustOneServer(TestData testData) {
         WebhookCoordinator.WebhookActionDirector director = testData.getDirector();
 
-        assertEquals(testData.getTestName(), testData.isExpectedToRestart(), director.webhookShouldRestartOnOneServerAndStopAnyOthers());
+        assertEquals(testData.isExpectedToRestart(), director.webhookShouldRestartOnOneServerAndStopAnyOthers());
     }
 
     private static Stream<TestData> buildTestData() {

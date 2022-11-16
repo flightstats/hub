@@ -14,7 +14,8 @@ import javax.ws.rs.core.Response.Status;
 
 import java.util.Optional;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 @Slf4j
 public class InternalZookeeperService {
