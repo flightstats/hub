@@ -8,11 +8,13 @@ import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelName;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StaleEntity;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
@@ -113,7 +115,7 @@ public class InternalChannelResource {
     @SneakyThrows
     @Path("{channel}")
     @DELETE
-    public Response delete(@PathParam("channel") final String channelName) {
+    public Response delete(@PathParam("channel") @ChannelName String channelName) {
         channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
                     Response errorResponse = ChannelResource.notFound(channelName);
@@ -192,7 +194,7 @@ public class InternalChannelResource {
         if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+            return Response.status(Response.Status.NOT_FOUND).entity("channel " + StringEscapeUtils.escapeHtml(channelName) + " not found").build();
         }
     }
 }

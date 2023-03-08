@@ -14,6 +14,7 @@ import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelName;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
@@ -23,6 +24,7 @@ import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -101,7 +103,7 @@ public class ChannelResource {
     }
 
     public static Response notFound(@PathParam("channel") String channelName) {
-        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + StringEscapeUtils.escapeJavaScript(channelName) + " not found").build();
     }
 
     @SneakyThrows
@@ -298,7 +300,7 @@ public class ChannelResource {
     }
 
     @DELETE
-    public Response delete(@PathParam("channel") final String channelName) throws Exception {
+    public Response delete(@PathParam("channel") @ChannelName String channelName) throws Exception {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channelName));
         Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
         if (!optionalChannelConfig.isPresent()) {

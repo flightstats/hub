@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.model.ChannelName;
 import com.flightstats.hub.model.SingleTrace;
 import com.google.common.io.ByteStreams;
 import lombok.extern.slf4j.Slf4j;
@@ -231,7 +232,7 @@ public class InternalSpokeResource {
 
     @Path("/latest/{channel}/{path:.+}")
     @GET
-    public Response getLatest(@PathParam("channel") String channel, @PathParam("path") String path) {
+    public Response getLatest(@PathParam("channel") @ChannelName String channel, @PathParam("path") String path) {
         try {
             String read = writeSpokeStore.getLatest(channel, path);
             if (read == null) {
