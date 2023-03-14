@@ -172,7 +172,7 @@ dependencies {
     systemTestCompile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.28'
     systemTestCompile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.28'
 
-    if (osdetector.classifier == "osx-aarch_64.jar") {
+    if (osdetector.classifier == "osx-aarch_64") {
         systemTestCompile('io.netty:netty-tcnative-boringssl-static:2.0.6.Final:osx-x86_64.jar')
     } else {
         systemTestCompile('io.netty:netty-tcnative-boringssl-static:2.0.6.Final:' + osdetector.classifier)
