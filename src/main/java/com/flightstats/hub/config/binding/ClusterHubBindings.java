@@ -15,10 +15,8 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
-import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.ReadOnlyContentDao;
 import com.flightstats.hub.dao.ReadOnlyDao;
-import com.flightstats.hub.dao.ReadOnlyDocumentationDao;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.aws.ClusterContentService;
@@ -30,7 +28,6 @@ import com.flightstats.hub.dao.aws.S3AccessMonitor;
 import com.flightstats.hub.dao.aws.S3BatchContentDao;
 import com.flightstats.hub.dao.aws.S3BatchManager;
 import com.flightstats.hub.dao.aws.S3Config;
-import com.flightstats.hub.dao.aws.S3DocumentationDao;
 import com.flightstats.hub.dao.aws.S3LargeContentDao;
 import com.flightstats.hub.dao.aws.S3SingleContentDao;
 import com.flightstats.hub.dao.aws.S3Verifier;
@@ -80,7 +77,6 @@ public class ClusterHubBindings extends AbstractModule {
         bind(S3Verifier.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
-        bind(S3DocumentationDao.class).asEagerSingleton();
     }
 
     @Named("READ")
@@ -107,12 +103,6 @@ public class ClusterHubBindings extends AbstractModule {
     @Provides
     public WriteQueue buildWriteQueue(AppProperties props, S3WriteQueue s3Queue) {
         return props.isReadOnly() ? new NoOpWriteQueue() : s3Queue;
-    }
-
-    @Singleton
-    @Provides
-    public DocumentationDao buildDocumentationDao(S3DocumentationDao base, AppProperties appProperties) {
-        return appProperties.isReadOnly() ? new ReadOnlyDocumentationDao(base) : base;
     }
 
     @Singleton
