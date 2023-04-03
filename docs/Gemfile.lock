@@ -14,8 +14,8 @@ GEM
       execjs
     coffee-script-source (1.11.1)
     colorator (1.1.0)
-    commonmarker (0.23.6)
     concurrent-ruby (1.2.0)
+    commonmarker (0.23.7)
     dnsruby (1.61.9)
       simpleidn (~> 0.1)
     em-websocket (0.5.3)
@@ -251,9 +251,8 @@ GEM
       unf_ext
     unf_ext (0.0.8.2)
     unicode-display_width (1.8.0)
-    webrick (1.7.0)
+    webrick (1.8.1)
     zeitwerk (2.6.6)
-
 PLATFORMS
   ruby
 
