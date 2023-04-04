@@ -76,7 +76,6 @@ public class LinkBuilder {
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getBaseUriBuilder().path("channel").path(channel).build());
-        addLink(links, "documentation", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("doc").build());
         addLink(links, "latest", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("latest").build());
         addLink(links, "earliest", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("earliest").build());
         addLink(links, "bulk", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("bulk").build());
