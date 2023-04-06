@@ -87,7 +87,7 @@ class TtlEnforcerTest {
         String directory = "testDir";
         assertTrue(createMockSpokeFiles(spoke, directory, LOST_AND_FOUND_DIR));
         ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
-        String command = "find .* -type f --mmin +360 -delete";
+        String command = "find .* -type f --mmin \\+360 -delete";
         verify(commander, times(1)).runInBash(matches(command), anyInt());
     }
 
