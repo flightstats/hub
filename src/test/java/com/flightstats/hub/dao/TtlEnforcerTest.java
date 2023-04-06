@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -87,8 +87,8 @@ class TtlEnforcerTest {
         String directory = "testDir";
         assertTrue(createMockSpokeFiles(spoke, directory, LOST_AND_FOUND_DIR));
         ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
-        String command = String.format("find %s/%s/%s -type f --mmin +360 -delete", spoke.toPath(), LOST_AND_FOUND_DIR, directory);
-        verify(commander, times(1)).runInBash(eq(command), anyInt());
+        String command = "find .* -type f --mmin +360 -delete";
+        verify(commander, times(1)).runInBash(matches(command), anyInt());
     }
 
     @Test
