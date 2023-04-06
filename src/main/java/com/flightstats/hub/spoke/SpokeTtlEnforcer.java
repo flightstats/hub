@@ -60,7 +60,7 @@ public class SpokeTtlEnforcer {
                 }
             } else {
                 int waitTimeSeconds = 3;
-                itemsEvicted += FileUtils.deleteFilesByAge(channelPath, ttlMinutes, waitTimeSeconds);
+                itemsEvicted += FileUtils.deletePathsByAge(channelPath, ttlMinutes, waitTimeSeconds);
             }
             evictionCounter.getAndAdd(itemsEvicted);
         };
@@ -69,7 +69,7 @@ public class SpokeTtlEnforcer {
     private long removeFromChannelByTime(String channelPath, String timePath) {
         final String path = channelPath + "/" + timePath;
         final int waitTimeSeconds = 3;
-        return FileUtils.deleteFiles(path, waitTimeSeconds);
+        return FileUtils.deletePaths(path, waitTimeSeconds);
     }
 
     private void updateOldestItemMetric() {
