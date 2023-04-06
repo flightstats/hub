@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -51,8 +52,8 @@ class TtlEnforcerTest {
         return Stream.of(fileNames).allMatch(str -> {
             try {
                 return new File(dir.toPath() + "/" + str).createNewFile();
-            } catch (Exception e) {
-                log.error("error adding files to spoke path {}", e);
+            } catch (Exception error) {
+                log.error("error adding files to spoke path {}", error.getMessage());
                 return false;
             }
         });
@@ -78,6 +79,16 @@ class TtlEnforcerTest {
         assertTrue(createMockSpokeFiles(spoke, "BacA", "aCaB", LOST_AND_FOUND_DIR));
         ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
         verify(commander, times(2)).runInBash(anyString(), anyInt());
+    }
+
+    @Test
+    void testdDeleteFilteredPathsRunsSpecificCommand(@TempDir File spoke) {
+        assertEquals(0, getSpokePathList(spoke).length);
+        String directory = "testDir";
+        assertTrue(createMockSpokeFiles(spoke, directory, LOST_AND_FOUND_DIR));
+        ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
+        String command = String.format("find %s/%s/%s -type f --mmin +360 -delete", spoke.toPath(), LOST_AND_FOUND_DIR, directory);
+        verify(commander, times(1)).runInBash(eq(command), anyInt());
     }
 
     @Test

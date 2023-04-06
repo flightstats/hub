@@ -37,9 +37,10 @@ public class TtlEnforcer {
                     .map(String::toLowerCase)
                     .filter(channel -> !channelSet.contains(channel.toLowerCase()) && !channel.equals(LOST_AND_FOUND_DIR))
                     .forEach(dir -> {
-                        String dirPath = path + "/" + dir;
-                        log.info("removing dir without channel {}", dirPath);
-                        commander.runInBash("rm " + " -rf " + dirPath, 1);
+
+                        String command = String.format("find %s/%s -type f --mmin +360 -delete", path, dir);
+                        log.info("removing directory no longer associated with channel with command {}", command);
+                        commander.runInBash(command, 1);
                     });
         } catch (Exception e) {
             log.error("unable to run {}", path, e);
