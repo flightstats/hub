@@ -25,6 +25,13 @@ public class FileUtils {
         return executeAndParse(command, waitTimeSeconds);
     }
 
+    public static long deleteEmptyDirectories(String path, int waitTimeSeconds) {
+        String options = "-depth -type d -empty" ;
+        String lostAndFoundDirIgnore = "-not -path \"*lost+found*\"";
+        String command = String.format("find \"%s\" %s %s -print -delete | wc -l", path, options, lostAndFoundDirIgnore);
+        return executeAndParse(command, waitTimeSeconds);
+    }
+
     private static long executeAndParse(String command, int waitTimeSeconds) {
         String result = Commander.run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
         String value = StringUtils.chomp(result);

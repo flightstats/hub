@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.config.properties.SpokeProperties;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -50,7 +51,13 @@ public class SpokeTtlEnforcer {
         return channel -> {
             int itemsEvicted = 0;
             final String channelPath = storagePath + "/" + channel.getDisplayName();
-            if (channel.isLive()) {
+
+            if (!channel.isLive() || spokeStore.equals(SpokeStore.READ)) {
+                int waitTimeSeconds = 3;
+                itemsEvicted += FileUtils.deletePathsByAge(channelPath, ttlMinutes, waitTimeSeconds);
+                FileUtils.deleteEmptyDirectories(channelPath, waitTimeSeconds);
+            }
+            else {
                 final DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
                 for (int i = 0; i < 2; i++) {
                     itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.minutes(ttlDateTime.minusMinutes(i)));
@@ -58,9 +65,6 @@ public class SpokeTtlEnforcer {
                     itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.days(ttlDateTime.minusDays(i + 1)));
                     itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.months(ttlDateTime.minusMonths(i + 1)));
                 }
-            } else {
-                int waitTimeSeconds = 3;
-                itemsEvicted += FileUtils.deletePathsByAge(channelPath, ttlMinutes, waitTimeSeconds);
             }
             evictionCounter.getAndAdd(itemsEvicted);
         };
