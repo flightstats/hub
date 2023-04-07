@@ -26,7 +26,7 @@ public class FileUtils {
     }
 
     public static long deleteEmptyDirectories(String path, int waitTimeSeconds) {
-        String options = "-depth -type d -empty" ;
+        String options = "-depth -mindepth 1 -type d -empty" ;
         String lostAndFoundDirIgnore = "-not -path \"*lost+found*\"";
         String command = String.format("find \"%s\" %s %s -print -delete | wc -l", path, options, lostAndFoundDirIgnore);
         return executeAndParse(command, waitTimeSeconds);
