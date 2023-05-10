@@ -4,15 +4,13 @@ import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
@@ -24,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebhookLeaderLocksTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
 
@@ -59,7 +58,9 @@ class WebhookLeaderLocksTest {
         } catch (NodeExistsException e) {
             log.error(e.getMessage());
             deletePath();
-            createPath();
+            for (int i=0; i < 3; i++) {
+                createWebhookLeader();
+            }
         }
     }
 
