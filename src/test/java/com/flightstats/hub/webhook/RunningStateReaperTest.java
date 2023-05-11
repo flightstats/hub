@@ -51,13 +51,9 @@ class RunningStateReaperTest {
     @Mock
     private AppProperties appProperties;
 
-    @BeforeAll
-    void runFirst() {
-        curator = IntegrationTestSetup.run().getZookeeperClient();
-    }
-
     @BeforeEach
     void setup() throws Exception {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
         WebhookErrorRepository.ErrorNodeNameGenerator nameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
