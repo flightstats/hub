@@ -60,8 +60,8 @@ class WebhookLeaderLocksTest {
             wait(1000);
             try {
                 createPath();
-            } catch (NodeExistsException e) {
-                log.error(e.getMessage());
+            } catch (NodeExistsException error) {
+                log.error(error.getMessage());
                 deletePath();
                 wait(1000);
                 createPath();
