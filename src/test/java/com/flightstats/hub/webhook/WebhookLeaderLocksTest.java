@@ -57,13 +57,13 @@ class WebhookLeaderLocksTest {
         } catch (NodeExistsException e) {
             log.error(e.getMessage());
             deletePath();
-            wait(1000);
+            Thread.sleep(1000);
             try {
                 createPath();
             } catch (NodeExistsException error) {
                 log.error(error.getMessage());
                 deletePath();
-                wait(1000);
+                Thread.sleep(1000);
                 createPath();
             }
         }
