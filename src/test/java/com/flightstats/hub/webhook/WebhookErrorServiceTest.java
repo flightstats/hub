@@ -8,14 +8,12 @@ import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-@Execution(ExecutionMode.SAME_THREAD)
+
 class WebhookErrorServiceTest {
 
     private static WebhookErrorService webhookErrorService;
