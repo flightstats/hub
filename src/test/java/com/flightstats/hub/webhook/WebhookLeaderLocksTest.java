@@ -44,28 +44,14 @@ class WebhookLeaderLocksTest {
         curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
-    @BeforeAll
-    static void setup() {
-        curator = IntegrationTestSetup.run().getZookeeperClient();
-        zooKeeperUtils = new SafeZooKeeperUtils(curator);
-    }
-
     @BeforeEach
     void createWebhookLeader() throws Exception {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
+        zooKeeperUtils = new SafeZooKeeperUtils(curator);
         try {
             createPath();
         } catch (NodeExistsException e) {
-            log.error(e.getMessage());
-            deletePath();
-            Thread.sleep(1000);
-            try {
-                createPath();
-            } catch (NodeExistsException error) {
-                log.error(error.getMessage());
-                deletePath();
-                Thread.sleep(1000);
-                createPath();
-            }
+            log.error("webhook leader path already exists");
         }
     }
 
