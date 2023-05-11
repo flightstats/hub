@@ -2,7 +2,6 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
-import com.flightstats.hub.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.*;
@@ -24,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Execution(ExecutionMode.SAME_THREAD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebhookLeaderLocksTest {
-    private static final String WEBHOOK_LEADER_PATH = "/" + StringUtils.randomAlphaNumeric(12);
+    private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
 
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
@@ -58,7 +57,15 @@ class WebhookLeaderLocksTest {
         } catch (NodeExistsException e) {
             log.error(e.getMessage());
             deletePath();
-            createPath();
+            wait(1000);
+            try {
+                createPath();
+            } catch (NodeExistsException e) {
+                log.error(e.getMessage());
+                deletePath();
+                wait(1000);
+                createPath();
+            }
         }
     }
 
