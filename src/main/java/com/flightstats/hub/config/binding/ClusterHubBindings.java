@@ -137,6 +137,34 @@ public class ClusterHubBindings extends AbstractModule {
         return props.isReadOnly() ? new NoOpWriteQueue() : s3Queue;
     }
 
+    @Provides
+    @Singleton
+    @Named("MAIN")
+    public AmazonS3 buildS3Client(@Named("MAIN") AwsConnectorFactory factory) {
+        return factory.getS3Client();
+    }
+
+    @Provides
+    @Singleton
+    @Named("DISASTER_RECOVERY")
+    public AmazonS3 buildDisasterRecoveryS3Client(@Named("DISASTER_RECOVERY") AwsConnectorFactory factory) {
+        return factory.getS3Client();
+    }
+
+    @Provides
+    @Singleton
+    @Named("MAIN")
+    public HubS3Client getHubS3Client(S3Properties s3Properties, @Named("MAIN") AmazonS3 s3Client, StatsdReporter statsdReporter) {
+        return new HubS3Client(s3Properties, s3Client, statsdReporter);
+    }
+
+    @Provides
+    @Singleton
+    @Named("DISASTER_RECOVERY")
+    public HubS3Client getDisasterRecoveryHubS3Client(S3Properties s3Properties, @Named("DISASTER_RECOVERY") AmazonS3 s3Client, StatsdReporter statsdReporter) {
+        return new HubS3Client(s3Properties, s3Client, statsdReporter);
+    }
+
     @Singleton
     @Provides
     @Named(ContentDao.SINGLE_LONG_TERM)
@@ -176,36 +204,8 @@ public class ClusterHubBindings extends AbstractModule {
 
     @Provides
     @Singleton
-    public AmazonDynamoDB buildDynamoClient(AwsConnectorFactory factory) {
+    public AmazonDynamoDB buildDynamoClient(@Named("MAIN") AwsConnectorFactory factory) {
         return factory.getDynamoClient();
-    }
-
-    @Provides
-    @Singleton
-    @Named("MAIN")
-    public AmazonS3 buildS3Client(@Named("MAIN") AwsConnectorFactory factory) {
-        return factory.getS3Client();
-    }
-
-    @Provides
-    @Singleton
-    @Named("DISASTER_RECOVERY")
-    public AmazonS3 buildDisasterRecoveryS3Client(@Named("DISASTER_RECOVERY") AwsConnectorFactory factory) {
-        return factory.getS3Client();
-    }
-
-    @Provides
-    @Singleton
-    @Named("MAIN")
-    public HubS3Client getHubS3Client(S3Properties s3Properties, @Named("MAIN") AmazonS3 s3Client, StatsdReporter statsdReporter) {
-        return new HubS3Client(s3Properties, s3Client, statsdReporter);
-    }
-
-    @Provides
-    @Singleton
-    @Named("DISASTER_RECOVERY")
-    public HubS3Client getDisasterRecoveryHubS3Client(S3Properties s3Properties, @Named("DISASTER_RECOVERY") AmazonS3 s3Client, StatsdReporter statsdReporter) {
-        return new HubS3Client(s3Properties, s3Client, statsdReporter);
     }
 
 }

@@ -58,6 +58,7 @@ public class IntegrationTestSetup {
         PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
         propertiesLoader.load("useDefault");
         propertiesLoader.setProperty("hub.type", "aws");
+        propertiesLoader.setProperty("aws.protocol", "HTTP");
         return propertiesLoader;
     }
 
