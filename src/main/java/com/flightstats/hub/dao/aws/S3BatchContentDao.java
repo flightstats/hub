@@ -74,7 +74,7 @@ public class S3BatchContentDao implements ContentDao {
     private final String bucketName;
     private final String disasterRecoveryBucketName;
     private final StatsdReporter statsdReporter;
-    private final S3Util s3Util;
+    private final S3ExtendedRequests s3ExtendedRequests;
 
     @Inject
     public S3BatchContentDao(@Named("MAIN") HubS3Client s3Client,
@@ -82,7 +82,7 @@ public class S3BatchContentDao implements ContentDao {
                              StatsdReporter statsdReporter,
                              AppProperties appProperties,
                              S3Properties s3Properties,
-                             S3Util s3Util) {
+                             S3ExtendedRequests s3ExtendedRequests) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
@@ -91,7 +91,7 @@ public class S3BatchContentDao implements ContentDao {
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
         this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
-        this.s3Util = s3Util;
+        this.s3ExtendedRequests = s3ExtendedRequests;
     }
 
 
@@ -318,7 +318,7 @@ public class S3BatchContentDao implements ContentDao {
             if (query.isNext()) {
                 contentKeys = handleNext(query);
             } else {
-                contentKeys = s3Util.queryPrevious(query, this);
+                contentKeys = s3ExtendedRequests.queryPrevious(query, this);
             }
             traces.add("S3BatchContentDao.query completed", contentKeys);
         } catch (Exception e) {
@@ -390,8 +390,8 @@ public class S3BatchContentDao implements ContentDao {
                 .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
                 .forEach(entry -> {
                     try {
-                        s3Util.delete(channel + BATCH_ITEMS, limitKey, entry.getKey(), entry.getValue());
-                        s3Util.delete(channel + BATCH_INDEX, limitKey, entry.getKey(), entry.getValue());
+                        s3ExtendedRequests.delete(channel + BATCH_ITEMS, limitKey, entry.getKey(), entry.getValue());
+                        s3ExtendedRequests.delete(channel + BATCH_INDEX, limitKey, entry.getKey(), entry.getValue());
                         log.info("completed deleteBefore of {}", channel);
                     } catch (Exception e) {
                         log.warn("unable to delete {} in {}", channel, entry.getKey(), e);

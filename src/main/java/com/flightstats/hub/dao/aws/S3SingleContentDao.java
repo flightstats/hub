@@ -55,7 +55,7 @@ public class S3SingleContentDao implements ContentDao {
     private final StatsdReporter statsdReporter;
     private final HubS3Client s3Client;
     private final HubS3Client s3DisasterRecoveryClient;
-    private final S3Util s3Util;
+    private final S3ExtendedRequests s3ExtendedRequests;
 
     @Inject
     public S3SingleContentDao(@Named("MAIN") HubS3Client s3Client,
@@ -63,7 +63,7 @@ public class S3SingleContentDao implements ContentDao {
                               StatsdReporter statsdReporter,
                               AppProperties appProperties,
                               S3Properties s3Properties,
-                              S3Util s3Util) {
+                              S3ExtendedRequests s3ExtendedRequests) {
         this.s3Client = s3Client;
         this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
         this.statsdReporter = statsdReporter;
@@ -72,7 +72,7 @@ public class S3SingleContentDao implements ContentDao {
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
         this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
-        this.s3Util = s3Util;
+        this.s3ExtendedRequests = s3ExtendedRequests;
     }
 
     static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
@@ -273,7 +273,7 @@ public class S3SingleContentDao implements ContentDao {
         if (query.isNext()) {
             contentKeys = next(query);
         } else {
-            contentKeys = s3Util.queryPrevious(query, this);
+            contentKeys = s3ExtendedRequests.queryPrevious(query, this);
         }
         traces.add("S3SingleContentDao.query completed", contentKeys);
         return contentKeys;
@@ -299,7 +299,7 @@ public class S3SingleContentDao implements ContentDao {
                 .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
                 .forEach(entry -> {
                     try {
-                        s3Util.delete(channel + "/", limitKey, entry.getKey(), entry.getValue());
+                        s3ExtendedRequests.delete(channel + "/", limitKey, entry.getKey(), entry.getValue());
                         log.debug("completed deletion of {} using limit key {} for bucket: {}", channel, limitKey.toUrl(), entry.getKey());
                     } catch (Exception e) {
                         log.warn("unable to delete {} in {}", channel, entry.getKey(), e);

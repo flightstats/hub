@@ -27,7 +27,7 @@ import static java.util.AbstractMap.SimpleImmutableEntry;
 
 
 @Slf4j
-public class S3Config {
+public class S3MaintenanceManager {
 
     // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure(terraform) code.
     private static final Integer S3_LIFECYCLE_RULES_AVAILABLE = 990;
@@ -40,12 +40,12 @@ public class S3Config {
     private final S3Properties s3Properties;
 
     @Inject
-    public S3Config(@Named("MAIN") HubS3Client s3Client,
-                    @Named("DISASTER_RECOVERY") HubS3Client s3DisasterRecoveryClient,
-                    DistributedAsyncLockRunner distributedLockRunner,
-                    @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                    MaxItemsEnforcer maxItemsEnforcer,
-                    S3Properties s3Properties) {
+    public S3MaintenanceManager(@Named("MAIN") HubS3Client s3Client,
+                                @Named("DISASTER_RECOVERY") HubS3Client s3DisasterRecoveryClient,
+                                DistributedAsyncLockRunner distributedLockRunner,
+                                @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                                MaxItemsEnforcer maxItemsEnforcer,
+                                S3Properties s3Properties) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
@@ -53,7 +53,7 @@ public class S3Config {
         this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
         this.s3Properties = s3Properties;
         if (s3Properties.isConfigManagementEnabled()) {
-            HubServices.register(new S3ConfigInit());
+            HubServices.register(new S3MaintenanceManagerInit());
         }
     }
 
@@ -68,12 +68,12 @@ public class S3Config {
     private void doWork() {
         log.debug("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
-        S3ConfigLockable lockable = new S3ConfigLockable(channels);
+        S3MaintenanceManagerLock lockable = new S3MaintenanceManagerLock(channels);
         distributedLockRunner.setLockPath("/S3ConfigLock");
         distributedLockRunner.runWithLock(lockable, 1, TimeUnit.MINUTES);
     }
 
-    private class S3ConfigInit extends AbstractScheduledService {
+    private class S3MaintenanceManagerInit extends AbstractScheduledService {
         @Override
         protected void runOneIteration() {
             run();
@@ -90,10 +90,10 @@ public class S3Config {
 
     }
 
-    private class S3ConfigLockable implements Lockable {
+    private class S3MaintenanceManagerLock implements Lockable {
         final Iterable<ChannelConfig> configurations;
 
-        private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
+        private S3MaintenanceManagerLock(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
         }
 

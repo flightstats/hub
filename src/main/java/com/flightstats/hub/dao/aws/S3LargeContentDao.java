@@ -16,11 +16,9 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
@@ -60,7 +58,7 @@ public class S3LargeContentDao implements ContentDao {
     private final String bucketName;
     private final String disasterRecoveryBucketName;
     private final int maxChunkInMB;
-    private final S3Util s3Util;
+    private final S3ExtendedRequests s3ExtendedRequests;
 
     @Inject
     public S3LargeContentDao(@Named("MAIN") HubS3Client s3Client,
@@ -68,7 +66,7 @@ public class S3LargeContentDao implements ContentDao {
                              StatsdReporter statsdReporter,
                              AppProperties appPropertiesIn,
                              S3Properties s3Properties,
-                             S3Util s3Util) {
+                             S3ExtendedRequests s3ExtendedRequests) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
@@ -76,7 +74,7 @@ public class S3LargeContentDao implements ContentDao {
         this.bucketName = s3Properties.getBucketName();
         this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
         this.maxChunkInMB = s3Properties.getMaxChunkInMB();
-        this.s3Util = s3Util;
+        this.s3ExtendedRequests = s3ExtendedRequests;
 
     }
 
@@ -254,7 +252,7 @@ public class S3LargeContentDao implements ContentDao {
                 .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
                 .forEach(entry -> {
                     try {
-                        s3Util.delete(channel + "/large/", limitKey, entry.getKey(), entry.getValue());
+                        s3ExtendedRequests.delete(channel + "/large/", limitKey, entry.getKey(), entry.getValue());
                         log.info("completed deletion of " + channel);
                     } catch (Exception e) {
                         log.error("unable to delete  {} in {}", channel, entry.getKey(), e);

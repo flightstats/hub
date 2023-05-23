@@ -30,7 +30,7 @@ import com.flightstats.hub.dao.aws.HubS3Client;
 import com.flightstats.hub.dao.aws.S3AccessMonitor;
 import com.flightstats.hub.dao.aws.S3BatchContentDao;
 import com.flightstats.hub.dao.aws.S3BatchManager;
-import com.flightstats.hub.dao.aws.S3Config;
+import com.flightstats.hub.dao.aws.S3MaintenanceManager;
 import com.flightstats.hub.dao.aws.S3LargeContentDao;
 import com.flightstats.hub.dao.aws.S3SingleContentDao;
 import com.flightstats.hub.dao.aws.S3Verifier;
@@ -72,7 +72,7 @@ public class ClusterHubBindings extends AbstractModule {
 
         bind(ServiceRegistration.class).to(ClusterServicesRegistration.class);
 
-        bind(S3Config.class).asEagerSingleton();
+        bind(S3MaintenanceManager.class).asEagerSingleton();
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();

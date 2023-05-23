@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class S3ConfigStrategyTest {
+class S3MaintenanceManagerStrategyTest {
 
     private TreeSet<String> allRules = new TreeSet<>();
     private final List<ChannelConfig> channelConfigs = new ArrayList<>();

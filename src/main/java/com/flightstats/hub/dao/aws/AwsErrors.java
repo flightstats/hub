@@ -8,7 +8,7 @@ import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 
-class AwsUtils {
+class AwsErrors {
 
     static boolean isAwsError(AmazonClientException exception) {
         if (exception.getCause() instanceof IOException) return true;

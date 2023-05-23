@@ -23,7 +23,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @Slf4j
-class S3Util {
+class S3ExtendedRequests {
 
     SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
         DateTime endTime = query.getStartKey().getTime();
