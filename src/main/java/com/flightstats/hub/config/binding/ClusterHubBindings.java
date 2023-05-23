@@ -8,6 +8,9 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ClusterServicesRegistration;
 import com.flightstats.hub.config.ServiceRegistration;
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.AwsProperties;
+import com.flightstats.hub.config.properties.DynamoProperties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.CachedDao;
 import com.flightstats.hub.dao.CachedLowerCaseDao;
@@ -55,8 +58,6 @@ public class ClusterHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(AwsConnectorFactory.class).asEagerSingleton();
-        bind(HubS3Client.class).asEagerSingleton();
 
         bind(LargeContentUtils.class).asEagerSingleton();
         bind(ContentService.class)
@@ -76,7 +77,38 @@ public class ClusterHubBindings extends AbstractModule {
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
-        bind(HubS3Client.class).asEagerSingleton();
+    }
+
+    @Named("MAIN")
+    @Singleton
+    @Provides
+    public static AwsConnectorFactory awsConnector(
+            AwsProperties awsProperties,
+            DynamoProperties dynamoProperties,
+            S3Properties s3Properties) {
+        return new AwsConnectorFactory(
+                awsProperties,
+                dynamoProperties,
+                s3Properties,
+                awsProperties.getSigningRegion(),
+                awsProperties.getProtocol()
+        );
+    }
+
+    @Named("DISASTER_RECOVERY")
+    @Singleton
+    @Provides
+    public static AwsConnectorFactory disasterRecoveryAwsConnector(
+            AwsProperties awsProperties,
+            DynamoProperties dynamoProperties,
+            S3Properties s3Properties) {
+        return new AwsConnectorFactory(
+                awsProperties,
+                dynamoProperties,
+                s3Properties,
+                awsProperties.getDisasterRecoveryRegion(),
+                awsProperties.getProtocol()
+        );
     }
 
     @Named("READ")
@@ -150,8 +182,30 @@ public class ClusterHubBindings extends AbstractModule {
 
     @Provides
     @Singleton
-    public AmazonS3 buildS3Client(AwsConnectorFactory factory) {
+    @Named("MAIN")
+    public AmazonS3 buildS3Client(@Named("MAIN") AwsConnectorFactory factory) {
         return factory.getS3Client();
+    }
+
+    @Provides
+    @Singleton
+    @Named("DISASTER_RECOVERY")
+    public AmazonS3 buildDisasterRecoveryS3Client(@Named("DISASTER_RECOVERY") AwsConnectorFactory factory) {
+        return factory.getS3Client();
+    }
+
+    @Provides
+    @Singleton
+    @Named("MAIN")
+    public HubS3Client getHubS3Client(S3Properties s3Properties, @Named("MAIN") AmazonS3 s3Client, StatsdReporter statsdReporter) {
+        return new HubS3Client(s3Properties, s3Client, statsdReporter);
+    }
+
+    @Provides
+    @Singleton
+    @Named("DISASTER_RECOVERY")
+    public HubS3Client getDisasterRecoveryHubS3Client(S3Properties s3Properties, @Named("DISASTER_RECOVERY") AmazonS3 s3Client, StatsdReporter statsdReporter) {
+        return new HubS3Client(s3Properties, s3Client, statsdReporter);
     }
 
 }

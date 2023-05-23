@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +41,8 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static java.util.AbstractMap.SimpleImmutableEntry;
+
 @Singleton
 @Slf4j
 public class S3SingleContentDao implements ContentDao {
@@ -51,15 +54,18 @@ public class S3SingleContentDao implements ContentDao {
     private final String disasterRecoveryBucketName;
     private final StatsdReporter statsdReporter;
     private final HubS3Client s3Client;
+    private final HubS3Client s3DisasterRecoveryClient;
     private final S3Util s3Util;
 
     @Inject
-    public S3SingleContentDao(HubS3Client s3Client,
+    public S3SingleContentDao(@Named("MAIN") HubS3Client s3Client,
+                              @Named("DISASTER_RECOVERY") HubS3Client s3DisasterRecoveryClient,
                               StatsdReporter statsdReporter,
                               AppProperties appProperties,
                               S3Properties s3Properties,
                               S3Util s3Util) {
         this.s3Client = s3Client;
+        this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
         this.statsdReporter = statsdReporter;
 
         this.useEncrypted = appProperties.isAppEncrypted();
@@ -289,14 +295,14 @@ public class S3SingleContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        Stream.of(bucketName, disasterRecoveryBucketName)
-                .filter(StringUtils::isNotBlank)
-                .forEach(bucket -> {
+        Stream.of(new SimpleImmutableEntry<>(bucketName, s3Client), new SimpleImmutableEntry<>(disasterRecoveryBucketName, s3DisasterRecoveryClient))
+                .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
+                .forEach(entry -> {
                     try {
-                        s3Util.delete(channel + "/", limitKey, bucket, s3Client);
-                        log.debug("completed deletion of {} using limit key {} for bucket: {}", channel, limitKey.toUrl(), bucket);
+                        s3Util.delete(channel + "/", limitKey, entry.getKey(), entry.getValue());
+                        log.debug("completed deletion of {} using limit key {} for bucket: {}", channel, limitKey.toUrl(), entry.getKey());
                     } catch (Exception e) {
-                        log.warn("unable to delete {} in {}", channel, bucket, e);
+                        log.warn("unable to delete {} in {}", channel, entry.getKey(), e);
                     }
                 });
     }
