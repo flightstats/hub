@@ -111,6 +111,7 @@ public class PropertiesLoader {
         propertiesDefault.put("metrics.enable", "false");
         propertiesDefault.put("s3Verifier.run", "false");
         propertiesDefault.put("aws.signing_region", "us-east-1");
+        propertiesDefault.put("aws.protocol", "HTTP");
 
         properties = propertiesDefault;
     }

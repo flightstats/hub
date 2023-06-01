@@ -15,10 +15,10 @@ public class AwsExceptionMapper implements ExceptionMapper<AmazonClientException
     @Override
     public Response toResponse(AmazonClientException exception) {
         log.warn("unhandled aws exception", exception);
-        if (AwsUtils.isAwsError(exception)) {
+        if (AwsErrors.isAwsError(exception)) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-        if (AwsUtils.isAwsThrottling(exception)) {
+        if (AwsErrors.isAwsThrottling(exception)) {
             return Response.status(Response.Status.SERVICE_UNAVAILABLE)
                     .header("Retry-After", 60).build();
         }

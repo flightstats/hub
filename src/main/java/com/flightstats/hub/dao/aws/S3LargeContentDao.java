@@ -31,6 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,32 +44,37 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.stream.Stream;
 
+import static java.util.AbstractMap.SimpleImmutableEntry;
+
 @SuppressWarnings("Duplicates")
 @Singleton
 @Slf4j
 public class S3LargeContentDao implements ContentDao {
 
     private final HubS3Client s3Client;
+    private final HubS3Client s3DisasterRecoveryClient;
     private final StatsdReporter statsdReporter;
     private final AppProperties appProperties;
     private final String bucketName;
     private final String disasterRecoveryBucketName;
     private final int maxChunkInMB;
-    private final S3Util s3Util;
+    private final S3ExtendedRequests s3ExtendedRequests;
 
     @Inject
-    public S3LargeContentDao(HubS3Client s3Client,
+    public S3LargeContentDao(@Named("MAIN") HubS3Client s3Client,
+                             @Named("DISASTER_RECOVERY") HubS3Client s3DisasterRecoveryClient,
                              StatsdReporter statsdReporter,
                              AppProperties appPropertiesIn,
                              S3Properties s3Properties,
-                             S3Util s3Util) {
+                             S3ExtendedRequests s3ExtendedRequests) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
+        this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
         this.appProperties = appPropertiesIn;
         this.bucketName = s3Properties.getBucketName();
         this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
         this.maxChunkInMB = s3Properties.getMaxChunkInMB();
-        this.s3Util = s3Util;
+        this.s3ExtendedRequests = s3ExtendedRequests;
 
     }
 
@@ -242,14 +248,14 @@ public class S3LargeContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        Stream.of(bucketName, disasterRecoveryBucketName)
-                .filter(StringUtils::isNotBlank)
-                .forEach(bucket -> {
+        Stream.of(new SimpleImmutableEntry<>(bucketName, s3Client), new SimpleImmutableEntry<>(disasterRecoveryBucketName, s3DisasterRecoveryClient))
+                .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
+                .forEach(entry -> {
                     try {
-                        s3Util.delete(channel + "/large/", limitKey, bucket, s3Client);
+                        s3ExtendedRequests.delete(channel + "/large/", limitKey, entry.getKey(), entry.getValue());
                         log.info("completed deletion of " + channel);
                     } catch (Exception e) {
-                        log.error("unable to delete  {} in {}", channel, bucket, e);
+                        log.error("unable to delete  {} in {}", channel, entry.getKey(), e);
                     }
                 });
     }

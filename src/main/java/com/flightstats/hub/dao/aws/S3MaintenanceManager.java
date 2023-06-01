@@ -23,9 +23,11 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static java.util.AbstractMap.SimpleImmutableEntry;
+
 
 @Slf4j
-public class S3Config {
+public class S3MaintenanceManager {
 
     // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure(terraform) code.
     private static final Integer S3_LIFECYCLE_RULES_AVAILABLE = 990;
@@ -34,21 +36,24 @@ public class S3Config {
     private final Dao<ChannelConfig> channelConfigDao;
     private final MaxItemsEnforcer maxItemsEnforcer;
     private final HubS3Client s3Client;
+    private final HubS3Client s3DisasterRecoveryClient;
     private final S3Properties s3Properties;
 
     @Inject
-    public S3Config(HubS3Client s3Client,
-                    DistributedAsyncLockRunner distributedLockRunner,
-                    @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                    MaxItemsEnforcer maxItemsEnforcer,
-                    S3Properties s3Properties) {
+    public S3MaintenanceManager(@Named("MAIN") HubS3Client s3Client,
+                                @Named("DISASTER_RECOVERY") HubS3Client s3DisasterRecoveryClient,
+                                DistributedAsyncLockRunner distributedLockRunner,
+                                @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                                MaxItemsEnforcer maxItemsEnforcer,
+                                S3Properties s3Properties) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
         this.maxItemsEnforcer = maxItemsEnforcer;
+        this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
         this.s3Properties = s3Properties;
         if (s3Properties.isConfigManagementEnabled()) {
-            HubServices.register(new S3ConfigInit());
+            HubServices.register(new S3MaintenanceManagerInit());
         }
     }
 
@@ -63,12 +68,12 @@ public class S3Config {
     private void doWork() {
         log.debug("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
-        S3ConfigLockable lockable = new S3ConfigLockable(channels);
+        S3MaintenanceManagerLock lockable = new S3MaintenanceManagerLock(channels);
         distributedLockRunner.setLockPath("/S3ConfigLock");
         distributedLockRunner.runWithLock(lockable, 1, TimeUnit.MINUTES);
     }
 
-    private class S3ConfigInit extends AbstractScheduledService {
+    private class S3MaintenanceManagerInit extends AbstractScheduledService {
         @Override
         protected void runOneIteration() {
             run();
@@ -85,10 +90,10 @@ public class S3Config {
 
     }
 
-    private class S3ConfigLockable implements Lockable {
+    private class S3MaintenanceManagerLock implements Lockable {
         final Iterable<ChannelConfig> configurations;
 
-        private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
+        private S3MaintenanceManagerLock(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
         }
 
@@ -98,14 +103,14 @@ public class S3Config {
             maxItemsEnforcer.updateMaxItems(configurations);
         }
 
-        private void updateRulesConfigForBucket(List<BucketLifecycleConfiguration.Rule> rules, String bucket) {
+        private void updateRulesConfigForBucket(List<BucketLifecycleConfiguration.Rule> rules, HubS3Client client, String bucket) {
             List<BucketLifecycleConfiguration.Rule> withNonHubRules = Stream.of(rules, getNonHubBucketLifecycleRules(bucket))
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
             BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(withNonHubRules);
             SetBucketLifecycleConfigurationRequest request =
                     new SetBucketLifecycleConfigurationRequest(bucket, lifecycleConfig);
-            s3Client.setBucketLifecycleConfiguration(request);
+            client.setBucketLifecycleConfiguration(request);
             log.info("updated {} rules with ttl life cycle for s3 bucket: {}", rules.size(), bucket);
         }
 
@@ -118,9 +123,9 @@ public class S3Config {
                         .apportion(configurations, new DateTime(), maxRules);
                 log.trace("updating {} ", rules);
                 if (!rules.isEmpty()) {
-                    Stream.of(s3Properties.getBucketName(), s3Properties.getDisasterRecoveryBucketName())
-                            .filter(StringUtils::isNotBlank)
-                            .forEach(bucket -> this.updateRulesConfigForBucket(rules, bucket));
+                    Stream.of(new SimpleImmutableEntry<>(s3Properties.getBucketName(), s3Client), new SimpleImmutableEntry<>(s3Properties.getDisasterRecoveryBucketName(), s3DisasterRecoveryClient))
+                            .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
+                            .forEach(entry -> this.updateRulesConfigForBucket(rules, entry.getValue(), entry.getKey()));
                 }
             }
             ActiveTraces.end();

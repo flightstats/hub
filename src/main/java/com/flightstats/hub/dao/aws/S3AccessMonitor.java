@@ -42,7 +42,7 @@ public class S3AccessMonitor {
     @Inject
     public S3AccessMonitor(
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-            HubS3Client hubS3Client,
+            @Named("MAIN") HubS3Client hubS3Client,
             S3Properties s3Properties) {
         this.channelConfigDao = channelConfigDao;
         this.hubS3Client = hubS3Client;

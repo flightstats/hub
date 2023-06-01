@@ -35,4 +35,6 @@ public class AwsProperties {
         return propertiesLoader.getProperty("aws.signing_region", "us-east-1");
     }
 
+    public String getDisasterRecoveryRegion() { return propertiesLoader.getProperty("aws.disaster.recovery.region", "us-west-2"); }
+
 }

@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import static java.util.AbstractMap.SimpleImmutableEntry;
 
 @Singleton
 @Slf4j
@@ -68,25 +70,28 @@ public class S3BatchContentDao implements ContentDao {
     private final int s3MaxQueryItems;
 
     private final HubS3Client s3Client;
+    private final HubS3Client s3DisasterRecoveryClient;
     private final String bucketName;
     private final String disasterRecoveryBucketName;
     private final StatsdReporter statsdReporter;
-    private final S3Util s3Util;
+    private final S3ExtendedRequests s3ExtendedRequests;
 
     @Inject
-    public S3BatchContentDao(HubS3Client s3Client,
+    public S3BatchContentDao(@Named("MAIN") HubS3Client s3Client,
+                             @Named("DISASTER_RECOVERY") HubS3Client s3DisasterRecoveryClient,
                              StatsdReporter statsdReporter,
                              AppProperties appProperties,
                              S3Properties s3Properties,
-                             S3Util s3Util) {
+                             S3ExtendedRequests s3ExtendedRequests) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
+        this.s3DisasterRecoveryClient = s3DisasterRecoveryClient;
 
         this.useEncrypted = appProperties.isAppEncrypted();
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
         this.disasterRecoveryBucketName = s3Properties.getDisasterRecoveryBucketName();
-        this.s3Util = s3Util;
+        this.s3ExtendedRequests = s3ExtendedRequests;
     }
 
 
@@ -313,7 +318,7 @@ public class S3BatchContentDao implements ContentDao {
             if (query.isNext()) {
                 contentKeys = handleNext(query);
             } else {
-                contentKeys = s3Util.queryPrevious(query, this);
+                contentKeys = s3ExtendedRequests.queryPrevious(query, this);
             }
             traces.add("S3BatchContentDao.query completed", contentKeys);
         } catch (Exception e) {
@@ -381,15 +386,15 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        Stream.of(bucketName, disasterRecoveryBucketName)
-                .filter(StringUtils::isNotBlank)
-                .forEach(bucket -> {
+        Stream.of(new SimpleImmutableEntry<>(bucketName, s3Client), new SimpleImmutableEntry<>(disasterRecoveryBucketName, s3DisasterRecoveryClient))
+                .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
+                .forEach(entry -> {
                     try {
-                        s3Util.delete(channel + BATCH_ITEMS, limitKey, bucket, s3Client);
-                        s3Util.delete(channel + BATCH_INDEX, limitKey, bucket, s3Client);
+                        s3ExtendedRequests.delete(channel + BATCH_ITEMS, limitKey, entry.getKey(), entry.getValue());
+                        s3ExtendedRequests.delete(channel + BATCH_INDEX, limitKey, entry.getKey(), entry.getValue());
                         log.info("completed deleteBefore of {}", channel);
                     } catch (Exception e) {
-                        log.warn("unable to delete {} in {}", channel, bucket, e);
+                        log.warn("unable to delete {} in {}", channel, entry.getKey(), e);
                     }
 
                 });

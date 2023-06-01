@@ -44,15 +44,12 @@ public class AwsConnectorFactory {
     private final String protocol;
 
     @Inject
-    public AwsConnectorFactory(AwsProperties awsProperties,
-                               DynamoProperties dynamoProperties,
-                               S3Properties s3Properties) {
+    public AwsConnectorFactory(AwsProperties awsProperties, DynamoProperties dynamoProperties, S3Properties s3Properties, String signingRegion, String protocol) {
         this.awsProperties = awsProperties;
         this.dynamoProperties = dynamoProperties;
         this.s3Properties = s3Properties;
-
-        this.signingRegion = awsProperties.getSigningRegion();
-        this.protocol = awsProperties.getProtocol();
+        this.signingRegion = signingRegion;
+        this.protocol = protocol;
     }
 
     public AmazonS3 getS3Client() {
