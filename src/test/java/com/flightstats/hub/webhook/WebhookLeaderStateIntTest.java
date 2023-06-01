@@ -8,7 +8,6 @@ import com.flightstats.hub.util.SafeZooKeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,8 +25,6 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,20 +57,14 @@ class WebhookLeaderStateIntTest {
         curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
-    @BeforeAll
-    static void setup() {
-        curator = IntegrationTestSetup.run().getZookeeperClient();
-        zooKeeperUtils = new SafeZooKeeperUtils(curator);
-    }
-
     @BeforeEach
     void createWebhookLeader() throws Exception {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
+        zooKeeperUtils = new SafeZooKeeperUtils(curator);
         try {
             createPath();
         } catch (NodeExistsException e) {
-            log.error(e.getMessage());
-            deletePath();
-            createPath();
+            log.error("webhook leader path already exists");
         }
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
     }

@@ -3,6 +3,9 @@ package com.flightstats.hub.webhook;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Wither;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -11,6 +14,8 @@ import java.util.stream.Stream;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Execution(ExecutionMode.SAME_THREAD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebhookLeaderStateRunningStateTest {
     @ParameterizedTest
     @MethodSource("buildTestData")

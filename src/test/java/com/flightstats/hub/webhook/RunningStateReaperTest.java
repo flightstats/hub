@@ -14,7 +14,6 @@ import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -51,13 +50,9 @@ class RunningStateReaperTest {
     @Mock
     private AppProperties appProperties;
 
-    @BeforeAll
-    void runFirst() {
-        curator = IntegrationTestSetup.run().getZookeeperClient();
-    }
-
     @BeforeEach
     void setup() throws Exception {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
         WebhookErrorRepository.ErrorNodeNameGenerator nameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
