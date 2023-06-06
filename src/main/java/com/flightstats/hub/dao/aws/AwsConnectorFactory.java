@@ -64,12 +64,11 @@ public class AwsConnectorFactory {
         log.info("using s3 config {}", clientConfiguration);
 
         return AmazonS3ClientBuilder.standard()
+                .withCredentials(getAwsCredentials())
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Properties.getEndpoint(), signingRegion))
                 .withClientConfiguration(clientConfiguration)
                 .withPathStyleAccessEnabled(s3Properties.isPathStyleAccessEnabled())
                 .withChunkedEncodingDisabled(s3Properties.isChunkedEncodingEnabled())
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Properties.getEndpoint(), signingRegion))
-                .withCredentials(getAwsCredentials())
-                .withRegion(signingRegion)
                 .build();
     }
 
