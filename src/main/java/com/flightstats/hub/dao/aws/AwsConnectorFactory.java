@@ -69,6 +69,7 @@ public class AwsConnectorFactory {
                 .withChunkedEncodingDisabled(s3Properties.isChunkedEncodingEnabled())
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Properties.getEndpoint(), signingRegion))
                 .withCredentials(getAwsCredentials())
+                .withRegion(signingRegion)
                 .build();
     }
 
