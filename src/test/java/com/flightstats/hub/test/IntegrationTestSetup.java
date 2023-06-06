@@ -59,6 +59,7 @@ public class IntegrationTestSetup {
         propertiesLoader.load("useDefault");
         propertiesLoader.setProperty("hub.type", "aws");
         propertiesLoader.setProperty("aws.protocol", "HTTP");
+        propertiesLoader.setProperty("s3.config.management.enabled", "false");
         return propertiesLoader;
     }
 
