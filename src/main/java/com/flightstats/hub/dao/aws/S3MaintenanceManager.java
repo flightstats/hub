@@ -47,8 +47,8 @@ public class S3MaintenanceManager {
                                 @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                                 MaxItemsEnforcer maxItemsEnforcer,
                                 String bucketName,
-                                int maxRules
-                                ) {
+                                int maxRules,
+                                boolean enabled) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
@@ -56,20 +56,9 @@ public class S3MaintenanceManager {
         this.bucketName = bucketName;
         this.maxRules = maxRules;
 
-        HubServices.register(new S3MaintenanceManagerInit());
-    }
-
-    public S3MaintenanceManager() {
-        this.s3Client = null;
-        this.distributedLockRunner = null;
-        this.channelConfigDao = null;
-        this.maxItemsEnforcer = null;
-        this.bucketName = "NO_OP";
-        this.maxRules = 0;
-    }
-
-    public static S3MaintenanceManager getNoOpMaintenanceManager() {
-        return new S3MaintenanceManager();
+        if (enabled) {
+            HubServices.register(new S3MaintenanceManagerInit());
+        }
     }
 
     private void run() {

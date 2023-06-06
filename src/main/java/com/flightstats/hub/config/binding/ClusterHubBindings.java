@@ -173,11 +173,7 @@ public class ClusterHubBindings extends AbstractModule {
     @Singleton
     @Named("MAIN")
     public S3MaintenanceManager getS3Maintainer(@Named("MAIN") HubS3Client s3Client, DistributedAsyncLockRunner asyncLockRunner, @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, MaxItemsEnforcer maxItemsEnforcer, S3Properties s3Properties) {
-        if (s3Properties.isConfigManagementEnabled()) {
-            return new S3MaintenanceManager(s3Client, asyncLockRunner, channelConfigDao, maxItemsEnforcer, s3Properties.getBucketName(), s3Properties.getBucketPolicyMaxRules(S3MaintenanceManager.S3_LIFECYCLE_RULES_AVAILABLE));
-        } else {
-            return S3MaintenanceManager.getNoOpMaintenanceManager();
-        }
+        return new S3MaintenanceManager(s3Client, asyncLockRunner, channelConfigDao, maxItemsEnforcer, s3Properties.getBucketName(), s3Properties.getBucketPolicyMaxRules(S3MaintenanceManager.S3_LIFECYCLE_RULES_AVAILABLE), s3Properties.isConfigManagementEnabled());
     }
 
 
@@ -185,12 +181,9 @@ public class ClusterHubBindings extends AbstractModule {
     @Singleton
     @Named("DISASTER_RECOVERY")
     public S3MaintenanceManager getDisasterRecoveryMaintainer(@Named("DISASTER_RECOVERY") HubS3Client s3Client, DistributedAsyncLockRunner asyncLockRunner, @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, MaxItemsEnforcer maxItemsEnforcer, S3Properties s3Properties) {
-        if (s3Properties.isConfigManagementEnabled()) {
-            return new S3MaintenanceManager(s3Client, asyncLockRunner, channelConfigDao, maxItemsEnforcer,  s3Properties.getDisasterRecoveryBucketName(), s3Properties.getBucketPolicyMaxRules(S3MaintenanceManager.S3_LIFECYCLE_RULES_AVAILABLE));
-        } else {
-            return S3MaintenanceManager.getNoOpMaintenanceManager();
-        }
+        return new S3MaintenanceManager(s3Client, asyncLockRunner, channelConfigDao, maxItemsEnforcer,  s3Properties.getDisasterRecoveryBucketName(), s3Properties.getBucketPolicyMaxRules(S3MaintenanceManager.S3_LIFECYCLE_RULES_AVAILABLE), s3Properties.isConfigManagementEnabled());
     }
+
 
     @Singleton
     @Provides
