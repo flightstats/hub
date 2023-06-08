@@ -75,7 +75,6 @@ public class ClusterHubBindings extends AbstractModule {
 
         bind(ServiceRegistration.class).to(ClusterServicesRegistration.class);
 
-        bind(S3MaintenanceManager.class).asEagerSingleton();
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
