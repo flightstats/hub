@@ -3,6 +3,7 @@ package com.flightstats.hub.config.binding;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.AppUrlCheck;
+import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ClusterServicesRegistration;
@@ -27,6 +28,7 @@ import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
 import com.flightstats.hub.dao.aws.DynamoUtils;
 import com.flightstats.hub.dao.aws.DynamoWebhookDao;
 import com.flightstats.hub.dao.aws.HubS3Client;
+import com.flightstats.hub.dao.aws.MaxItemsEnforcer;
 import com.flightstats.hub.dao.aws.S3AccessMonitor;
 import com.flightstats.hub.dao.aws.S3BatchContentDao;
 import com.flightstats.hub.dao.aws.S3BatchManager;
@@ -56,6 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ClusterHubBindings extends AbstractModule {
 
+
     @Override
     protected void configure() {
 
@@ -72,7 +75,6 @@ public class ClusterHubBindings extends AbstractModule {
 
         bind(ServiceRegistration.class).to(ClusterServicesRegistration.class);
 
-        bind(S3MaintenanceManager.class).asEagerSingleton();
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
@@ -164,6 +166,23 @@ public class ClusterHubBindings extends AbstractModule {
     public HubS3Client getDisasterRecoveryHubS3Client(S3Properties s3Properties, @Named("DISASTER_RECOVERY") AmazonS3 s3Client, StatsdReporter statsdReporter) {
         return new HubS3Client(s3Properties, s3Client, statsdReporter);
     }
+
+
+    @Provides
+    @Singleton
+    @Named("MAIN")
+    public S3MaintenanceManager getS3Maintainer(@Named("MAIN") HubS3Client s3Client, DistributedAsyncLockRunner asyncLockRunner, @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, MaxItemsEnforcer maxItemsEnforcer, S3Properties s3Properties) {
+        return new S3MaintenanceManager(s3Client, asyncLockRunner, channelConfigDao, maxItemsEnforcer, s3Properties.getBucketName(), s3Properties.getBucketPolicyMaxRules(S3MaintenanceManager.S3_LIFECYCLE_RULES_AVAILABLE), s3Properties.isConfigManagementEnabled());
+    }
+
+
+    @Provides
+    @Singleton
+    @Named("DISASTER_RECOVERY")
+    public S3MaintenanceManager getDisasterRecoveryMaintainer(@Named("DISASTER_RECOVERY") HubS3Client s3Client, DistributedAsyncLockRunner asyncLockRunner, @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, MaxItemsEnforcer maxItemsEnforcer, S3Properties s3Properties) {
+        return new S3MaintenanceManager(s3Client, asyncLockRunner, channelConfigDao, maxItemsEnforcer,  s3Properties.getDisasterRecoveryBucketName(), s3Properties.getBucketPolicyMaxRules(S3MaintenanceManager.S3_LIFECYCLE_RULES_AVAILABLE), s3Properties.isConfigManagementEnabled());
+    }
+
 
     @Singleton
     @Provides
