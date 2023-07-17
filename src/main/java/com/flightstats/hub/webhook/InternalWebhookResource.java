@@ -9,6 +9,7 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.StaleEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -24,6 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -98,10 +100,14 @@ public class InternalWebhookResource {
             webhookService.getAll().forEach(webhook -> {
                 final WebhookStatus status = webhookService.getStatus(webhook);
                 final ContentPath contentPath = status.getLastCompleted();
-                if (contentPath.getTime().isAfter(staleCutoff)) return;
+                final DateTime lastCompleted = Optional.ofNullable(contentPath)
+                        .map(ContentPath::getTime)
+                        .orElseGet(() -> new DateTime(0, DateTimeZone.UTC));
+
+                if (lastCompleted.isAfter(staleCutoff)) return;
 
                 final URI webhookURI = constructWebhookURI(webhook);
-                staleWebhooks.put(contentPath.getTime(), webhookURI);
+                staleWebhooks.put(lastCompleted, webhookURI);
             });
             return staleWebhooks;
         });
