@@ -51,7 +51,7 @@ public class InternalS3MaintenanceManagerResource {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public Response getTraces() {
+    public Response getS3MaintenanceManagerResource() {
         ObjectNode root = objectMapper.createObjectNode();
 
         root.put("description", S3MM_DESCRIPTION);
