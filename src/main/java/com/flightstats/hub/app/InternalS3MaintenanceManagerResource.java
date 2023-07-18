@@ -6,12 +6,8 @@ import com.amazonaws.services.s3.model.lifecycle.LifecyclePrefixPredicate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.dao.aws.S3Lifecycler;
 import com.flightstats.hub.dao.aws.S3MaintenanceManager;
-import com.flightstats.hub.metrics.InternalTracesResource;
-import com.flightstats.hub.util.SecretFilter;
-import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -23,29 +19,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.TreeSet;
 
 import static com.flightstats.hub.constant.InternalResourceDescription.S3MM_DESCRIPTION;
-import static com.flightstats.hub.constant.InternalResourceDescription.TIME_DESCRIPTION;
 
 @Slf4j
 @Path("/internal/s3Maintenance")
 public class InternalS3MaintenanceManagerResource {
 
-    private final S3MaintenanceManager s3MaintenanceManager;
-    private final S3MaintenanceManager drS3MaintenanceManager;
+    private final S3Lifecycler s3Lifecycler;
     private final ObjectMapper objectMapper;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    public InternalS3MaintenanceManagerResource(@Named("MAIN") S3MaintenanceManager s3MaintenanceManager,
-                                                @Named("DISASTER_RECOVERY") S3MaintenanceManager drS3MaintenanceManager,
+    public InternalS3MaintenanceManagerResource(S3Lifecycler s3Lifecycler,
                                                 ObjectMapper objectMapper) {
-        this.s3MaintenanceManager = s3MaintenanceManager;
-        this.drS3MaintenanceManager = drS3MaintenanceManager;
+        this.s3Lifecycler = s3Lifecycler;
         this.objectMapper = objectMapper;
     }
 
@@ -75,14 +65,14 @@ public class InternalS3MaintenanceManagerResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("/main")
     public Response getMain() {
-        return describe(s3MaintenanceManager.getLastLifecycleApplied());
+        return describe(s3Lifecycler.getMainLifecycleManager().getLastLifecycleApplied());
     }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("/dr")
     public Response getDr() {
-        return describe(drS3MaintenanceManager.getLastLifecycleApplied());
+        return describe(s3Lifecycler.getDrLifecycleManager().getLastLifecycleApplied());
     }
 
     private Response describe(S3MaintenanceManager.HubS3LifecycleRequest lifecycleRequest) {
