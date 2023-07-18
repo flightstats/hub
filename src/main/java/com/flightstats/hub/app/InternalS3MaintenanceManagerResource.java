@@ -72,12 +72,14 @@ public class InternalS3MaintenanceManagerResource {
     }
 
     @GET
+    @Produces({MediaType.APPLICATION_JSON})
     @Path("/main")
     public Response getMain() {
         return describe(s3MaintenanceManager.getLastLifecycleApplied());
     }
 
     @GET
+    @Produces({MediaType.APPLICATION_JSON})
     @Path("/dr")
     public Response getDr() {
         return describe(drS3MaintenanceManager.getLastLifecycleApplied());
