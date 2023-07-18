@@ -14,6 +14,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
 
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -21,6 +22,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +41,7 @@ public class S3MaintenanceManager {
 
     private final int maxRules;
 
-
+    private final AtomicReference<HubS3LifecycleRequest> lastLifecycleApplied = new AtomicReference<>();
 
     @Inject
     public S3MaintenanceManager(HubS3Client s3Client,
@@ -59,6 +61,10 @@ public class S3MaintenanceManager {
         if (enabled) {
             HubServices.register(new S3MaintenanceManagerInit());
         }
+    }
+
+    public HubS3LifecycleRequest getLastLifecycleApplied() {
+        return lastLifecycleApplied.get();
     }
 
     private void run() {
@@ -115,7 +121,9 @@ public class S3MaintenanceManager {
             SetBucketLifecycleConfigurationRequest request =
                     new SetBucketLifecycleConfigurationRequest(bucketName, lifecycleConfig);
             s3Client.setBucketLifecycleConfiguration(request);
+
             log.info("updated {} rules with ttl life cycle for s3 bucket: {}", rules.size(), bucketName);
+            lastLifecycleApplied.set(new HubS3LifecycleRequest(DateTime.now(), request));
         }
 
         private void updateTtlDays() {
@@ -142,4 +150,9 @@ public class S3MaintenanceManager {
         }
     }
 
+    @Value
+    public static class HubS3LifecycleRequest {
+        DateTime requestTime;
+        SetBucketLifecycleConfigurationRequest request;
+    }
 }
