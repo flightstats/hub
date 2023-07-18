@@ -7,11 +7,13 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
+
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.name.Named;
+
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
