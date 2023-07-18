@@ -24,6 +24,7 @@ import static com.flightstats.hub.constant.InternalResourceDescription.TIME_DESC
 import static com.flightstats.hub.constant.InternalResourceDescription.TRACES_DESCRIPTION;
 import static com.flightstats.hub.constant.InternalResourceDescription.WEBHOOK_DESCRIPTION;
 import static com.flightstats.hub.constant.InternalResourceDescription.ZOOKEEPER_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.S3MM_DESCRIPTION;
 
 @Path("/internal")
 public class InternalResource {
@@ -55,6 +56,7 @@ public class InternalResource {
         addLink("deploy", DEPLOY_DESCRIPTION);
         addLink("health", HEALTH_DESCRIPTION);
         addLink("properties", PROPERTIES_DESCRIPTION);
+        addLink("s3Maintenance", S3MM_DESCRIPTION);
         addLink("shutdown", SHUTDOWN_DESCRIPTION);
         addLink("stacktrace", STACKTRACE_DESCRIPTION);
         addLink("time", TIME_DESCRIPTION);
