@@ -32,7 +32,9 @@ public interface ContentDao {
 
     void delete(String channelName);
 
-    void initialize();
+    default void initialize() {
+        // do nothing
+    };
 
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
 

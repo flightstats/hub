@@ -89,10 +89,6 @@ public class S3SingleContentDao implements ContentDao {
         return metadata;
     }
 
-    @Override
-    public void initialize() {
-        s3Client.initialize();
-    }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {

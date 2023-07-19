@@ -412,11 +412,6 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public void initialize() {
-        s3Client.initialize();
-    }
-
-    @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
         throw new UnsupportedOperationException("use query interface");
     }
