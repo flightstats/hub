@@ -9,7 +9,6 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.metrics.StatsdReporter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -46,9 +45,9 @@ class HubS3ClientTest {
         when(amazonS3Client.getCachedResponseMetadata(request)).thenReturn(s3ResponseMetadata);
         StatsdReporter statsdReporter = mock(StatsdReporter.class);
 
-        HubS3Client hubS3Client = new HubS3Client(s3Properties, amazonS3Client, statsdReporter);
+        HubS3Client hubS3Client = new HubS3Client(amazonS3Client, statsdReporter);
         SdkClientException exception = new AmazonS3Exception("something f'd up");
-        hubS3Client.countError(exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
+        hubS3Client.countError(s3Properties.getBucketName(), exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
 
         verify(statsdReporter).count(
                 "s3.error",
@@ -71,7 +70,7 @@ class HubS3ClientTest {
 
         when(amazonS3Client.putObject(request)).thenThrow(new SdkClientException("testException"));
 
-        HubS3Client hubS3Client = new HubS3Client(s3Properties, amazonS3Client, statsdReporter);
+        HubS3Client hubS3Client = new HubS3Client(amazonS3Client, statsdReporter);
 
 
         try {

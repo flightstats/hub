@@ -84,14 +84,15 @@ public class SingleHubBindings extends AbstractModule {
     @Singleton
     @Named("MAIN")
     public HubS3Client getHubS3Client(S3Properties s3Properties, @Named("MAIN") AmazonS3 s3Client, StatsdReporter statsdReporter) {
-        return new HubS3Client(s3Properties, s3Client, statsdReporter);
+        HubS3Client.performUglyLegacySanityCheckOnBucketName(s3Client, s3Properties.getBucketName());
+        return new HubS3Client(s3Client, statsdReporter);
     }
 
     @Provides
     @Singleton
     @Named("DISASTER_RECOVERY")
-    public HubS3Client getDisasterRecoveryHubS3Client(S3Properties s3Properties, @Named("DISASTER_RECOVERY") AmazonS3 s3Client, StatsdReporter statsdReporter) {
-        return new HubS3Client(s3Properties, s3Client, statsdReporter);
+    public HubS3Client getDisasterRecoveryHubS3Client(@Named("DISASTER_RECOVERY") AmazonS3 s3Client, StatsdReporter statsdReporter) {
+        return new HubS3Client(s3Client, statsdReporter);
     }
 
     @Singleton

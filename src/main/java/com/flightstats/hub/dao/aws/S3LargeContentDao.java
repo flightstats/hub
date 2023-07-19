@@ -78,9 +78,6 @@ public class S3LargeContentDao implements ContentDao {
 
     }
 
-    public void initialize() {
-        s3Client.initialize();
-    }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
