@@ -61,7 +61,6 @@ class HubS3ClientTest {
     void putObject() {
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         StatsdReporter statsdReporter = mock(StatsdReporter.class);
-        when(s3Properties.getBucketName()).thenReturn("testBucket");
 
         InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
         ObjectMetadata metadata = new ObjectMetadata();
