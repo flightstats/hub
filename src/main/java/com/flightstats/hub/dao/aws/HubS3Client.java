@@ -170,18 +170,18 @@ public class HubS3Client {
         return s3Client.getCachedResponseMetadata(request);
     }
 
-    void countError(String errorBucketName, SdkClientException exception, AmazonWebServiceRequest request, String method, List<String> keys) {
+    void countError(String bucketName, SdkClientException exception, AmazonWebServiceRequest request, String method, List<String> keys) {
         List<String> tags = new ArrayList<>();
         tags.add("exception:" + exception.getClass().getCanonicalName());
         tags.add("method:" + method);
-        tags.add("bucket:" + errorBucketName);
+        tags.add("bucket:" + bucketName);
 
         String requestId = Optional.ofNullable(getCachedResponseMetadata(request))
                 .map(ResponseMetadata::getRequestId)
                 .orElse("unknown");
         String errorMessage = String.format("S3 Error %s for bucket %s and keys: %s. Request ID: %s",
                 method,
-                errorBucketName,
+                bucketName,
                 String.join(", ", keys),
                 requestId);
         log.error(errorMessage, exception);

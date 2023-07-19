@@ -38,7 +38,6 @@ class HubS3ClientTest {
     void countError() {
         String requestId = "numbers-and-letters-go-here";
         when(s3ResponseMetadata.getRequestId()).thenReturn(requestId);
-        when(s3Properties.getBucketName()).thenReturn("testBucket");
 
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         AmazonWebServiceRequest request = mock(AmazonWebServiceRequest.class);
@@ -47,7 +46,7 @@ class HubS3ClientTest {
 
         HubS3Client hubS3Client = new HubS3Client(amazonS3Client, statsdReporter);
         SdkClientException exception = new AmazonS3Exception("something f'd up");
-        hubS3Client.countError(s3Properties.getBucketName(), exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
+        hubS3Client.countError("testBucket", exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
 
         verify(statsdReporter).count(
                 "s3.error",
