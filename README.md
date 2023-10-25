@@ -48,11 +48,3 @@ From Local:
 3) Go to root of hub project source and run below command
    ./gradlew systemTest -i    
    
-From Jenkins:
-
-1) Goto https://ddt-jenkins.pdx.prod.flightstats.io/job/hub-system-test/ 
-
-2) Click on "Build With Parameters"
- 
-3) Add your git branch and start the build.
-  
