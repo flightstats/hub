@@ -142,6 +142,11 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     @Override
+    public Map<ContentKey, Content> readBatch(String channelName, ContentKey key) throws IOException {
+        return ContentDao.super.readBatch(channelName, key);
+    }
+
+    @Override
     public Content get(final String channelName, final ContentKey key) {
         ActiveTraces.getLocal().add("S3SingleContentDao.read", key);
         try {

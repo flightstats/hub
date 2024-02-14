@@ -19,7 +19,7 @@ public class SingleHubMain {
 
         final PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
-        setProperty(propertiesLoader, "hub.type", "test");
+        setProperty(propertiesLoader, "hub.type", "aws");
         setProperty(propertiesLoader, "app.name", "hub");
         setProperty(propertiesLoader, "app.environment", "single");
 
@@ -44,6 +44,9 @@ public class SingleHubMain {
         setProperty(propertiesLoader, "spoke.path", spokePath);
         setProperty(propertiesLoader, "app.remoteTimeFile", storagePath + "/remoteTime");
 
+        setProperty(propertiesLoader, "s3.bucket_name", "hub-v2-local");
+        setProperty(propertiesLoader, "dynamo.table_name.channel_configs", "hub-v2-local-channelMetaData");
+        setProperty(propertiesLoader, "dynamo.table_name.webhook_configs", "hub-v2-local-GroupConfig");
         new HubMain().run();
     }
 

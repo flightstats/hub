@@ -214,17 +214,6 @@ public class ChannelResource {
         }
     }
 
-    @POST
-    @Consumes("multipart/*")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/batch")
-    public Response insertBatch(@PathParam("channel") final String channelName,
-                                @HeaderParam("Content-Type") final String contentType,
-                                final InputStream data) {
-
-        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertBatch", channelName));
-        return insertBulk(channelName, contentType, data);
-    }
 
     @POST
     @Consumes("multipart/*")
