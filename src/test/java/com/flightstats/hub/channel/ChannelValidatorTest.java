@@ -61,12 +61,14 @@ class ChannelValidatorTest {
         ChannelConfig oldConfig = getBuilder()
                 .name("forever")
                 .keepForever(true)
+                .protect(true)
                 .ttlDays(300)
                 .build();
 
         ChannelConfig  newConfig = getBuilder()
                 .name("forever")
                 .keepForever(false)
+                .protect(true)
                 .ttlDays(0)
                 .build();
 
@@ -80,6 +82,7 @@ class ChannelValidatorTest {
         ChannelConfig channelConfig = getBuilder()
                 .name("forever")
                 .keepForever(true)
+                .protect(true)
                 .build();
 
         assertThrows(ForbiddenRequestException.class,
@@ -92,6 +95,7 @@ class ChannelValidatorTest {
         ChannelConfig channelConfig = getBuilder()
                 .name("forever")
                 .keepForever(true)
+                .protect(true)
                 .build();
 
         assertThrows(ForbiddenRequestException.class,
