@@ -55,8 +55,9 @@ class ChannelValidatorTest {
         assertThrows(InvalidRequestException.class, () ->
                 validator.validate(getBuilder().name(null).build(), null, false));
     }
+
     @Test
-    void validatorShouldThrowForBiddenExceptionWhenMaxItemsAndTtlDaysDecreased() {
+    void validatorShouldThrowForBiddenExceptionWhenMaxItemsChange() {
         ChannelConfig channelConfig = getBuilder()
                 .name("forever")
                 .keepForever(true)
@@ -65,10 +66,19 @@ class ChannelValidatorTest {
         assertThrows(ForbiddenRequestException.class,
                 () -> validator.validate(channelConfig.toBuilder().keepForever(false).maxItems(300).build(), channelConfig, false));
 
+    }
+
+    @Test
+    void validatorShouldThrowForBiddenExceptionWhenTtlDaysChange() {
+        ChannelConfig channelConfig = getBuilder()
+                .name("forever")
+                .keepForever(true)
+                .build();
+
         assertThrows(ForbiddenRequestException.class,
                 () -> validator.validate(channelConfig.toBuilder().keepForever(false).ttlDays(300).build(), channelConfig, false));
-
     }
+
     @Test
     void validatorShouldNotThrowAnyExceptionToUpdateTtlDaysWhenKeepForeverSetAsTrue() {
         ChannelConfig single = ChannelConfig.builder()
@@ -76,7 +86,7 @@ class ChannelValidatorTest {
                 .ttlDays(30)
                 .keepForever(false)
                 .name("defaults").build();
-        assertDoesNotThrow(() -> validator.validate(single.toBuilder().keepForever(true).ttlDays(0).build(), single, false));
+        assertDoesNotThrow(() -> validator.validate(single.toBuilder().keepForever(true).ttlDays(0).build(), single, true));
     }
 
     @Test
