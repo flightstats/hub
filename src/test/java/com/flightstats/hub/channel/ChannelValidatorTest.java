@@ -57,6 +57,25 @@ class ChannelValidatorTest {
     }
 
     @Test
+    void testTtlDays() {
+        ChannelConfig oldConfig = getBuilder()
+                .name("forever")
+                .keepForever(true)
+                .ttlDays(300)
+                .build();
+
+        ChannelConfig  newConfig = getBuilder()
+                .name("forever")
+                .keepForever(false)
+                .ttlDays(0)
+                .build();
+
+        assertThrows(ForbiddenRequestException.class,
+                () -> validator.validate(newConfig, oldConfig, false));
+
+    }
+
+    @Test
     void validatorShouldThrowForBiddenExceptionWhenMaxItemsChange() {
         ChannelConfig channelConfig = getBuilder()
                 .name("forever")
