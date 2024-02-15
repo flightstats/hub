@@ -7,10 +7,14 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Strings;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,12 +26,12 @@ import java.util.List;
 import static com.flightstats.hub.model.ChannelType.BATCH;
 import static com.flightstats.hub.model.ChannelType.BOTH;
 import static com.flightstats.hub.model.ChannelType.SINGLE;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Slf4j
+@Execution(ExecutionMode.SAME_THREAD)
 class ChannelValidatorTest {
 
     @Mock
@@ -37,6 +41,11 @@ class ChannelValidatorTest {
     @BeforeEach
     void setUp() {
         validator = new ChannelValidator(channelConfigDao);
+    }
+
+    @AfterEach
+    void teardown() {
+        log.info("test finished");
     }
 
     @Test
@@ -56,6 +65,53 @@ class ChannelValidatorTest {
     void testChannelNameNull() {
         assertThrows(InvalidRequestException.class, () ->
                 validator.validate(getBuilder().name(null).build(), null, false));
+    }
+
+    @Test
+    void validatorShouldThrowForBiddenExceptionWhenMaxItemsChange() {
+        ChannelConfig channelConfig = getBuilder()
+                .name("forever")
+                .keepForever(true)
+                .protect(true)
+                .build();
+
+        log.info("In the test");
+        log.info("channel value" + channelConfig.getKeepForever());
+        assertThrows(ForbiddenRequestException.class,
+                () -> validator.validate(channelConfig.toBuilder().keepForever(false).maxItems(300).build(), channelConfig, false));
+
+    }
+
+    @Test
+    void validatorShouldThrowForBiddenExceptionWhenTtlDaysChange() {
+        ChannelConfig channelConfig = getBuilder()
+                .name("forever")
+                .keepForever(true)
+                .protect(true)
+                .build();
+
+        assertThrows(ForbiddenRequestException.class,
+                () -> validator.validate(channelConfig.toBuilder().keepForever(false).ttlDays(300).build(), channelConfig, false));
+    }
+
+    @Test
+    void validatorShouldNotThrowAnyExceptionToUpdateTtlDaysWhenKeepForeverSetAsTrue() {
+        ChannelConfig single = ChannelConfig.builder()
+                .owner("test Owner")
+                .ttlDays(30)
+                .keepForever(false)
+                .name("defaults").build();
+        assertDoesNotThrow(() -> validator.validate(single.toBuilder().keepForever(true).ttlDays(0).build(), single, true));
+    }
+
+    @Test
+    void validatorShouldNotThrowAnyExceptionToUpdateMaxItemsWhenKeepForeverSetAsTrue() {
+        ChannelConfig single = ChannelConfig.builder()
+                .owner("test Owner")
+                .maxItems(30)
+                .keepForever(false)
+                .name("defaults").build();
+        assertDoesNotThrow(() -> validator.validate(single.toBuilder().keepForever(true).maxItems(0).build(), single, false));
     }
 
     @Test
