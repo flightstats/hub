@@ -8,7 +8,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Strings;
 import com.google.inject.name.Named;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
@@ -17,7 +16,6 @@ import java.util.Optional;
 import static com.flightstats.hub.constant.ContentConstant.VALID_NAME;
 import static com.flightstats.hub.model.ChannelType.BOTH;
 
-@Slf4j
 public class ChannelValidator {
 
     private final Dao<ChannelConfig> channelConfigDao;
@@ -50,11 +48,6 @@ public class ChannelValidator {
         if (config.isProtect()) {
             ensurePropertyNotBlank("Owner", config.getOwner());
         }
-        log.info("New channel: " + config.toString());
-        if (oldConfig != null) {
-            log.info("Old channel: " + oldConfig.toString());
-        }
-        log.info("is local?" + isLocalHost);
         if (!isLocalHost) {
             preventDataLoss(config, oldConfig);
         }
@@ -81,10 +74,7 @@ public class ChannelValidator {
             }
 
             if (!config.getKeepForever()) {
-                log.info("***** - new config is not keep forever!");
-                log.info("****" + oldConfig.getKeepForever());
                 if (oldConfig.getKeepForever()) {
-                    log.info("should fail!");
                     throw new ForbiddenRequestException("{\"error\": \"A channels retention policy (keepForever) is not allowed to decrease in this environment\"}");
                 }
                 if (config.getMaxItems() < oldConfig.getMaxItems()) {

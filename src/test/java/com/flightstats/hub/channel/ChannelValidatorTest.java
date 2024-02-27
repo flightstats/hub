@@ -7,7 +7,6 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Strings;
-import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
 class ChannelValidatorTest {
 
@@ -41,11 +39,6 @@ class ChannelValidatorTest {
     @BeforeEach
     void setUp() {
         validator = new ChannelValidator(channelConfigDao);
-    }
-
-    @AfterEach
-    void teardown() {
-        log.info("test finished");
     }
 
     @Test
@@ -75,8 +68,6 @@ class ChannelValidatorTest {
                 .protect(true)
                 .build();
 
-        log.info("In the test");
-        log.info("channel value" + channelConfig.getKeepForever());
         assertThrows(ForbiddenRequestException.class,
                 () -> validator.validate(channelConfig.toBuilder().keepForever(false).maxItems(300).build(), channelConfig, false));
 
