@@ -2,6 +2,8 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.SingleTrace;
 import com.google.common.io.ByteStreams;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -173,7 +175,8 @@ public class InternalSpokeResource {
                                   @PathParam("M") String M,
                                   @PathParam("day") String day) {
         FileSpokeStore store = getSpokeStoreByName(storeName);
-        return getResponse(store, C + "/" + Y + "/" + M + "/" + day);
+        Path timePath = Paths.get(C , Y , M , day);
+        return getResponse(store, timePath.normalize().toString());
     }
 
     @GET
