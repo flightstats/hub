@@ -118,6 +118,8 @@ class ClusterContentServiceTest {
         ArgumentCaptor<ChannelContentKey> arg = ArgumentCaptor.forClass(ChannelContentKey.class);
         verify(s3WriteQueue, times(1)).add(arg.capture());
         assertNotNull(arg.getValue());
+        System.out.println("#################"+arg.getValue());
+        System.out.println("#################"+s3WriteQueue.s());
         assertEquals(contentKey, arg.getValue().getContentKey());
         assertEquals(channelName, arg.getValue().getChannel());
 
