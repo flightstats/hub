@@ -47,12 +47,12 @@ class FileSpokeStoreTest {
 
     @Test
     void testPathTranslation() {
-        String incoming = "/test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
+        String incoming = "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
         File outputFile = spokeStore.spokeFilePathPart(incoming);
         String filePath = "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5";
         String expectedPath = tempDir + filePath;
-        assertEquals(expectedPath, outputFile.getAbsolutePath());
-        final File file = new File(filePath);
+        assertEquals(new File(expectedPath).getAbsolutePath(), outputFile.getAbsolutePath());
+        final File file = new File(tempDir+filePath);
         String urlPart = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
         assertEquals(incoming, urlPart);
     }

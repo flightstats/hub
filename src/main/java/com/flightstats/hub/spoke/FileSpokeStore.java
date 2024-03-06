@@ -162,6 +162,20 @@ public class FileSpokeStore {
     String spokeKeyFromPath(String path) {
         if (path.contains(spokePath))
             path = path.substring(spokePath.length());
+        else if (path.contains("\\")) {
+            /* Added this block to alter the path to support windows specific file Path
+               Eg1: input -> C:\Users\xxxx\AppData\Local\Temp\1709744619644-0\test_0_4274725520517677\2014\11\18\00\57\24015NV2cl5
+                    output -> test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5
+               Eg2: input -> C:\tmp\spoke\write\testQueryRangeMinuteuqcRIjkTHumrP349KBSo\2014\11\14\15\27\00000A0
+                    output -> testQueryRangeMinuteuqcRIjkTHumrP349KBSo/2014/11/14/15/27/00000A0 */
+            path = path.replaceAll("\\\\", "/");
+            String tempSpokePath = spokePath.replaceAll("\\\\", "/");
+            if (path.contains(tempSpokePath)) {
+                path = path.substring(path.lastIndexOf(tempSpokePath) + tempSpokePath.length());
+            }
+            log.info("modified spoke key path {}",path);
+        }
+        log.info("spoke key path {}",path);
 
         // file or directory?
         int i = path.lastIndexOf("/");
