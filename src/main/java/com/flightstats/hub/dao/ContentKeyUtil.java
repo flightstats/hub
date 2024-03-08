@@ -5,6 +5,7 @@ import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
+import java.nio.file.FileSystems;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,7 +68,7 @@ public class ContentKeyUtil {
 
     public static Optional<ContentKey> convertKey(String key) {
         if (StringUtils.isNotEmpty(key)) {
-            return ContentKey.fromUrl(StringUtils.substringAfter(key, "/"));
+            return ContentKey.fromUrl(StringUtils.substringAfter(key, FileSystems.getDefault().getSeparator()));
         }
         return Optional.empty();
     }
