@@ -329,11 +329,11 @@ public class FileSpokeStore {
     }
 
     private void recurseDelete(String path, String[] limitPath, int count, String channel) {
-        log.info("recurse delete {} {}", path, count);
+        log.trace("recurse delete {} {}", path, count);
         String pathname = spokePath + path;
         String[] items = new File(pathname).list();
         if (items == null) {
-            log.info("path not found {}", pathname);
+            log.trace("path not found {}", pathname);
             return;
         }
         String limitCompare = channel + "/";
