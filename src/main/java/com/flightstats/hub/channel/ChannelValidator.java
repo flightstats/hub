@@ -73,15 +73,16 @@ public class ChannelValidator {
                 throw new ForbiddenRequestException("{\"error\": \"A channels tags are not allowed to be removed in this environment\"}");
             }
 
-            if (!config.getKeepForever() && oldConfig.getKeepForever()) {
-                throw new ForbiddenRequestException("{\"error\": \"A channels retention policy (keepForever) is not allowed to decrease in this environment\"}");
-            }
-
-            if (config.getMaxItems() < oldConfig.getMaxItems()) {
-                throw new ForbiddenRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
-            }
-            if (config.getTtlDays() < oldConfig.getTtlDays()) {
-                throw new ForbiddenRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
+            if (!config.getKeepForever()) {
+                if (oldConfig.getKeepForever()) {
+                    throw new ForbiddenRequestException("{\"error\": \"A channels retention policy (keepForever) is not allowed to decrease in this environment\"}");
+                }
+                if (config.getMaxItems() < oldConfig.getMaxItems()) {
+                    throw new ForbiddenRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
+                }
+                if (config.getTtlDays() < oldConfig.getTtlDays()) {
+                    throw new ForbiddenRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
+                }
             }
             if (!StringUtils.isEmpty(oldConfig.getReplicationSource())
                     && !config.getReplicationSource().equals(oldConfig.getReplicationSource())) {
