@@ -10,6 +10,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.function.Function;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -233,28 +234,14 @@ public class FileSpokeStore {
         return getLatest(channel, limitPath, limitKey.getTime());
     }
     private List<String> listDirsOnPath(Path normalizedPath){
-        List<String> listDirs = null;
-        try(Stream<Path> streamPaths = Files.list(normalizedPath))  {
-            listDirs =
-                streamPaths.map(Path::toFile).map(File::getName)
-                    .sorted().collect(
-                        Collectors.toList());
-        } catch (IOException e) {
-            log.warn("Warning - No data found at path - {}.", normalizedPath);
-        } finally {
-            if(CollectionUtils.isNullOrEmpty(listDirs)){
-                listDirs = new ArrayList<>(1);
-            }
-        }
-        log.debug("Directories at Path {} - {}.", normalizedPath, listDirs.toString());
-        return listDirs;
+        return listDirsOnPathByFilter(normalizedPath, (fileName) -> true);
     }
 
-    private List<String> listDirsOnPathByFilter(Path normalizedPath){
+    private List<String> listDirsOnPathByFilter(Path normalizedPath, Function<String, Boolean> fileNameFilter){
         List<String> listDirs = null;
         try(Stream<Path> streamPaths = Files.list(normalizedPath))  {
             listDirs =
-                streamPaths.map(Path::toFile).map(File::getName).filter(f -> !isTempFile(f))
+                streamPaths.map(Path::toFile).map(File::getName).filter(fileNameFilter::apply)
                     .sorted().collect(
                         Collectors.toList());
         } catch (IOException e) {
@@ -279,13 +266,13 @@ public class FileSpokeStore {
             for (String minute : minutes) {
                 Path normalizedHoursMins = Paths.get(normalizeFullHoursPath.toString(), minute)
                     .normalize();
-                List<String> fileNames = listDirsOnPathByFilter(normalizedHoursMins);
+                List<String> fileNames = listDirsOnPathByFilter(normalizedHoursMins, (fileName) -> !isTempFile(fileName));
                 if(!CollectionUtils.isNullOrEmpty(fileNames)) {
                     Collections.reverse(fileNames);
                     for (String fileName : fileNames) {
                         String spokeKeyFromPath = spokeKeyFromPath(
                             Paths.get(hoursPath, minute, fileName).normalize().toString());
-                        log.trace("Looking at file {} ", spokeKeyFromPath);
+                        log.trace("Looking at file {} .", spokeKeyFromPath);
                         if (spokeKeyFromPath.compareTo(limitPath) < 0) {
                             return Paths.get(channel, spokeKeyFromPath).normalize().toString();
                         }
