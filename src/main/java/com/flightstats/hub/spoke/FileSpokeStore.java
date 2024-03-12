@@ -253,7 +253,7 @@ public class FileSpokeStore {
                 String spokeKeyFromPath = spokeKeyFromPath(Paths.get(hoursPath,minute,fileName).toString());
                 log.trace("looking at file {} ", spokeKeyFromPath);
                 if (Paths.get(spokeKeyFromPath).toString().compareTo(Paths.get(limitPath).toString()) < 0) {
-                    return channel + "/" + spokeKeyFromPath;
+                    return Paths.get(channel,spokeKeyFromPath).toString();
                 }
             }
         }
