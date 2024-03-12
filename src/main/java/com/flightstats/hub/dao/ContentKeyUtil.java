@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -68,7 +69,7 @@ public class ContentKeyUtil {
 
     public static Optional<ContentKey> convertKey(String key) {
         if (StringUtils.isNotEmpty(key)) {
-            return ContentKey.fromUrl(StringUtils.substringAfter(key, FileSystems.getDefault().getSeparator()));
+            return ContentKey.fromUrl(StringUtils.substringAfter(key, HubUtils.FILE_SYSTEM_SEPARATOR));
         }
         return Optional.empty();
     }

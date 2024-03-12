@@ -27,6 +27,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -43,6 +45,7 @@ public class HubUtils {
     private final Cluster hubCluster;
     private final ObjectMapper objectMapper;
     private final String uriScheme;
+    public static final String FILE_SYSTEM_SEPARATOR = FileSystems.getDefault().getSeparator();
 
     @Inject
     public HubUtils(@Named("NoRedirects") Client noRedirectsClient,
@@ -324,6 +327,10 @@ public class HubUtils {
         } catch (Exception e) {
             log.warn("unable to refresh {}", server, e);
         }
+    }
+
+    public static String getNormalizedFilePath(String pathPart, String... additionalPathParts) {
+        return Paths.get(pathPart, additionalPathParts).toString();
     }
 
 }
