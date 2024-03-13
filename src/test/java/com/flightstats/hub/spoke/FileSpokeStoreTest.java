@@ -281,16 +281,13 @@ class FileSpokeStoreTest {
     void testLatestCycle() {
         DateTime now = TimeUtil.now();
         String latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now).toUrl());
-        log.info("latest1: {}",latest);
         assertNull(latest);
         String key = new ContentKey(now, "0").toUrl();
         assertTrue(spokeStore.insert("testLatestCycle/" + key, BYTES));
 
         latest = spokeStore.getLatest("testLatestCycle", key);
         assertNull(latest);
-        log.info("latest2: {}",latest);
         String latest3 = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now.plusMinutes(1)).toUrl());
-        log.info("latest3: {}",latest3);
         assertNotNull(latest3);
         assertEquals(Paths.get("testLatestCycle",key), Paths.get(latest3));
     }
