@@ -330,7 +330,7 @@ public class HubUtils {
     }
 
     public static String getNormalizedFilePath(String pathPart, String... additionalPathParts) {
-        return Paths.get(pathPart, additionalPathParts).toString();
+        return Paths.get(pathPart, additionalPathParts).normalize().toString();
     }
 
 }
