@@ -366,7 +366,7 @@ public class FileSpokeStore {
             String current = Paths.get(path, item, HubUtils.FILE_SYSTEM_SEPARATOR).toString();
             if (current.compareTo(limitCompare) <= 0) {
                 if (count < 4) {
-                    recurseDelete(Paths.get(path, item).toString(), limitPath, count + 1, channel);
+                    recurseDelete(HubUtils.getNormalizedFilePath(path, item), limitPath, count + 1, channel);
                 } else {
                     Path deleteSpokePath = Paths.get(spokePath, current);
                     log.info("deleting {}", deleteSpokePath,toString());
