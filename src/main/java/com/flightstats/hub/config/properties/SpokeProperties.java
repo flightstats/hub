@@ -4,6 +4,8 @@ import com.flightstats.hub.spoke.SpokeStore;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
+import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 
 public class SpokeProperties {
 
@@ -27,8 +29,8 @@ public class SpokeProperties {
     public String getPath(SpokeStore spokeStore) {
         String property = "spoke." + spokeStore + ".path";
         String fallbackProperty = "spoke.path";
-        String defaultPath = "/spoke/" + spokeStore;
-        return propertiesLoader.getProperty(property, propertiesLoader.getProperty(fallbackProperty, defaultPath));
+        String defaultPath = Paths.get(FileSystems.getDefault().getSeparator(),"spoke", String.valueOf(spokeStore)).toString();
+        return Paths.get(propertiesLoader.getProperty(property, propertiesLoader.getProperty(fallbackProperty, defaultPath))).toString();
     }
 
     public String getStoragePath() {

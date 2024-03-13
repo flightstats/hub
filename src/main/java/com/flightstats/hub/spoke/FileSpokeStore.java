@@ -2,6 +2,7 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
@@ -26,6 +27,7 @@ import java.io.OutputStream;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +54,7 @@ public class FileSpokeStore {
     private final Set<String> filesArtificiallyLocked = ConcurrentHashMap.newKeySet();
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
-        this.spokePath = StringUtils.appendIfMissing(spokePath, "/");
+        this.spokePath = StringUtils.appendIfMissing(spokePath, HubUtils.FILE_SYSTEM_SEPARATOR);
         this.spokeTtlMinutes = spokeTtlMinutes;
         log.info("starting with storage path " + this.spokePath);
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
@@ -161,10 +163,12 @@ public class FileSpokeStore {
     //Given a File, return a key part (full key, or time path part)
     String spokeKeyFromPath(String path) {
         if (path.contains(spokePath))
-            path = path.substring(spokePath.length());
+            path = path.substring(path.lastIndexOf(spokePath)+spokePath.length());
+
+        log.info("spoke key path {}",path);
 
         // file or directory?
-        int i = path.lastIndexOf("/");
+        int i = path.lastIndexOf(HubUtils.FILE_SYSTEM_SEPARATOR);
         String suffix = path.substring(i + 1);
         if (suffix.length() > 4) {
             // presence of second proves file aims at a full payload path
@@ -172,10 +176,10 @@ public class FileSpokeStore {
             String seconds = suffix.substring(0, 2);
             String milliseconds = suffix.substring(2, 5);
             String hash = suffix.substring(5);
-            return folderPath + "/" + seconds + "/" + milliseconds + "/" + hash;
+            return HubUtils.getNormalizedFilePath(folderPath ,seconds , milliseconds , hash);
         }
         // file is a directory
-        return path;
+        return HubUtils.getNormalizedFilePath(path);
     }
 
     public void readKeysInBucket(String key, OutputStream output) {
@@ -244,10 +248,10 @@ public class FileSpokeStore {
                     .collect(Collectors.toList());
             Collections.reverse(fileNames);
             for (String fileName: fileNames) {
-                String spokeKeyFromPath = spokeKeyFromPath(hoursPath + "/" + minute + "/" + fileName);
+                String spokeKeyFromPath = spokeKeyFromPath(HubUtils.getNormalizedFilePath(hoursPath,minute,fileName));
                 log.trace("looking at file {} ", spokeKeyFromPath);
-                if (spokeKeyFromPath.compareTo(limitPath) < 0) {
-                    return channel + "/" + spokeKeyFromPath;
+                if (HubUtils.getNormalizedFilePath(spokeKeyFromPath).compareTo(HubUtils.getNormalizedFilePath(limitPath)) < 0) {
+                    return HubUtils.getNormalizedFilePath(channel,spokeKeyFromPath);
                 }
             }
         }
@@ -274,7 +278,7 @@ public class FileSpokeStore {
      */
     public void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
         DateTime now = TimeUtil.now();
-        String channelPath = spokePath + channel + "/";
+        String channelPath = spokePath + channel + HubUtils.FILE_SYSTEM_SEPARATOR;
         log.trace("next {} {} {}", channel, startKey, now);
         ContentKey start = ContentKey
                 .fromUrl(startKey)
@@ -291,8 +295,8 @@ public class FileSpokeStore {
                             .orElse(new String[]{}))
                     .filter(f -> !isTempFile(f))
                     .forEach(item -> {
-                        String keyFromPath = spokeKeyFromPath(minuteUrl + "/" + item);
-                        String fullKey = channel + "/" + keyFromPath;
+                        String keyFromPath = spokeKeyFromPath(HubUtils.getNormalizedFilePath(minuteUrl ,item));
+                        String fullKey = HubUtils.getNormalizedFilePath(channel,keyFromPath);
                         if (firstMinute.get()) {
                             ContentKey.fromUrl(keyFromPath).filter((key) -> key.compareTo(start) > 0)
                                     .ifPresent((key) -> writeNext(found, output, fullKey));
