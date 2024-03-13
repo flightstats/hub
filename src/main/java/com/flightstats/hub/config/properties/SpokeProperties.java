@@ -1,9 +1,12 @@
 package com.flightstats.hub.config.properties;
 
 import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.util.HubUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
+import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 
 public class SpokeProperties {
 
@@ -27,8 +30,8 @@ public class SpokeProperties {
     public String getPath(SpokeStore spokeStore) {
         String property = "spoke." + spokeStore + ".path";
         String fallbackProperty = "spoke.path";
-        String defaultPath = "/spoke/" + spokeStore;
-        return propertiesLoader.getProperty(property, propertiesLoader.getProperty(fallbackProperty, defaultPath));
+        String defaultPath = Paths.get(HubUtils.FILE_SYSTEM_SEPARATOR,"spoke", String.valueOf(spokeStore)).toString();
+        return Paths.get(propertiesLoader.getProperty(property, propertiesLoader.getProperty(fallbackProperty, defaultPath))).toString();
     }
 
     public String getStoragePath() {
