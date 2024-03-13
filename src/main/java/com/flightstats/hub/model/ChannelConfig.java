@@ -358,7 +358,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public String toString() {
-        return "com.flightstats.hub.model.ChannelConfig(name=" + this.getName() + ", owner=" + this.getOwner() + ", creationDate=" + this.getCreationDate() + ", ttlDays=" + this.getTtlDays() + ", maxItems=" + this.getMaxItems() + ", description=" + this.getDescription() + ", tags=" + this.getTags() + ", replicationSource=" + this.getReplicationSource() + ", storage=" + this.getStorage() + ", protect=" + this.isProtect() + ", mutableTime=" + this.getMutableTime() + ", allowZeroBytes=" + this.isAllowZeroBytes() + ")";
+        return "com.flightstats.hub.model.ChannelConfig(name=" + this.getName() + ", owner=" + this.getOwner() + ", creationDate=" + this.getCreationDate() + ", ttlDays=" + this.getTtlDays() + ", maxItems=" + this.getMaxItems() + ", description=" + this.getDescription() + ", tags=" + this.getTags() + ", replicationSource=" + this.getReplicationSource() + ", storage=" + this.getStorage() + ", protect=" + this.isProtect() + ", mutableTime=" + this.getMutableTime() + ", allowZeroBytes=" + this.isAllowZeroBytes() + ", keepForever=" + this.keepForever + ")";
     }
 
     public ChannelConfigBuilder toBuilder() {
