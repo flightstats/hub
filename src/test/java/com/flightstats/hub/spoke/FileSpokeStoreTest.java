@@ -287,10 +287,9 @@ class FileSpokeStoreTest {
 
         latest = spokeStore.getLatest("testLatestCycle", key);
         assertNull(latest);
-
-        latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now.plusMinutes(1)).toUrl());
-        assertNotNull(latest);
-        assertEquals(Paths.get("testLatestCycle",key), Paths.get(latest));
+        String latest3 = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now.plusMinutes(1)).toUrl());
+        assertNotNull(latest3);
+        assertEquals(Paths.get("testLatestCycle",key), Paths.get(latest3));
     }
 
     @Test
