@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,14 +49,14 @@ class FileSpokeStoreTest {
 
     @Test
     void testPathTranslation() {
-        String incoming = "/test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
+        String incoming = "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
         File outputFile = spokeStore.spokeFilePathPart(incoming);
         String filePath = "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5";
         String expectedPath = tempDir + filePath;
-        assertEquals(expectedPath, outputFile.getAbsolutePath());
-        final File file = new File(filePath);
+        assertEquals(new File(expectedPath).getAbsolutePath(), outputFile.getAbsolutePath());
+        final File file = new File(tempDir+filePath);
         String urlPart = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
-        assertEquals(incoming, urlPart);
+        assertEquals(Paths.get(incoming), Paths.get(urlPart));
     }
 
     @Test
@@ -85,9 +87,9 @@ class FileSpokeStoreTest {
         assertEquals(7, keys.size());
 
         log.info("files " + keys);
-        assertTrue(keys.contains(path1));
-        assertTrue(keys.contains(path2));
-        assertTrue(keys.contains(path3));
+        assertTrue(keys.contains(Paths.get(path1).toString()));
+        assertTrue(keys.contains(Paths.get(path2).toString()));
+        assertTrue(keys.contains(Paths.get(path3).toString()));
 
         // filesInBucket second query
         keys = spokeStore.getKeysInBucketArray("/testAdjacentPaths/2014/11/18/00/57/24");
@@ -101,12 +103,12 @@ class FileSpokeStoreTest {
         final File file = new File(tempDir +
                 "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N");
         String key = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
-        assertEquals("test_0_7475501417648047/2014/11/19/18/15/43/916/UD7V4N", key);
+        assertEquals(Paths.get("test_0_7475501417648047","2014/11/19/18/15/43/916/UD7V4N"), Paths.get(key));
 
         final File file1 = new File(tempDir +
                 "/test_0_7475501417648047/2014/11/19/18");
         String directory = spokeStore.spokeKeyFromPath(file1.getAbsolutePath());
-        assertEquals("test_0_7475501417648047/2014/11/19/18", directory);
+        assertEquals(Paths.get("test_0_7475501417648047","2014","11","19","18"), Paths.get(directory));
 
     }
 
@@ -124,15 +126,15 @@ class FileSpokeStoreTest {
         }
         ContentKey limitKey = new ContentKey(time.minusMinutes(1), "A");
         String found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
-        assertEquals("testLastFile/2015/01/01/00/28/30/031/C", found);
+        assertEquals(Paths.get("testLastFile","2015","01","01","00","28","30","031","C"), Paths.get(found));
 
         limitKey = new ContentKey(time, "B");
         found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
-        assertEquals("testLastFile/2015/01/01/00/30/31/031/B", found);
+        assertEquals(Paths.get("testLastFile","2015","01","01","00","30","31","031","B"), Paths.get(found));
 
         limitKey = new ContentKey(time.plusMinutes(1), "D");
         found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
-        assertEquals("testLastFile/2015/01/01/00/30/31/032/C", found);
+        assertEquals(Paths.get("testLastFile","2015","01","01","00","30","31","032","C"), Paths.get(found));
     }
 
     @Test
@@ -148,17 +150,18 @@ class FileSpokeStoreTest {
         ContentKey limitKey = new ContentKey(start, hash);
         String found = spokeStore.getLatest(channel, limitKey.toUrl());
         log.info("found {}", found);
-        assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+        Path expectedPath = Paths.get(channel, "2015", "03", "17", "17", "31", "59", "600", "2905220");
+        assertEquals(expectedPath, Paths.get(found));
 
         limitKey = new ContentKey(start.plusSeconds(15), hash);
         found = spokeStore.getLatest(channel, limitKey.toUrl());
         log.info("found {}", found);
-        assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+        assertEquals(expectedPath, Paths.get(found));
 
         limitKey = new ContentKey(start.plusSeconds(45), hash);
         found = spokeStore.getLatest(channel, limitKey.toUrl());
         log.info("found {}", found);
-        assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+        assertEquals(expectedPath, Paths.get(found));
     }
 
     @Test
@@ -204,8 +207,8 @@ class FileSpokeStoreTest {
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
         log.info("found {}", found);
         assertEquals(3, found.size());
-        assertTrue(found.contains(name + "/" + contentKeyB.toUrl()));
-        assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
+        assertTrue(found.contains(Paths.get(name , contentKeyB.toUrl()).toString()));
+        assertTrue(found.contains(Paths.get(name , contentKeyC.toUrl()).toString()));
     }
 
     @Test
@@ -229,8 +232,8 @@ class FileSpokeStoreTest {
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
         log.info("found {}", found);
         assertEquals(2, found.size());
-        assertTrue(found.contains(name + "/" + contentKeyB.toUrl()));
-        assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
+        assertTrue(found.contains(Paths.get(name , contentKeyB.toUrl()).toString()));
+        assertTrue(found.contains(Paths.get(name , contentKeyC.toUrl()).toString()));
     }
 
     List<String> getNextTesting(String channel, String startKey, int count) throws IOException {
@@ -271,7 +274,7 @@ class FileSpokeStoreTest {
         DateTime limitTime = afterTheHour.withMillisOfSecond(0);
         String read = spokeStore.getLatest("testLatestBug", ContentKey.lastKey(limitTime).toUrl());
         assertNotNull(read);
-        assertEquals("testLatestBug/" + beforeKey, read);
+        assertEquals(Paths.get("testLatestBug",beforeKey), Paths.get(read));
     }
 
     @Test
@@ -284,10 +287,9 @@ class FileSpokeStoreTest {
 
         latest = spokeStore.getLatest("testLatestCycle", key);
         assertNull(latest);
-
-        latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now.plusMinutes(1)).toUrl());
-        assertNotNull(latest);
-        assertEquals("testLatestCycle/" + key, latest);
+        String latest3 = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now.plusMinutes(1)).toUrl());
+        assertNotNull(latest3);
+        assertEquals(Paths.get("testLatestCycle",key), Paths.get(latest3));
     }
 
     @Test
@@ -314,7 +316,7 @@ class FileSpokeStoreTest {
 
         String read = spokeStore.getLatest("testLatestBugStable", ContentKey.lastKey(limitTime).toUrl());
         assertNotNull(read);
-        assertEquals("testLatestBugStable/" + afterKey, read);
+        assertEquals(Paths.get("testLatestBugStable" ,afterKey), Paths.get(read));
     }
 
     @Test
@@ -333,7 +335,7 @@ class FileSpokeStoreTest {
         while (time.isAfter(ttlTime)) {
             String read = spokeStore.getLatest("testLatestMore", ContentKey.lastKey(time).toUrl());
             assertNotNull(read);
-            assertEquals("testLatestMore/" + new ContentKey(time, "B").toUrl(), read);
+            assertEquals(Paths.get("testLatestMore", new ContentKey(time, "B").toUrl()), Paths.get(read));
             time = time.minusMinutes(1);
         }
     }
