@@ -13,6 +13,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StaleEntity;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.StringEscapeUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
@@ -36,7 +37,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.constant.InternalResourceDescription.CHANNEL_DESCRIPTION;
-import com.google.common.html.HtmlEscapers;
+import org.owasp.encoder.Encode;
 
 
 @Path("/internal/channel")
@@ -116,7 +117,7 @@ public class InternalChannelResource {
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) {
         //added sanitizing method for user input for channelname to prevent XSS Vulnerability
-        String sanitizedChannelName = HtmlEscapers.htmlEscaper().escape(channelName);
+        String sanitizedChannelName = Encode.forUriComponent(StringEscapeUtils.escapeHtml4(channelName));
         channelService.getChannelConfig(sanitizedChannelName, false)
                 .orElseThrow(() -> {
                     Response errorResponse = ChannelResource.notFound(sanitizedChannelName);
