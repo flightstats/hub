@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.constant.InternalResourceDescription.CHANNEL_DESCRIPTION;
+import com.google.common.html.HtmlEscapers;
 
 
 @Path("/internal/channel")
@@ -114,18 +115,20 @@ public class InternalChannelResource {
     @Path("{channel}")
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) {
-        channelService.getChannelConfig(channelName, false)
+        //added sanitizing method for user input for channelname to prevent XSS Vulnerability
+        String sanitizedChannelName = HtmlEscapers.htmlEscaper().escape(channelName);
+        channelService.getChannelConfig(sanitizedChannelName, false)
                 .orElseThrow(() -> {
-                    Response errorResponse = ChannelResource.notFound(channelName);
+                    Response errorResponse = ChannelResource.notFound(sanitizedChannelName);
                     throw new WebApplicationException(errorResponse);
                 });
 
         if (contentProperties.isChannelProtectionEnabled()) {
-            log.info("using internal localhost only to delete {}", channelName);
-            return LocalHostOnly.getResponse(uriInfo, () -> deleteChannel(channelName));
+            log.info("using internal localhost only to delete {}", sanitizedChannelName);
+            return LocalHostOnly.getResponse(uriInfo, () -> deleteChannel(sanitizedChannelName));
         }
-        log.info("using internal delete {}", channelName);
-        return deleteChannel(channelName);
+        log.info("using internal delete {}", sanitizedChannelName);
+        return deleteChannel(sanitizedChannelName);
     }
 
     @GET
