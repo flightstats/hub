@@ -13,7 +13,6 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StaleEntity;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.text.StringEscapeUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
@@ -117,7 +116,7 @@ public class InternalChannelResource {
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) {
         //added sanitizing method for user input for channelname to prevent XSS Vulnerability
-        String sanitizedChannelName = Encode.forUriComponent(StringEscapeUtils.escapeHtml4(channelName));
+        String sanitizedChannelName = Encode.forUriComponent(channelName);
         channelService.getChannelConfig(sanitizedChannelName, false)
                 .orElseThrow(() -> {
                     Response errorResponse = ChannelResource.notFound(sanitizedChannelName);
