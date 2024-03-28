@@ -19,7 +19,7 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "jasmine": "^2.99.0"
   }
 }
