@@ -37,7 +37,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.constant.InternalResourceDescription.CHANNEL_DESCRIPTION;
-import org.owasp.encoder.Encode;
+
 
 
 @Path("/internal/channel")
