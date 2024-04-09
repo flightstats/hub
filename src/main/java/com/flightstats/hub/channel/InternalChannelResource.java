@@ -14,6 +14,7 @@ import com.flightstats.hub.util.StaleEntity;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -192,7 +193,7 @@ public class InternalChannelResource {
         if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+            return Response.status(Response.Status.NOT_FOUND).entity("channel " + Encode.forHtml(channelName) + " not found").build();
         }
     }
 }
