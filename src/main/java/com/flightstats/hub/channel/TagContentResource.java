@@ -14,6 +14,7 @@ import com.google.common.io.ByteStreams;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
@@ -166,16 +167,18 @@ public class TagContentResource {
                              @PathParam("ms") int millis,
                              @PathParam("hash") String hash,
                              @HeaderParam("Accept") String accept) {
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        String encodedHtmlTag = Encode.forHtml(tag);
+        String encodedHtmlHash = Encode.forHtml(hash);
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, encodedHtmlHash);
         ItemRequest itemRequest = ItemRequest.builder()
-                .tag(tag)
+                .tag(encodedHtmlTag)
                 .key(key)
                 .uri(uriInfo.getRequestUri())
                 .build();
         Optional<Content> optionalResult = tagService.getValue(itemRequest);
 
         if (!optionalResult.isPresent()) {
-            log.warn("404 content not found {} {}", tag, key);
+            log.warn("404 content not found {} {}", encodedHtmlTag, key);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         Content content = optionalResult.get();
