@@ -109,7 +109,7 @@ dependencies {
     implementation'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.9.3'
     implementation'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.9.3'
 
-    implementation'com.google.inject:guice:4.1.0'
+    compile'com.google.inject:guice:4.1.0'
     implementation'com.google.inject.extensions:guice-servlet:4.1.0'
     implementation'com.google.guava:guava:23.5-jre'
     implementation'com.diffplug.durian:durian:3.4.0'
@@ -130,7 +130,7 @@ dependencies {
     implementation('org.apache.zookeeper:zookeeper:3.8.0')
     implementation('org.apache.curator:curator-test:5.3.0')
 
-    implementation'org.apache.commons:commons-lang3:3.7'
+    compile'org.apache.commons:commons-lang3:3.7'
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
     implementation'commons-io:commons-io:2.6'
     implementation('com.github.rholder:guava-retrying:2.0.0') {
