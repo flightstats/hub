@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -101,7 +102,7 @@ public class ChannelResource {
     }
 
     public static Response notFound(@PathParam("channel") String channelName) {
-        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + Encode.forHtml(channelName) + " not found").build();
     }
 
     @SneakyThrows
