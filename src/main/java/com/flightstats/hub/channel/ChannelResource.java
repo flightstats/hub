@@ -269,7 +269,7 @@ public class ChannelResource {
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @HeaderParam("Last-Event-ID") String lastEventId) {
-        channel =Encode.forHtml(channel);
+        channel = Encode.forHtml(channel);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "getEvents", channel));
         try {
             log.info("starting events for {} at {}", channel, lastEventId);
