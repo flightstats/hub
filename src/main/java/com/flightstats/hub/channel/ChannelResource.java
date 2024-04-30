@@ -110,15 +110,16 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName,
                                        @QueryParam("cached") @DefaultValue("true") boolean cached) throws WebApplicationException {
-        log.debug("get channel {}", channelName);
+        final String sanitizedChannelName = Encode.forHtml(channelName);
+        log.debug("get channel {}", sanitizedChannelName);
 
-        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, cached)
+        ChannelConfig channelConfig = channelService.getChannelConfig(sanitizedChannelName, cached)
                 .orElseThrow(() -> {
-                    log.error("unable to get channel {}", channelName);
+                    log.error("unable to get channel {}", sanitizedChannelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
-        ObjectNode output = linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelName);
+        ObjectNode output = linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, sanitizedChannelName);
         return Response.ok(output).build();
     }
 
@@ -126,6 +127,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) {
+        channelName = Encode.forHtml(channelName);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
         log.trace("put channel {} {}", channelName, json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
@@ -148,11 +150,12 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
-        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateMetadata", channelName));
-        log.trace("patch channel {} {}", channelName, json);
-        ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
+        String sanitizedChannelName  = Encode.forHtml(channelName);
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateMetadata", sanitizedChannelName));
+        log.trace("patch channel {} {}", sanitizedChannelName, json);
+        ChannelConfig oldConfig = channelService.getChannelConfig(sanitizedChannelName, false)
                 .orElseThrow(() -> {
-                    log.error("unable to patch channel " + channelName);
+                    log.error("unable to patch channel " + sanitizedChannelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -160,7 +163,7 @@ public class ChannelResource {
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = linkBuilder.buildChannelUri(newConfig.getDisplayName(), uriInfo);
-        ObjectNode output = linkBuilder.buildChannelConfigResponse(newConfig, uriInfo, channelName);
+        ObjectNode output = linkBuilder.buildChannelConfigResponse(newConfig, uriInfo, sanitizedChannelName);
         return Response.ok(channelUri).entity(output).build();
     }
 
@@ -172,6 +175,7 @@ public class ChannelResource {
                                 @QueryParam("threads") @DefaultValue("3") String threads,
                                 @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) {
+        channelName = Encode.forHtml(channelName);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertValue", channelName));
         if (!contentRetriever.isExistingChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -222,13 +226,14 @@ public class ChannelResource {
     public Response insertBulk(@PathParam("channel") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
                                final InputStream data) {
-        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertBulk", channelName));
+        final String sanitizedChannelName = Encode.forHtml(channelName);
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertBulk", sanitizedChannelName));
         try {
             final BulkContent content = BulkContent.builder()
                     .isNew(true)
                     .contentType(contentType)
                     .stream(data)
-                    .channel(channelName)
+                    .channel(sanitizedChannelName)
                     .build();
             Collection<ContentKey> keys = channelService.insert(content);
             log.trace("posted {}", keys);
@@ -241,10 +246,10 @@ public class ChannelResource {
                 ContentKey first = keys.iterator().next();
                 ContentKey trimmedKey = new ContentKey(first.getTime(), first.getHash().substring(0, 6)
                         + "/next/" + keys.size() + "?stable=false");
-                URI payloadUri = linkBuilder.buildItemUri(trimmedKey, linkBuilder.buildChannelUri(channelName, uriInfo));
+                URI payloadUri = linkBuilder.buildItemUri(trimmedKey, linkBuilder.buildChannelUri(sanitizedChannelName, uriInfo));
                 self.put("href", payloadUri.toString());
                 ArrayNode uris = links.putArray("uris");
-                URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
+                URI channelUri = linkBuilder.buildChannelUri(sanitizedChannelName, uriInfo);
                 for (ContentKey key : keys) {
                     URI uri = linkBuilder.buildItemUri(key, channelUri);
                     uris.add(uri.toString());
@@ -254,7 +259,7 @@ public class ChannelResource {
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
-            log.warn("unable to bulk POST to " + channelName, e);
+            log.warn("unable to bulk POST to " + sanitizedChannelName, e);
             throw e;
         }
     }
@@ -264,6 +269,7 @@ public class ChannelResource {
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @HeaderParam("Last-Event-ID") String lastEventId) {
+        channel =Encode.forHtml(channel);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "getEvents", channel));
         try {
             log.info("starting events for {} at {}", channel, lastEventId);
@@ -288,17 +294,18 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channelName));
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+        final String sanitizedChannelName = Encode.forHtml(channelName);
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", sanitizedChannelName));
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(sanitizedChannelName, false);
         if (!optionalChannelConfig.isPresent()) {
-            return notFound(channelName);
+            return notFound(sanitizedChannelName);
         }
         if (contentProperties.isChannelProtectionEnabled() || optionalChannelConfig.get().isProtect()) {
-            log.warn("using localhost only to delete {}", channelName);
-            return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
+            log.warn("using localhost only to delete {}", sanitizedChannelName);
+            return LocalHostOnly.getResponse(uriInfo, () -> deletion(sanitizedChannelName));
         }
-        log.debug("using normal delete {}", channelName);
-        return deletion(channelName);
+        log.debug("using normal delete {}", sanitizedChannelName);
+        return deletion(sanitizedChannelName);
     }
 
 }
