@@ -110,7 +110,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName,
                                        @QueryParam("cached") @DefaultValue("true") boolean cached) throws WebApplicationException {
-        final String sanitizedChannelName = Encode.forHtml(channelName);
+        String sanitizedChannelName = Encode.forHtml(channelName);
         log.debug("get channel {}", sanitizedChannelName);
 
         ChannelConfig channelConfig = channelService.getChannelConfig(sanitizedChannelName, cached)
