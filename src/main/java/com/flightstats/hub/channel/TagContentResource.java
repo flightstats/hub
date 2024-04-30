@@ -14,6 +14,7 @@ import com.google.common.io.ByteStreams;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
@@ -166,6 +167,8 @@ public class TagContentResource {
                              @PathParam("ms") int millis,
                              @PathParam("hash") String hash,
                              @HeaderParam("Accept") String accept) {
+        tag = Encode.forHtml(tag);
+        hash = Encode.forHtml(hash);
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         ItemRequest itemRequest = ItemRequest.builder()
                 .tag(tag)
