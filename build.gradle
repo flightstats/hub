@@ -131,7 +131,7 @@ dependencies {
     implementation('org.apache.curator:curator-test:5.3.0')
 
     compile'org.apache.commons:commons-lang3:3.7'
-    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.12.0'
     implementation'commons-io:commons-io:2.6'
     implementation('com.github.rholder:guava-retrying:2.0.0') {
         exclude group: 'com.google.guava'
