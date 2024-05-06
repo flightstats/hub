@@ -30,6 +30,7 @@ var server = http.createServer((request, response) => {
         console.log(getTimestamp(), 'connection closed:', request.headers.host);
     });
 
+    response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     response.writeHead(200);
     response.end('ok');
 
