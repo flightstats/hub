@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -101,7 +102,7 @@ public class ChannelResource {
     }
 
     public static Response notFound(@PathParam("channel") String channelName) {
-        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + Encode.forHtml(channelName) + " not found").build();
     }
 
     @SneakyThrows
@@ -125,6 +126,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) {
+        channelName = Encode.forHtml(channelName);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
         log.trace("put channel {} {}", channelName, json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
@@ -171,6 +173,7 @@ public class ChannelResource {
                                 @QueryParam("threads") @DefaultValue("3") String threads,
                                 @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) {
+        channelName = Encode.forHtml(channelName);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertValue", channelName));
         if (!contentRetriever.isExistingChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -263,6 +266,7 @@ public class ChannelResource {
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @HeaderParam("Last-Event-ID") String lastEventId) {
+        channel = Encode.forHtml(channel);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "getEvents", channel));
         try {
             log.info("starting events for {} at {}", channel, lastEventId);
