@@ -136,6 +136,7 @@ dependencies {
     compile('com.github.rholder:guava-retrying:2.0.0') {
         exclude group: 'com.google.guava'
     }
+
     compile 'com.google.code.gson:gson:2.8.2'
 
     compile 'de.jkeylockmanager:jkeylockmanager:2.1.0'
