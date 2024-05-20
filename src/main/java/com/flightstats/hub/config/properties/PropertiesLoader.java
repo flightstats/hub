@@ -1,6 +1,7 @@
 package com.flightstats.hub.config.properties;
 
 import com.flightstats.hub.app.HubMain;
+import com.google.common.html.HtmlEscapers;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -47,7 +48,7 @@ public class PropertiesLoader {
     }
 
     public void load(String file) {
-
+        file = HtmlEscapers.htmlEscaper().escape(file);
         URL resource = null;
         try {
             resource = new File(file).toURI().toURL();
