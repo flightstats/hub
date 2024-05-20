@@ -186,10 +186,11 @@ const followRedirectIfPresent = async (response, headers = {}) => {
     const redirectCode = isRedirect(statusCode);
     console.log('redirecting to location: ', location);
     if (redirectCode && !!location) {
-        const newResponse = await hubClientGet(location, headers);
-        return newResponse;
-    } else {
-        return response;
+        const safeHeaders = { ...headers };
+                delete safeHeaders['user'];  // We pass the sanitized safeHeaders to hubClientGet to ensure no sensitive information is sent during the redirect.
+
+                const newResponse = await hubClientGet(location, safeHeaders);
+                return newResponse;
     }
 };
 
