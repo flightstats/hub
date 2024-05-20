@@ -5,9 +5,9 @@ import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.flightstats.hub.config.server.HubServer;
 import com.flightstats.hub.config.server.ZooKeeperTestServer;
-import com.google.common.html.HtmlEscapers;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.shaded.com.google.common.html.HtmlEscapers;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.CountDownLatch;

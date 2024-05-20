@@ -48,7 +48,6 @@ public class PropertiesLoader {
     }
 
     public void load(String file) {
-        file = HtmlEscapers.htmlEscaper().escape(file);
         URL resource = null;
         try {
             resource = new File(file).toURI().toURL();
