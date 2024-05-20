@@ -21,8 +21,8 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-
-        PropertiesLoader.getInstance().load(HtmlEscapers.htmlEscaper().escape(args[0]));
+        String sanitizedFileName = HtmlEscapers.htmlEscaper().escape(args[0]);
+        PropertiesLoader.getInstance().load(sanitizedFileName);
         new HubMain().run();
     }
 
