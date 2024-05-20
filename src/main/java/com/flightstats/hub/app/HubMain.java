@@ -5,6 +5,7 @@ import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.flightstats.hub.config.server.HubServer;
 import com.flightstats.hub.config.server.ZooKeeperTestServer;
+import com.google.common.html.HtmlEscapers;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -21,7 +22,7 @@ public class HubMain {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
 
-        PropertiesLoader.getInstance().load(args[0]);
+        PropertiesLoader.getInstance().load(HtmlEscapers.htmlEscaper().escape(args[0]));
         new HubMain().run();
     }
 
