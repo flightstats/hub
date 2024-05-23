@@ -9,6 +9,7 @@ import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.shaded.com.google.common.html.HtmlEscapers;
 import org.joda.time.DateTime;
+import org.owasp.encoder.Encode;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -18,10 +19,11 @@ public class HubMain {
     private final static DateTime startTime = new DateTime();
 
     public static void main(String[] args) throws Exception {
+
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-        String sanitizedFileName = HtmlEscapers.htmlEscaper().escape(args[0]);
+        String sanitizedFileName = HtmlEscapers.htmlEscaper().escape(Encode.forHtml(args[0]));
         PropertiesLoader.getInstance().load(sanitizedFileName);
         new HubMain().run();
     }
