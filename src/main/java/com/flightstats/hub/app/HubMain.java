@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class HubMain {
@@ -17,12 +19,24 @@ public class HubMain {
     private final static DateTime startTime = new DateTime();
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
+        if (args == null || args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
+        if (hasPathTraversal(args[0])) {
+            log.error("Input file path contains path traversal");
+        } else {
+            PropertiesLoader.getInstance().load(args[0]);
+            new HubMain().run();
+        }
+    }
 
-        PropertiesLoader.getInstance().load(args[0]);
-        new HubMain().run();
+    public static boolean hasPathTraversal(String input) {
+
+        String pathTraversalPattern = "(\\.\\./)|(\\.\\.\\\\)|(/etc/passwd)|(\\%2e%2e/)|(\\%2e%2e\\\\)";
+
+        Pattern pattern = Pattern.compile(pathTraversalPattern);
+        Matcher matcher = pattern.matcher(input);
+        return matcher.find();
     }
 
     public static DateTime getStartTime() {
