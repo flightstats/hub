@@ -24,6 +24,7 @@ public class HubMain {
         }
         if (hasPathTraversal(args[0])) {
             log.error("Input file path contains path traversal");
+            throw new UnsupportedOperationException("HubMain requires a valid property filename, 'useDefault', or 'useEncryptedDefault'");
         } else {
             PropertiesLoader.getInstance().load(args[0]);
             new HubMain().run();
