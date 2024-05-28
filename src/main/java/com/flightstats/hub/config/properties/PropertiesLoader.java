@@ -54,7 +54,7 @@ public class PropertiesLoader {
         try {
             if (!isPathTraversal(file)) {
                 // Proceed with using the file path
-                resource = new File(file).toURI().toURL();
+                resource = new File(file).toURI().normalize().toURL();
                 // Perform operations with the file
             } else {
                 // Path traversal detected, handle accordingly
