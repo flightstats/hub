@@ -53,11 +53,9 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            if (Pattern.compile("\\.\\.|\\|/").matcher(file).find()) {
-                log.error("Path traversal detected for input file name");
-            } else {
-                resource = new File(file.replaceAll("../../", "").trim()).toURI().normalize().toURL();
-            }
+            String sanitizedFile = file.replaceAll("/../", "/");
+            sanitizedFile = file.replaceAll("/%46%46/", "/").trim();
+            resource = new File(sanitizedFile).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
