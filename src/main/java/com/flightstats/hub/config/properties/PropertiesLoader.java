@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 @Slf4j
@@ -50,7 +52,14 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            resource = new File(file).toURI().toURL();
+            if (!isPathTraversal(file)) {
+                // Proceed with using the file path
+                resource = new File(file).toURI().toURL();
+                // Perform operations with the file
+            } else {
+                // Path traversal detected, handle accordingly
+                log.error("Path traversal detected for input file: {}", file);
+            }
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
@@ -76,6 +85,30 @@ public class PropertiesLoader {
         if (getProperty("hub.read.only", false)) {
             ensureReadOnlyPropertiesAreSet();
         }
+    }
+
+    public static boolean isPathTraversal(String filePath) {
+        // Normalize the path
+        Path path = Paths.get(filePath).normalize();
+
+        // Check if the normalized path is different from the original path
+        if (!path.toString().equals(filePath)) {
+            // Path traversal detected
+            return true;
+        }
+
+        // Check path components for any parent directory references
+        for (Path component : path) {
+            if (component.toString().equals("..")) {
+                // Parent directory reference detected
+                return true;
+            }
+        }
+
+        // Additional checks such as whitelist validation can be added here
+
+        // No path traversal detected
+        return false;
     }
 
     private void ensureReadOnlyPropertiesAreSet() {
