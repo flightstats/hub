@@ -56,7 +56,7 @@ public class PropertiesLoader {
             if (Pattern.compile("\\.\\.|\\|/").matcher(file).find()) {
                 log.error("Path traversal detected for input file name");
             } else {
-                resource = new File(file).toURI().normalize().toURL();
+                resource = new File(file.replaceAll("../", "")).toURI().normalize().toURL();
             }
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
