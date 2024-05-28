@@ -52,13 +52,10 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            if (!isPathTraversal(file)) {
-                // Proceed with using the file path
-                resource = new File(file).toURI().normalize().toURL();
-                // Perform operations with the file
-            } else {
-                // Path traversal detected, handle accordingly
-                log.error("Path traversal detected for input file: {}", file);
+            if(file.matches("[a-zA-Z0-9_]+")) {
+                resource = new File(file).toURI().toURL();
+            }else{
+                log.error("Path traversal dected for input file name");
             }
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
