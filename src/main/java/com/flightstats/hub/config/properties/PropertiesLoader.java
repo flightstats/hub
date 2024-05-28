@@ -55,7 +55,7 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            resource = new File(FilenameUtils.normalize(file, true)).toURI().normalize().toURL();
+            resource = new File(FilenameUtils.normalize(file, true)).toURI().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
