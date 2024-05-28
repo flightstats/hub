@@ -10,6 +10,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class PropertiesLoader {
@@ -52,10 +53,10 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            if(file.matches("[a-zA-Z0-9_]+")) {
+            if (Pattern.compile("\\.\\.|\\|/").matcher(file).find()) {
+                log.error("Path traversal detected for input file name");
+            } else {
                 resource = new File(file).toURI().toURL();
-            }else{
-                log.error("Path traversal dected for input file name");
             }
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
