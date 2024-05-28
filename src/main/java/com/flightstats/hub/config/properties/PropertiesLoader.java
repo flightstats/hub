@@ -53,7 +53,8 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            String sanitizedFile = file.replaceAll("/../../../", "");
+            String pathTraversalRegex = "\\.\\./|%46%46/";
+            String sanitizedFile = file.replaceAll(pathTraversalRegex, "/");
             resource = new File(sanitizedFile).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
