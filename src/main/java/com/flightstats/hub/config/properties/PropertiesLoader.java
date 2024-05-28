@@ -2,6 +2,8 @@ package com.flightstats.hub.config.properties;
 
 import com.flightstats.hub.app.HubMain;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.InputStream;
@@ -53,8 +55,7 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            String pathTraversalRegex = "\\.\\./|%46%46/";
-            String sanitizedFile = file.replaceAll(pathTraversalRegex, "/");
+            String sanitizedFile = FilenameUtils.normalize(StringUtils.chomp(file), true);
             resource = new File(sanitizedFile).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
