@@ -9,6 +9,9 @@ import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
@@ -20,9 +23,37 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-
+        ensurePathIsRelative(args[0]);
         PropertiesLoader.getInstance().load(args[0]);
         new HubMain().run();
+    }
+
+    private static void ensurePathIsRelative(String path) {
+        ensurePathIsRelative(new File(path));
+    }
+
+    private static void ensurePathIsRelative(URI uri) {
+        ensurePathIsRelative(new File(uri));
+    }
+
+    private static void ensurePathIsRelative(File file) {
+        String canonicalPath;
+        String absolutePath;
+
+        if (file.isAbsolute()) {
+            throw new RuntimeException("Potential directory traversal attempt - absolute path not allowed");
+        }
+
+        try {
+            canonicalPath = file.getCanonicalPath();
+            absolutePath = file.getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException("Potential directory traversal attempt", e);
+        }
+
+        if (!canonicalPath.startsWith(absolutePath) || !canonicalPath.equals(absolutePath)) {
+            throw new RuntimeException("Potential directory traversal attempt");
+        }
     }
 
     public static DateTime getStartTime() {
