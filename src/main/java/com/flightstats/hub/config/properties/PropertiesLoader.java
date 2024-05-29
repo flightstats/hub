@@ -59,8 +59,6 @@ public class PropertiesLoader {
             resource = new File(filename).toURI().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
-        } catch (IOException e) {
-            log.warn("Problem with input file name");
         }
 
         if (file.equals("useDefault")) {
