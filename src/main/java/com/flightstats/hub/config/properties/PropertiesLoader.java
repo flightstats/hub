@@ -59,12 +59,7 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            if(isPathTraversal(file)){
-                resource = new File(file.replaceAll("file:", "")).toURI().toURL();
-            }else{
-                log.error("Input file path traversal detected");
-            }
-
+            resource = new File(file.replaceAll("file://", "")).toURI().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
