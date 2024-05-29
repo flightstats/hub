@@ -47,9 +47,9 @@ public class PropertiesLoader {
         return properties.getProperty(name, defaultValue);
     }
 
-    private boolean isPathTraversal(String path) {
+    private boolean isPathTraversal(String file) {
         // Check for disallowed patterns and ensure the path doesn't contain suspicious protocols like 'file:///'
-        return path.contains("file:") || path.contains("..");
+        return file.contains("file:") || file.contains("..")|| file.contains("../") || file.contains("://") || file.contains("%");
     }
     public void setProperty(String key, String value) {
         properties.put(key, value);
@@ -59,7 +59,11 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            resource = new File(file.replaceAll("file://", "")).toURI().toURL();
+            if (isPathTraversal(file)) {
+                throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
+            } else {
+                resource = new File(file).toURI().normalize().toURL();
+            }
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
