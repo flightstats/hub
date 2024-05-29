@@ -47,6 +47,10 @@ public class PropertiesLoader {
         return properties.getProperty(name, defaultValue);
     }
 
+    private boolean isPathTraversal(String path) {
+        // Check for disallowed patterns and ensure the path doesn't contain suspicious protocols like 'file:///'
+        return path.contains("file:") || path.contains("..");
+    }
     public void setProperty(String key, String value) {
         properties.put(key, value);
     }
@@ -55,8 +59,12 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            String safeFileName = FilenameUtils.getName(file);
-            resource = new File(safeFileName).toURI().toURL();
+            if(isPathTraversal(file)){
+                resource = new File(file).toURI().toURL();
+            }else{
+                log.error("Input file path traversal detected");
+            }
+
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
@@ -83,31 +91,6 @@ public class PropertiesLoader {
             ensureReadOnlyPropertiesAreSet();
         }
     }
-
-    public static boolean isPathTraversal(String filePath) {
-        // Normalize the path
-        Path path = Paths.get(filePath).normalize();
-
-        // Check if the normalized path is different from the original path
-        if (!path.toString().equals(filePath)) {
-            // Path traversal detected
-            return true;
-        }
-
-        // Check path components for any parent directory references
-        for (Path component : path) {
-            if (component.toString().equals("..")) {
-                // Parent directory reference detected
-                return true;
-            }
-        }
-
-        // Additional checks such as whitelist validation can be added here
-
-        // No path traversal detected
-        return false;
-    }
-
     private void ensureReadOnlyPropertiesAreSet() {
         properties.put("webhook.leadership.enabled", "false");
         properties.put("replication.enabled", "false");
