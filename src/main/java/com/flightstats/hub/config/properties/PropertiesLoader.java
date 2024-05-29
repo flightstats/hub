@@ -64,7 +64,7 @@ public class PropertiesLoader {
             } else if (file.contains("/%46%46/")) {
                 file = file.replaceAll("/%46%46/", "");
             }*/
-            file.replaceAll("[^a-zA-Z0-9_.-]", "_");
+
             resource = new File(file).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
