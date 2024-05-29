@@ -65,7 +65,7 @@ public class PropertiesLoader {
                 file = file.replaceAll("/%46%46/", "");
             }*/
 
-            resource = new File(file).toURI().normalize().toURL();
+            resource = new File(file.replaceAll("../", "/")).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }

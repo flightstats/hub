@@ -23,8 +23,8 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-        String file = args[0].replaceAll("[^a-zA-Z0-9_.-]", "_");
-        PropertiesLoader.getInstance().load(file);
+
+        PropertiesLoader.getInstance().load(args[0]);
         new HubMain().run();
     }
 
