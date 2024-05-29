@@ -4,9 +4,14 @@ import com.flightstats.hub.app.HubMain;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 @Slf4j
@@ -50,9 +55,15 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            resource = new File(file).toURI().toURL();
+            String filename = sanitizePathTraversal(file);
+            /*Path path = Paths.get("" + filename);
+            byte[] fileContentBytes = Files.readAllBytes(path);
+            String sani = new String(fileContentBytes, "");*/
+            resource = new File(filename).toURI().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
+        } catch (IOException e) {
+            log.warn("Problem with input file name");
         }
 
         if (file.equals("useDefault")) {
@@ -76,6 +87,11 @@ public class PropertiesLoader {
         if (getProperty("hub.read.only", false)) {
             ensureReadOnlyPropertiesAreSet();
         }
+    }
+
+    private static String sanitizePathTraversal(String filename) {
+        Path p = Paths.get(filename);
+        return p.getFileName().toString();
     }
 
     private void ensureReadOnlyPropertiesAreSet() {
