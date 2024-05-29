@@ -59,11 +59,12 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            if (isPathTraversal(file)) {
-                throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
-            } else {
-                resource = new File(file).toURI().normalize().toURL();
+            if (file.contains("/\\.\\./")) {
+                file = file.replaceAll("/\\.\\./", "");
+            } else if (file.contains("/%46%46/")) {
+                file = file.replaceAll("/%46%46/", "");
             }
+            resource = new File(file).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
