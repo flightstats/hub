@@ -6,9 +6,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -54,7 +56,10 @@ public class PropertiesLoader {
     public void setProperty(String key, String value) {
         properties.put(key, value);
     }
-
+    private static String sanitizePathTraversal(String filename) {
+        Path p = Paths.get(filename);
+        return p.getFileName().toString();
+    }
     public void load(String file) {
 
         URL resource = null;
@@ -64,10 +69,16 @@ public class PropertiesLoader {
             } else if (file.contains("/%46%46/")) {
                 file = file.replaceAll("/%46%46/", "");
             }*/
+            String filename = sanitizePathTraversal(file); // Ensures access only to files in a given folder, no traversal
+            Path path = Paths.get("" + filename);
+            byte[] fileContentBytes = Files.readAllBytes(path);
+            String fileContents = new String(fileContentBytes, "");
 
-            resource = new File(file.replaceAll("../../", "/")).toURI().normalize().toURL();
+            resource = new File(fileContents).toURI().normalize().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         if (file.equals("useDefault")) {
