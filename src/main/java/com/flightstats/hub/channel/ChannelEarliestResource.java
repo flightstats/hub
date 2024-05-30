@@ -21,6 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.SortedSet;
 
@@ -102,6 +103,8 @@ public class ChannelEarliestResource {
                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
+        channel = sanitizePathTraversal(channel);
+        epoch = sanitizePathTraversal(epoch);
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, order, accept, uriInfo);
         }
@@ -116,6 +119,11 @@ public class ChannelEarliestResource {
         } else {
             return linkBuilder.directionalResponse(keys, count, query, uriInfo, false, trace, descending);
         }
+    }
+
+    private static String sanitizePathTraversal(String filename) {
+        java.nio.file.Path p = Paths.get(filename);
+        return p.getFileName().toString();
     }
 
 }
