@@ -22,8 +22,8 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-        String sanitizedFileName = sanitizePathTraversal(args[0]);
-        PropertiesLoader.getInstance().load(sanitizedFileName);
+
+        PropertiesLoader.getInstance().load(args[0]);
         new HubMain().run();
     }
 
