@@ -75,6 +75,8 @@ public class ChannelEarliestResource {
                                 @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                 @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                 @QueryParam("tag") String tag) {
+        location = sanitizePathTraversal(location);
+        epoch = sanitizePathTraversal(epoch);
         if (tag != null) {
             return tagEarliestResource.getEarliest(tag, stable, trace, location, epoch, uriInfo);
         }
@@ -103,6 +105,7 @@ public class ChannelEarliestResource {
                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
+        location = sanitizePathTraversal(location);
         channel = sanitizePathTraversal(channel);
         epoch = sanitizePathTraversal(epoch);
         if (tag != null) {
