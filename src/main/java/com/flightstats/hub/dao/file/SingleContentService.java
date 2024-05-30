@@ -152,7 +152,8 @@ public class SingleContentService implements ContentService {
             handleNext(query, keys);
         } else {
             DateTime limitTime = query.getEarliestTime().minusDays(1);
-            while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
+            int count = query.getCount();
+            while (keys.size() < count && time.isAfter(limitTime)) {
                 addKeys(query, keys, hours, time);
                 keys = ContentKeyUtil.filter(keys, query);
                 time = time.minus(hours.getDuration());
