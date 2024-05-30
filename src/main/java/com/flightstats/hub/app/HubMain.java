@@ -9,6 +9,8 @@ import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
@@ -20,9 +22,14 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-
-        PropertiesLoader.getInstance().load(args[0]);
+        String sanitizedFileName = sanitizePathTraversal(args[0]);
+        PropertiesLoader.getInstance().load(sanitizedFileName);
         new HubMain().run();
+    }
+
+    private static String sanitizePathTraversal(String filename) {
+        Path p = Paths.get(filename);
+        return p.getFileName().toString();
     }
 
     public static DateTime getStartTime() {

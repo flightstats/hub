@@ -55,8 +55,8 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            String filename = sanitizePathTraversal(file);
-            resource = new File(filename).toURI().toURL();
+            //String filename = sanitizePathTraversal(file);
+            resource = new File(file).toURI().toURL();
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
