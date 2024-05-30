@@ -186,10 +186,29 @@ const followRedirectIfPresent = async (response, headers = {}) => {
     const redirectCode = isRedirect(statusCode);
     console.log('redirecting to location: ', location);
     if (redirectCode && !!location) {
-        const newResponse = await hubClientGet(location, headers);
-        return newResponse;
-    } else {
-        return response;
+        try {
+                    // Parse and sanitize the URL
+                    const url = new URL(location);
+
+                    // If there are user-specific query parameters, remove them
+                    // Here we assume 'user' is a sensitive query parameter, adjust accordingly
+                    url.searchParams.delete('user');
+
+                    const sanitizedLocation = url.toString();
+                    console.log('Sanitized location: ', sanitizedLocation);
+
+                    // Clone and filter out sensitive headers
+                    const safeHeaders = { ...headers };
+                    delete safeHeaders['user'];  // Remove any sensitive user information
+
+                    const newResponse = await hubClientGet(sanitizedLocation, safeHeaders);
+                    return newResponse;
+                } catch (ex) {
+                    console.log(`Error parsing location URL: ${location} ::: ${ex}`);
+                    return response;
+                }
+            } else {
+                return response;
     }
 };
 
