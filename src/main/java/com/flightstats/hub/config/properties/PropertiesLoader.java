@@ -85,8 +85,12 @@ public class PropertiesLoader {
     }
 
     private static String sanitizePathTraversal(String filename) {
-        Path p = Paths.get(filename);
-        return p.toString();
+        if (filename.startsWith("../")) {
+            Path p = Paths.get(filename);
+            return p.getFileName().toString();
+        } else {
+            return filename;
+        }
     }
 
     private void ensureReadOnlyPropertiesAreSet() {
