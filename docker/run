@@ -28,7 +28,7 @@ else
 fi
 
 JAVA_OPTS="
- -d64
+#-d64
  -server
  -Xmx$MAX_HEAP
  -Xms$MIN_HEAP
