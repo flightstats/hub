@@ -31,6 +31,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
+import static com.flightstats.hub.model.ChannelConfig.contentProperties;
+
 /**
  * SingleContentService allows for the singleHub to have different characteristics than using Spoke in the clustered hub.
  * Spoke is designed to hold a short period's cache, while the singleHub may hold data spanning much large periods of time.
@@ -152,6 +154,9 @@ public class SingleContentService implements ContentService {
             handleNext(query, keys);
         } else {
             DateTime limitTime = query.getEarliestTime().minusDays(1);
+            if (query.getCount() > 10000) {
+                query = query.withCount(1000);
+            }
             while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
                 addKeys(query, keys, hours, time);
                 keys = ContentKeyUtil.filter(keys, query);
