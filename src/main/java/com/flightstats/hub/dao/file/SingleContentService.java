@@ -31,8 +31,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
-import static com.flightstats.hub.model.ChannelConfig.contentProperties;
-
 /**
  * SingleContentService allows for the singleHub to have different characteristics than using Spoke in the clustered hub.
  * Spoke is designed to hold a short period's cache, while the singleHub may hold data spanning much large periods of time.
