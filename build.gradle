@@ -4,6 +4,16 @@ plugins {
     id 'com.google.osdetector' version '1.6.2'
 }
 
+def javaVersion = '12'
+
+// Configure toolchains
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    }
+}
+
+
 if (project.ext.properties.get('isDevBuild') == null) {
     project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 }
@@ -27,8 +37,8 @@ configurations {
     systemTestCompile.extendsFrom testCompile
 }
 
-sourceCompatibility = JavaVersion.VERSION_12
-targetCompatibility = JavaVersion.VERSION_12
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
 
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
 project.ext.jenkinsJobName = "hub-v2"
