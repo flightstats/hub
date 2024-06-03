@@ -87,11 +87,11 @@ configurations {
 
 dependencies {
 
-    implementation 'org.eclipse.jetty:jetty-server:9.4.13.v20181111'
-    implementation 'org.eclipse.jetty:jetty-servlet:9.4.13.v20181111'
-    implementation 'org.eclipse.jetty:jetty-servlets:9.4.13.v20181111'
-    implementation 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.4.48.v20220622'
-    implementation 'org.eclipse.jetty:jetty-jmx:9.4.48.v20220622'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.8.v20171121'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.8.v20171121'
+    implementation 'org.eclipse.jetty:jetty-servlets:9.4.8.v20171121'
+    implementation 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.4.8.v20171121'
+    implementation 'org.eclipse.jetty:jetty-jmx:9.4.8.v20171121'
     implementation group: 'org.owasp.encoder', name: 'encoder', version: '1.2.3'
 
     implementation 'org.glassfish.jersey.containers:jersey-container-jetty-http:2.29.1'
