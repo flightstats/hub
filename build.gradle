@@ -27,8 +27,8 @@ configurations {
     systemTestCompile.extendsFrom testCompile
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = 17
+targetCompatibility = 17
 
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
 project.ext.jenkinsJobName = "hub-v2"
