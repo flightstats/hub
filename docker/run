@@ -52,7 +52,6 @@ JAVA_OPTS="
  -Dsun.rmi.dgc.client.gcInterval=300000
  -Dsun.rmi.dgc.server.gcInterval=300000
  -XX:+PrintGCDetails
- -XX:NumberOfGCLogFiles=10
  -XX:GCLogFileSize=100M
  -Xloggc:${LOG_DIR}/gc.log
  -Dfile.encoding=UTF-8
