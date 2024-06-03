@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM openjdk:12
 
 RUN apt-get update && apt-get install -y bash ntp curl && \
     mkdir -p /mnt/log && \
