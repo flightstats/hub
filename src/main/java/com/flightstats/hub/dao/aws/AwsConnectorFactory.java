@@ -93,15 +93,16 @@ public class AwsConnectorFactory {
     private AWSCredentialsProviderChain getAwsCredentials() {
         return new AWSCredentialsProviderChain(
                 new DefaultAWSCredentialsProviderChain(),
-                new AWSStaticCredentialsProvider(loadTestCredentials(awsProperties.getCredentialsFile())));
+                new AWSStaticCredentialsProvider(loadTestCredentials(awsProperties.getCredentialsFile()))
+        );
     }
 
     private AWSCredentials loadTestCredentials(String credentialsPath) {
-        log.info("loading test credentials " + credentialsPath);
+        log.debug("loading test credentials from file."); //Changed log level to debug and removed the file path
         try {
             return new PropertiesCredentials(new File(credentialsPath));
         } catch (Exception e) {
-            log.warn("unable to load test credentials " + credentialsPath + " " + e.getMessage());
+            log.warn("unable to load test credentials from file.", e.getMessage()); //Removed the file path and logging the exception message separately
             return new BasicAWSCredentials("noKey", "noSecret");
         }
     }
