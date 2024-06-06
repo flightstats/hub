@@ -17,14 +17,18 @@ public class StatsdReporter {
     private StatsDFormatter statsDFormatter;
     private DataDogHandler dataDogHandler;
 
+    private GrafanaHandler grafanaHandler;
+
     public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
-            DataDogHandler dataDogHandler
+            DataDogHandler dataDogHandler,
+            GrafanaHandler grafanaHandler
     ) {
         this.statsDFilter = statsDFilter;
         this.statsDFormatter = statsDFormatter;
         this.dataDogHandler = dataDogHandler;
+        this.grafanaHandler = grafanaHandler;
     }
 
     public void insert(String channel, long start, ChannelMetricTag channelMetricTag, int items, long bytes) {
@@ -86,7 +90,9 @@ public class StatsdReporter {
     }
 
     public void mute() {
+
         dataDogHandler.mute();
+        grafanaHandler.mute();
     }
 
     private void reportWithBothClients(Consumer<StatsDClient> method) {
