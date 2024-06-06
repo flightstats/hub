@@ -105,7 +105,7 @@ class StatsdReporterIntegrationTest {
     private StatsdReporter provideStatsDHandlers() {
         StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
         statsDFilter.setOperatingClients();
-        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties);
+        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties, grafanaMetricsProperties);
         return provider.get();
     }
 
