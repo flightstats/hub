@@ -88,7 +88,11 @@ public class StatsDFilter {
                 .map(requestMetricsToIgnore::contains)
                 .orElse(true);
     }
-
+    public boolean isIgnoredGrRequestMetric(RequestMetric metric) {
+        return metric.getMetricName()
+                .map(requestMetricsToIgnoreGrafana::contains)
+                .orElse(true);
+    }
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
         StatsDClient primaryClient = datadogMetricsProperties.isPrimary() ? dataDogClient : statsDClient;
         StatsDClient secondaryClient = primaryClient.equals(dataDogClient) ? statsDClient : dataDogClient;
