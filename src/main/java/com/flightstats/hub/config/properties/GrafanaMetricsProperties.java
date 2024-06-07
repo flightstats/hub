@@ -11,7 +11,7 @@ public class GrafanaMetricsProperties {
     }
 
     public String getApiUrl() {
-        return propertiesLoader.getProperty("metrics.grafana.url", "https://app.grafana.com");
+        return propertiesLoader.getProperty("metrics.grafana.url", "https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push");
     }
 
     public String getAppKey() {
