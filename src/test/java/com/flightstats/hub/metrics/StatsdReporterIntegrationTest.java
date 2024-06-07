@@ -1,6 +1,7 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
@@ -47,6 +48,8 @@ class StatsdReporterIntegrationTest {
     private Dao<ChannelConfig> channelConfigDao;
     @Mock
     private Dao<Webhook> webhookDao;
+    @Mock
+    private GrafanaMetricsProperties grafanaMetricsProperties;
 
     @BeforeEach
     void setup(){
@@ -100,9 +103,9 @@ class StatsdReporterIntegrationTest {
     }
 
     private StatsdReporter provideStatsDHandlers() {
-        StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+        StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
         statsDFilter.setOperatingClients();
-        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties);
+        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties, grafanaMetricsProperties);
         return provider.get();
     }
 

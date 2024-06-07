@@ -1,6 +1,7 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -44,10 +45,12 @@ class StatsDFilterTest {
     @Mock
     private Webhook webhook;
     private StatsDFilter statsDFilter;
+    @Mock
+    private GrafanaMetricsProperties grafanaMetricsProperties;
 
     @BeforeEach
     void setup() {
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
     }
 
     @Test
@@ -230,7 +233,7 @@ class StatsDFilterTest {
         when(metric.getMetricName()).thenReturn(Optional.of("request.api.channel"));
 
         when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
 
         assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
     }
@@ -241,7 +244,7 @@ class StatsDFilterTest {
         when(metric.getMetricName()).thenReturn(Optional.of("request.internal.channel"));
 
         when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
 
         assertFalse(statsDFilter.isIgnoredRequestMetric(metric));
     }
@@ -252,7 +255,7 @@ class StatsDFilterTest {
         when(metric.getMetricName()).thenReturn(Optional.empty());
 
         when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
 
         assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
     }
