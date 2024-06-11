@@ -97,6 +97,7 @@ public class StatsdReporter {
     private void reportWithBothClients(Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
         clients.forEach(method);
+
         List<StatsDClient> grafanaClients = statsDFilter.getGrafanaFilteredClients(true);
         grafanaClients.forEach(method);
     }
