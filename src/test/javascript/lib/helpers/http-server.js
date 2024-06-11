@@ -36,6 +36,7 @@ const startServer = async (port, callback, path = '/', secure, file) => {
             console.log('request.headers', request.headers);
         }
         request.on('end', function () {
+            response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
             response.end();
         });
     });
