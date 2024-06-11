@@ -35,6 +35,7 @@ public class StatsdReporter {
 
         time(channel, "channel", start, bytes, "type:" + channelMetricTag.name());
         count("channel.items", items, "type:" + channelMetricTag.name(), "channel:" + channel);
+
     }
 
     public void event(String title, String text, String[] tags) {
@@ -96,6 +97,8 @@ public class StatsdReporter {
     private void reportWithBothClients(Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
         clients.forEach(method);
+        List<StatsDClient> grafanaClients = statsDFilter.getGrafanaFilteredClients(true);
+        grafanaClients.forEach(method);
     }
 
 }
