@@ -32,42 +32,53 @@ class SpokeFile {
 
     boolean write(byte[] bytes, String filename, String path) {
         try {
-            FileUtils.writeByteArrayToFile(new File(path + filename), bytes);
+            File file = new File(path, filename);
+            FileUtils.writeByteArrayToFile(file, bytes);
             return true;
         } catch (IOException e) {
-            log.warn("unable to write file " + filename, e);
+            log.warn("Unable to write file {} at path {}", filename, path, e);
             return false;
         }
     }
 
     <T> T read(String path, String name, Function<String, T> function) {
-        return read(new File(path + name), function);
+        return read(new File(path, name), function);
     }
 
     <T> T read(String path, String name, BiFunction<String, ContentRetriever, T> function) {
-        return read(new File(path + name), function);
+        return read(new File(path, name), function);
     }
 
     private <T> T read(File file, Function<String, T> function) {
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", file.getPath());
+            return null;
+        }
+
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return function.apply(new String(bytes));
         } catch (FileNotFoundException e) {
-            log.warn("file not found {} {} ", file.getName(), e.getMessage());
+            log.warn("File not found: {} - {}", file.getPath(), e.getMessage());
         } catch (IOException e) {
-            log.warn("unable to find for " + file.getName(), e);
+            log.warn("Unable to read file: {} - {}", file.getPath(), e.getMessage());
         }
         return null;
     }
 
     private <T> T read(File file, BiFunction<String, ContentRetriever, T> function) {
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", file.getPath());
+            return null;
+        }
+
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return function.apply(new String(bytes), contentRetriever);
         } catch (FileNotFoundException e) {
-            log.info("file not found {} {} ", file.getName(), e.getMessage());
+            log.info("File not found: {} - {}", file.getPath(), e.getMessage());
         } catch (IOException e) {
-            log.warn("unable to find for " + file.getName(), e);
+            log.warn("Unable to read file: {} - {}", file.getPath(), e.getMessage());
         }
         return null;
     }
@@ -76,10 +87,14 @@ class SpokeFile {
         List<T> list = new ArrayList<>();
         File[] files = new File(path).listFiles();
         if (files == null) {
+            log.warn("No files found at path {}", path);
             return list;
         }
         for (File file : files) {
-            list.add(read(file, function));
+            T item = read(file, function);
+            if (item != null) {
+                list.add(item);
+            }
         }
         return list;
     }
@@ -88,10 +103,14 @@ class SpokeFile {
         List<T> list = new ArrayList<>();
         File[] files = new File(path).listFiles();
         if (files == null) {
+            log.warn("No files found at path {}", path);
             return list;
         }
         for (File file : files) {
-            list.add(read(file, function));
+            T item = read(file, function);
+            if (item != null) {
+                list.add(item);
+            }
         }
         return list;
     }
@@ -100,5 +119,16 @@ class SpokeFile {
         Path path = Paths.get(filepath);
         File file = path.toFile();
         return FileUtils.deleteQuietly(file);
+    }
+
+    private boolean isSafePath(File file) {
+        try {
+            String canonicalPath = file.getCanonicalPath();
+            String canonicalBasePath = new File(".").getCanonicalPath();
+            return canonicalPath.startsWith(canonicalBasePath);
+        } catch (IOException e) {
+            log.warn("Failed to resolve canonical path for {}", file.getPath(), e);
+            return false;
+        }
     }
 }
