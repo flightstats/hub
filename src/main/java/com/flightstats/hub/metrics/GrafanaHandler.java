@@ -24,8 +24,8 @@ public class GrafanaHandler {
     }
 
     void mute() {
-        log.debug("Attempting to mute datadog");
-        String datadogUrl = grafanaMetricsProperties.getApiUrl() + "/downtime";
+        log.debug("Attempting to mute grafana");
+        String grafanaUrl = grafanaMetricsProperties.getApiUrl() + "/downtime";
         String apiKey = grafanaMetricsProperties.getApiKey();
         String appKey = grafanaMetricsProperties.getAppKey();
         String name = metricsProperties.getHostTag();
@@ -43,7 +43,7 @@ public class GrafanaHandler {
         try {
 
             String data = String.format(dataTemplate, name, fourMinutesFutureInSeconds);
-            String url = String.format(urlTemplate, datadogUrl, apiKey, appKey);
+            String url = String.format(urlTemplate, grafanaUrl, apiKey, appKey);
             ClientResponse response = RestClient
                     .defaultClient()
                     .resource(url)
@@ -57,7 +57,7 @@ public class GrafanaHandler {
                 log.warn("Muting grafana monitoring failed: " + name + " status " + status);
             }
         } catch (Exception e) {
-            log.warn("Muting datadog error ", e);
+            log.warn("Muting grafana error ", e);
         }
     }
 }
