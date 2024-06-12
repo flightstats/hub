@@ -32,8 +32,7 @@ class SpokeFile {
 
     boolean write(byte[] bytes, String filename, String path) {
         try {
-            File file = new File(path, filename);
-            FileUtils.writeByteArrayToFile(file, bytes);
+            FileUtils.writeByteArrayToFile(new File(path + filename), bytes);
             return true;
         } catch (IOException e) {
             log.warn("unable to write file " + filename, e);
@@ -78,7 +77,7 @@ class SpokeFile {
         } catch (FileNotFoundException e) {
             log.info("File not found: {} - {}", file.getPath(), e.getMessage());
         } catch (IOException e) {
-            log.warn("Unable to read file: {} - {}", file.getPath(), e.getMessage());
+            log.warn("unable to find for " + file.getName(), e);
         }
         return null;
     }
