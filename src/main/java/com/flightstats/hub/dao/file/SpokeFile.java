@@ -75,7 +75,7 @@ class SpokeFile {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return function.apply(new String(bytes), contentRetriever);
         } catch (FileNotFoundException e) {
-            log.info("File not found: {} - {}", file.getPath(), e.getMessage());
+            log.info("file not found {} {} ", file.getName(), e.getMessage());
         } catch (IOException e) {
             log.warn("unable to find for " + file.getName(), e);
         }
