@@ -49,6 +49,11 @@ class SpokeFile {
     }
 
     private <T> T read(File file, Function<String, T> function) {
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", file.getPath());
+            return null;
+        }
+
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return function.apply(new String(bytes));
@@ -61,6 +66,11 @@ class SpokeFile {
     }
 
     private <T> T read(File file, BiFunction<String, ContentRetriever, T> function) {
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", file.getPath());
+            return null;
+        }
+
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return function.apply(new String(bytes), contentRetriever);
@@ -100,5 +110,16 @@ class SpokeFile {
         Path path = Paths.get(filepath);
         File file = path.toFile();
         return FileUtils.deleteQuietly(file);
+    }
+
+    private boolean isSafePath(File file) {
+        try {
+            String canonicalPath = file.getCanonicalPath();
+            String canonicalBasePath = new File(".").getCanonicalPath();
+            return canonicalPath.startsWith(canonicalBasePath);
+        } catch (IOException e) {
+            log.warn("Failed to resolve canonical path for {}", file.getPath(), e);
+            return false;
+        }
     }
 }
