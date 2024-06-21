@@ -32,6 +32,10 @@ class SpokeFile {
 
     boolean write(byte[] bytes, String filename, String path) {
         try {
+            if (!isSafePath(new File(path + filename))) {
+                log.warn("Potential path traversal attempt: {}", new File(path + filename).getPath());
+                return false;
+            }
             FileUtils.writeByteArrayToFile(new File(path + filename), bytes);
             return true;
         } catch (IOException e) {
