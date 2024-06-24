@@ -73,8 +73,9 @@ describe(__filename, function () {
         const iteratorFunc = async (item) => {
             const { name } = item;
             console.log('get latest ', name);
-            const url = `${channelUrl}/${name}/latest?trace=true`;
-            const res = await hubClientGet(url, headers);
+            // Strip any potential user information from the URL
+                    const sanitizedChannelUrl = `${channelUrl}/${encodeURIComponent(name)}/latest?trace=true`;
+                    const res = await hubClientGet(sanitizedChannelUrl, headers);
             const statusCode = getProp('statusCode', res);
             if (statusCode === 404) {
                 item.empty = true;
