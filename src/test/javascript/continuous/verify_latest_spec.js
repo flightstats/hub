@@ -80,9 +80,11 @@ describe(__filename, function () {
                 item.empty = true;
             } else if (statusCode === 303) {
                 const location = fromObjectPath(['headers', 'location'], res);
+                // Ensure location does not contain sensitive information before logging or processing
+                const sanitizedLocation = location ? encodeURIComponent(location) : 'unknown';
                 const strLength = channelUrl.length + name.length + 2;
-                const latestKey = location.substring(strLength);
-                console.log('latestKey ', latestKey, location);
+                const latestKey = sanitizedLocation.substring(strLength);
+                console.log('latestKey (sanitized) ', latestKey);
                 item.latestKey = latestKey;
             } else {
                 console.log('unexpected result');
