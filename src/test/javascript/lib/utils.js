@@ -527,6 +527,7 @@ exports.startServer = function startServer(server, port, callback, done) {
 
         request.on('end', function () {
             if (callback) callback(incoming, response);
+            response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
             response.end();
         });
     });
