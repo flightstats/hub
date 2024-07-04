@@ -1,5 +1,7 @@
 package com.flightstats.hub.model;
 
+import org.owasp.encoder.Encode;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +105,7 @@ public class BulkContent {
         }
 
         public BulkContent.BulkContentBuilder contentType(String contentType) {
-            this.contentType = contentType;
+            this.contentType = Encode.forHtml(contentType);
             return this;
         }
 

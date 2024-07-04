@@ -82,14 +82,12 @@ public class ProviderResource {
     public Response insertBulk(@HeaderParam("channelName") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
                                final InputStream data) {
-
         try {
             ensureChannel(channelName);
-            String sanitizedContentType = sanitizeContentType(contentType);
 
             BulkContent content = BulkContent.builder()
                     .isNew(true)
-                    .contentType(sanitizedContentType)
+                    .contentType(contentType)
                     .stream(data)
                     .channel(channelName)
                     .build();
@@ -103,20 +101,5 @@ public class ProviderResource {
             log.warn("unable to bulk POST to {}", channelName, e);
             throw e;
         }
-    }
-
-    private String sanitizeContentType(String contentType) {
-        // Define a regular expression to validate contentType
-        String regex = "[a-zA-Z0-9]+(/[a-zA-Z0-9]+)*"; // Allows alphanumeric with optional slashes
-
-        // Validate contentType using regex
-        if (contentType == null || !Pattern.matches(regex, contentType)) {
-            throw new IllegalArgumentException("Invalid contentType");
-        }
-
-        // Optionally, further sanitize or normalize the contentType if needed
-        // For example, ensure it's lowercase or replace invalid characters
-
-        return contentType;
     }
 }
