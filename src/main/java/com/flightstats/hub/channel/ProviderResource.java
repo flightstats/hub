@@ -8,6 +8,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import lombok.extern.slf4j.Slf4j;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -83,10 +84,11 @@ public class ProviderResource {
                                final InputStream data) {
         try {
             ensureChannel(channelName);
+            String SanitizedContentType = Encode.forHtml(contentType);
 
             BulkContent content = BulkContent.builder()
                     .isNew(true)
-                    .contentType(contentType)
+                    .contentType(SanitizedContentType)
                     .stream(data)
                     .channel(channelName)
                     .build();
