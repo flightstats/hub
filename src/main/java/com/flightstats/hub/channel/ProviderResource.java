@@ -84,11 +84,10 @@ public class ProviderResource {
                                final InputStream data) {
         try {
             ensureChannel(channelName);
-            String SanitizedContentType = Encode.forHtml(contentType);
 
             BulkContent content = BulkContent.builder()
                     .isNew(true)
-                    .contentType(SanitizedContentType)
+                    .contentType(sanitizePathtraversal(contentType))
                     .stream(data)
                     .channel(channelName)
                     .build();
@@ -104,4 +103,10 @@ public class ProviderResource {
         }
     }
 
+    private String sanitizePathtraversal(String contentType) {
+        if (contentType == null || contentType.isEmpty()) {
+            throw new IllegalArgumentException("Invalid contentType");
+        }
+        return contentType;
+    }
 }
