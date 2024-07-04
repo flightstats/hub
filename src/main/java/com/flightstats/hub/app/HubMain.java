@@ -22,16 +22,18 @@ public class HubMain {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
+        }
+        String fileName = args[0];
+        File file = new File(fileName);
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", new File(args[0]).getPath());
+            throw new UnsupportedOperationException("HubMain requires a valid property filename");
         } else {
-            if (!isSafePath(new File(args[0]))) {
-                log.warn("Potential path traversal attempt: {}", new File(args[0]).getPath());
-                throw new UnsupportedOperationException("HubMain requires a valid property filename");
-            } else {
-                PropertiesLoader.getInstance().load(args[0]);
-                new HubMain().run();
-            }
+            PropertiesLoader.getInstance().load(fileName);
+            new HubMain().run();
         }
     }
+
 
     private static boolean isSafePath(File file) {
         try {
