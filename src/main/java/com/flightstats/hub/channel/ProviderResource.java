@@ -8,7 +8,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import lombok.extern.slf4j.Slf4j;
-import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
