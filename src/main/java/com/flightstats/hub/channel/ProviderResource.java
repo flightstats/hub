@@ -8,6 +8,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import lombok.extern.slf4j.Slf4j;
+import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -19,7 +20,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 /**
  * This is a convenience interface for external data Providers.
@@ -87,7 +87,7 @@ public class ProviderResource {
 
             BulkContent content = BulkContent.builder()
                     .isNew(true)
-                    .contentType(contentType)
+                    .contentType(Encode.forHtml(contentType))
                     .stream(data)
                     .channel(channelName)
                     .build();
@@ -102,4 +102,5 @@ public class ProviderResource {
             throw e;
         }
     }
-}
+
+    }

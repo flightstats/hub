@@ -105,7 +105,7 @@ public class BulkContent {
         }
 
         public BulkContent.BulkContentBuilder contentType(String contentType) {
-            this.contentType = Encode.forHtml(contentType);
+            this.contentType = contentType;
             return this;
         }
 
