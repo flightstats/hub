@@ -7,7 +7,6 @@ import com.flightstats.hub.config.server.HubServer;
 import com.flightstats.hub.config.server.ZooKeeperTestServer;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.joda.time.DateTime;
 
 import java.io.File;
