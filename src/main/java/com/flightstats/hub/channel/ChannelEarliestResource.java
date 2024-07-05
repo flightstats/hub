@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 import java.util.SortedSet;
+import java.util.regex.Pattern;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -102,6 +103,8 @@ public class ChannelEarliestResource {
                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
+        // Sanitize the channel parameter to prevent path traversal vulnerabilities
+        String sanitizedChannel = sanitizeChannel(channel);
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, order, accept, uriInfo);
         }
@@ -118,4 +121,13 @@ public class ChannelEarliestResource {
         }
     }
 
+    private String sanitizeChannel(String channel) {
+        // Regex pattern to allow only alphanumeric characters, underscore, and hyphen
+        String regexPattern = "^[a-zA-Z0-9_-]+$";
+        // Validate channel against the pattern
+        if (!Pattern.matches(regexPattern, channel)) {
+            throw new IllegalArgumentException("Invalid channel name: " + channel + ". Must only contain characters a-z, A-Z, 0-9, '_', and '-'");
+        }
+        return channel;
+    }
 }
