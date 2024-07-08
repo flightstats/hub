@@ -40,6 +40,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             }
 
             reportTime(requestState.getRequestMetric(), requestState.getStart());
+            reportGrTime(requestState.getRequestMetric(),requestState.getStart());
             reportError(requestState);
         } catch (Exception e) {
             log.error("metrics request error", e);
@@ -53,6 +54,20 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
         long time = System.currentTimeMillis() - startTime;
         log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
         if (statsdFilter.isIgnoredRequestMetric(metric)) {
+            return;
+        }
+
+        String[] tagArray = getTagArray(metric.getTags());
+        log.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
+        metric.getMetricName().ifPresent(metricName ->
+                statsdReporter.time(metricName, startTime, tagArray));
+    }
+
+    @VisibleForTesting
+    void reportGrTime(RequestMetric metric, long startTime) {
+        long time = System.currentTimeMillis() - startTime;
+        log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
+        if (statsdFilter.isIgnoredGrRequestMetric(metric)) {
             return;
         }
 

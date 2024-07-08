@@ -1,6 +1,7 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -40,20 +41,31 @@ public class StatsDFilter {
 
     private final Set<String> requestMetricsToIgnore;
 
+    private StatsDClient dataGrafanaClient = new NoOpStatsDClient();
+
+    private final GrafanaMetricsProperties grafanaMetricsProperties;
+    private final Set<String> requestMetricsToIgnoreGrafana;
+
     @Inject
     public StatsDFilter(
             DatadogMetricsProperties datadogMetricsProperties,
             TickMetricsProperties tickMetricsProperties,
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-            @Named("Webhook") Dao<Webhook> webhookConfigDao) {
+            @Named("Webhook") Dao<Webhook> webhookConfigDao, GrafanaMetricsProperties grafanaMetricsProperties) {
         this.datadogMetricsProperties = datadogMetricsProperties;
         this.tickMetricsProperties = tickMetricsProperties;
         this.channelConfigDao = channelConfigDao;
         this.webhookConfigDao = webhookConfigDao;
+        this.grafanaMetricsProperties = grafanaMetricsProperties;
 
         String[] ignoredRequestMetrics = StringUtils.split(datadogMetricsProperties.getRequestMetricsToIgnore());
         requestMetricsToIgnore = (null != ignoredRequestMetrics && ignoredRequestMetrics.length > 0)
                 ? new HashSet<>(Arrays.asList(ignoredRequestMetrics))
+                : Collections.emptySet();
+
+        String[] ignoredGrafanaRequestMetrics = StringUtils.split(grafanaMetricsProperties.getRequestMetricsToIgnore());
+        requestMetricsToIgnoreGrafana = (null != ignoredGrafanaRequestMetrics && ignoredGrafanaRequestMetrics.length > 0)
+                ? new HashSet<>(Arrays.asList(ignoredGrafanaRequestMetrics))
                 : Collections.emptySet();
     }
 
@@ -61,8 +73,10 @@ public class StatsDFilter {
     void setOperatingClients() {
         int statsdPort = tickMetricsProperties.getStatsdPort();
         int dogstatsdPort = datadogMetricsProperties.getStatsdPort();
+        int grafanaStatsdPort = grafanaMetricsProperties.getStatsdPort();
         this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, statsdPort);
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
+        this.dataGrafanaClient = new NonBlockingStatsDClient(clientPrefix, clientHost, grafanaStatsdPort);
     }
 
     public boolean isTestChannel(String channel) {
@@ -74,13 +88,27 @@ public class StatsDFilter {
                 .map(requestMetricsToIgnore::contains)
                 .orElse(true);
     }
-
+    public boolean isIgnoredGrRequestMetric(RequestMetric metric) {
+        return metric.getMetricName()
+                .map(requestMetricsToIgnoreGrafana::contains)
+                .orElse(true);
+    }
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
         StatsDClient primaryClient = datadogMetricsProperties.isPrimary() ? dataDogClient : statsDClient;
         StatsDClient secondaryClient = primaryClient.equals(dataDogClient) ? statsDClient : dataDogClient;
+
         return secondaryReporting ?
                 Arrays.asList(primaryClient, secondaryClient) :
                 Collections.singletonList(primaryClient);
+    }
+
+    List<StatsDClient> getGrafanaFilteredClients(boolean reporting) {
+        StatsDClient primaryGrafanaClient = grafanaMetricsProperties.isPrimary() ? dataGrafanaClient : statsDClient;
+        StatsDClient secondaryGrafanaClient = primaryGrafanaClient.equals(dataGrafanaClient) ? statsDClient : dataGrafanaClient;
+
+        return reporting ?
+                Arrays.asList(primaryGrafanaClient, secondaryGrafanaClient) :
+                Collections.singletonList(primaryGrafanaClient);
     }
 
     boolean isSecondaryReporting(String name) {
