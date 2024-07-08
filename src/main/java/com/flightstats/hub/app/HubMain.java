@@ -9,6 +9,8 @@ import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
@@ -20,9 +22,27 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
+        String fileName = args[0];
+        File file = new File(fileName);
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", new File(args[0]).getPath());
+            throw new UnsupportedOperationException("HubMain requires a valid property filename");
+        } else {
+            PropertiesLoader.getInstance().load(fileName);
+            new HubMain().run();
+        }
+    }
 
-        PropertiesLoader.getInstance().load(args[0]);
-        new HubMain().run();
+
+    private static boolean isSafePath(File file) {
+        try {
+            String canonicalPath = file.getCanonicalPath();
+            String canonicalBasePath = new File(".").getCanonicalPath();
+            return canonicalPath.startsWith(canonicalBasePath);
+        } catch (IOException e) {
+            log.warn("Failed to resolve canonical path for {}", file.getPath(), e);
+            return false;
+        }
     }
 
     public static DateTime getStartTime() {
