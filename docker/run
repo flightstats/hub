@@ -86,7 +86,9 @@ function shutdownChild()
 trap "shutdownChild" SIGTERM SIGINT
 
 echo "running hub in the background..."
-exec java -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
+#exec java -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
+#CHILDPID=$!
+java -javaagent:/opt/jmx_prometheus_javaagent-0.17.2.jar=12345:/opt/config.yaml -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
 echo "... hub pid is $CHILDPID"
 

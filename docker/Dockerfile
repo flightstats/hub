@@ -8,6 +8,12 @@ RUN apt-get update && apt-get install -y bash ntp curl && \
 ENV MIN_HEAP=1g \
     MAX_HEAP=3g \
     NEW_SIZE=100m
+# Download the JAR file from the specified URL and place it in /opt
+RUN wget -O /opt/jmx_prometheus_javaagent-0.17.2.jar https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.17.2/jmx_prometheus_javaagent-0.17.2.jar
+RUN chmod +x /opt/jmx_prometheus_javaagent-0.17.2.jar
+
+ADD config.yaml /opt/config.yaml
+RUN chmod +x /opt/config.yaml
 
 ADD configs /etc/hub
 
