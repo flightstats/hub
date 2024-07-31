@@ -90,6 +90,7 @@ echo "running hub in the background..."
 #CHILDPID=$!
 java -javaagent:/opt/jmx_prometheus_javaagent-0.17.2.jar=12345:/opt/config.yaml -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
+ls -l /opt/jmx_prometheus_javaagent-0.17.2.jar
 echo "... hub pid is $CHILDPID"
 
 wait ${CHILDPID}
