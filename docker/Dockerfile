@@ -13,7 +13,6 @@ RUN wget -O /opt/jmx_prometheus_javaagent-1.0.1.jar https://repo1.maven.org/mave
 RUN chmod +x /opt/jmx_prometheus_javaagent-1.0.1.jar
 
 ADD config.yaml /opt/config.yaml
-RUN chmod +x /opt/config.yaml
 
 ADD configs /etc/hub
 
