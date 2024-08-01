@@ -85,6 +85,11 @@ configurations {
     integrationTests
 }
 
+ext {
+    jmxPrometheusVersion = "1.0.1"
+    jmxJavaAgent = '-javaagent:/opt/hub/lib/jmx_prometheus_javaagent-' + jmxPrometheusVersion + '.jar=12346:/opt/java_exporter/config.yaml'
+}
+
 dependencies {
 
     compile 'org.eclipse.jetty:jetty-server:9.4.8.v20171121'
