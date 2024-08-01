@@ -91,7 +91,7 @@ configurations {
 }*/
 
 dependencies {
-    implementation("io.prometheus.jmx:jmx_prometheus_javaagent:1.0.1")
+    /*implementation("io.prometheus.jmx:jmx_prometheus_javaagent:1.0.1")*/
     compile 'org.eclipse.jetty:jetty-server:9.4.8.v20171121'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.8.v20171121'
     compile 'org.eclipse.jetty:jetty-servlets:9.4.8.v20171121'
