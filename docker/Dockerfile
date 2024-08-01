@@ -12,8 +12,8 @@ ENV MIN_HEAP=1g \
 #RUN wget -O /opt/jmx_prometheus_javaagent-1.0.1.jar https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar
 #RUN chmod +x /opt/jmx_prometheus_javaagent-1.0.1.jar
 
-ADD jmx_prometheus_javaagent-1.0.1.jar /opt/hub/jmx_prometheus_javaagent-1.0.1.jar
-RUN chmod +x /opt/hub/jmx_prometheus_javaagent-1.0.1.jar
+#ADD jmx_prometheus_javaagent-1.0.1.jar /opt/hub/jmx_prometheus_javaagent-1.0.1.jar
+#RUN chmod +x /opt/hub/jmx_prometheus_javaagent-1.0.1.jar
 ADD config.yaml /opt/hub/config.yaml
 
 ADD configs /etc/hub
