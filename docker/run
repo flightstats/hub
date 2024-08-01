@@ -90,7 +90,7 @@ echo "running hub in the background..."
 #CHILDPID=$!
 #ls -l jmxAgent/jmx_prometheus_javaagent-1.0.1.jar
 echo "Harinadh checking jar present or not"
-ls -l ${APP_HOME}/jmx_prometheus_javaagent-0.17.2.jar
+#ls -l ${APP_HOME}/jmx_prometheus_javaagent-0.17.2.jar
 
 exec java -javaagent:${APP_HOME}/jmx_prometheus_javaagent-0.17.2.jar=12345:${APP_HOME}/config.yaml -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
