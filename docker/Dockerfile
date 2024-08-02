@@ -15,8 +15,8 @@ ENV MIN_HEAP=1g \
 #ADD jmx_prometheus_javaagent-1.0.1.jar /opt/hub/jmx_prometheus_javaagent-1.0.1.jar
 #RUN chmod +x /opt/hub/jmx_prometheus_javaagent-1.0.1.jar
 
-COPY config.yaml /opt/hub/config.yaml
-RUN chmod 644 /opt/hub/config.yaml
+#COPY ../configs/config.yaml /opt/hub/config.yaml
+#RUN chmod 644 /opt/hub/config.yaml
 ADD configs /etc/hub
 
 ADD hub /opt/hub

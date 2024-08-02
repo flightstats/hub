@@ -92,7 +92,7 @@ echo "running hub in the background..."
 echo "Harinadh checking jar present or not"
 #ls -l ${APP_HOME}/jmx_prometheus_javaagent-0.17.2.jar
 
-exec java -javaagent:"${APP_HOME}/lib/jmx_prometheus_javaagent-1.0.1.jar"=12347:${APP_HOME}/config.yaml -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
+exec java -javaagent:"${APP_HOME}/lib/jmx_prometheus_javaagent-1.0.1.jar"=12347:docker/configs/config.yaml -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
 
 echo "... hub pid is $CHILDPID"
