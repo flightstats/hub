@@ -91,6 +91,20 @@ echo "running hub in the background..."
 #ls -l jmxAgent/jmx_prometheus_javaagent-1.0.1.jar
 echo "Harinadh checking jar present or not"
 #ls -l ${APP_HOME}/jmx_prometheus_javaagent-0.17.2.jar
+CONFIG_FILE="/opt/hub/config.yaml"
+
+# Check if the config file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Configuration file does not exist. Creating it..."
+
+    # Create the configuration file with the required content
+    echo "rules:" > "$CONFIG_FILE"
+    echo "- pattern: \".*\"" >> "$CONFIG_FILE"
+
+    echo "Configuration file created at $CONFIG_FILE"
+else
+    echo "Configuration file already exists at $CONFIG_FILE"
+fi
 
 exec java -javaagent:"${APP_HOME}/lib/jmx_prometheus_javaagent-1.0.1.jar"=12347:/opt/hub/config.yaml -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
