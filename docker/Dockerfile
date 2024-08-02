@@ -17,6 +17,9 @@ ENV MIN_HEAP=1g \
 
 #COPY ../configs/config.yaml /opt/hub/config.yaml
 #RUN chmod 644 /opt/hub/config.yaml
+RUN chmod 644 config.yaml
+ADD config.yaml /opt/hub/config.yaml
+RUN chmod 644 /opt/hub/config.yaml
 ADD configs /etc/hub
 
 ADD hub /opt/hub
