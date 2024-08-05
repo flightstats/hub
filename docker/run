@@ -88,17 +88,15 @@ function shutdownChild()
 }
 trap "shutdownChild" SIGTERM SIGINT
 
-CONFIG="/opt/hub/config.yaml"
-
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Configuration file does not exist. Creating it..."
 
-    echo "rules:" > "$CONFIG"
-    echo "- pattern: \".*\"" >> "$CONFIG"
+    echo "rules:" > "$CONFIG_FILE"
+    echo "- pattern: \".*\"" >> "$CONFIG_FILE"
 
-    echo "Configuration file created at $CONFIG"
+    echo "Configuration file created at $CONFIG_FILE"
 else
-    echo "Configuration file already exists at $CONFIG"
+    echo "Configuration file already exists at $CONFIG_FILE"
 fi
 
 echo "running hub in the background..."
