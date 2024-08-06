@@ -22,9 +22,23 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-
-        PropertiesLoader.getInstance().load(args[0]);
+        String fileName = args[0];
+        File file = new File(fileName);
+        if (!isSafePath(file)) {
+            log.warn("Potential path traversal attempt: {}", file.getPath());
+            throw new UnsupportedOperationException("HubMain requires a valid property filename");
+        }
+        PropertiesLoader.getInstance().load(fileName);
         new HubMain().run();
+    }
+
+    private static boolean isSafePath(File file) {
+        try {
+            return file.getCanonicalPath().startsWith(new File(".").getCanonicalPath());
+        } catch (IOException e) {
+            log.warn("Failed to resolve canonical path for {}", file.getPath(), e);
+            return false;
+        }
     }
 
     public static DateTime getStartTime() {
