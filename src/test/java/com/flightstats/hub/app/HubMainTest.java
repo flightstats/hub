@@ -1,4 +1,4 @@
-/*
+
 package com.flightstats.hub.app;
 
 import org.junit.jupiter.api.Test;
@@ -25,8 +25,7 @@ public class HubMainTest {
         assertEquals("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'", exception.getMessage());
     }
 
-  */
-/*  @Test
+    @Test
     public void testUnsafePathArgument() {
         String unsafePath = "../../../../../../etc/passwd";
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
@@ -34,8 +33,7 @@ public class HubMainTest {
         });
         assertEquals("HubMain requires a valid property filename", exception.getMessage());
 
-    }*//*
-
+    }
 
 }
-*/
+
