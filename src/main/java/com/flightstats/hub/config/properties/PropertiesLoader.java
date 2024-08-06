@@ -51,7 +51,11 @@ public class PropertiesLoader {
 
         URL resource = null;
         try {
-            resource = new File(file).toURI().toURL();
+            if (Objects.nonNull(file) && sanitizePathTraversal(file)) {
+                log.error("Path traversal detected in input file ", file);
+            } else {
+                resource = new File(file).toURI().toURL();
+            }
         } catch (MalformedURLException e) {
             log.warn("Problem loading file {}", file, e);
         }
@@ -77,6 +81,10 @@ public class PropertiesLoader {
         if (getProperty("hub.read.only", false)) {
             ensureReadOnlyPropertiesAreSet();
         }
+    }
+
+    private boolean sanitizePathTraversal(String file) {
+        return file.contains("../") || file.contains("%");
     }
 
     private void ensureReadOnlyPropertiesAreSet() {
