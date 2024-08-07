@@ -1,4 +1,3 @@
-
 package com.flightstats.hub.app;
 
 import org.junit.jupiter.api.Test;
@@ -36,4 +35,3 @@ public class HubMainTest {
     }
 
 }
-
