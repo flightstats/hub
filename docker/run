@@ -14,7 +14,7 @@ HOST_IP=${HUB_RMI_HOST_IP:=localhost}
 JMXREMOTE_PORT=8888
 JMX_AGENT_PORT=12347
 CONFIG_FILE="/opt/hub/config.yaml"
-JMX_AGENT="${APP_HOME}/lib/jmx_prometheus_javaagent-1.0.1.jar=${JMX_AGENT_PORT}:${CONFIG_FILE}"
+JMX_AGENT="${APP_HOME}/lib/jmx_prometheus_javaagent-1.0.1.jar ${JMX_AGENT_PORT} ${CONFIG_FILE}"
 
 # extract the port from hub.properties
 for word in $(<${CONFIG_DIR}/hub.properties); do

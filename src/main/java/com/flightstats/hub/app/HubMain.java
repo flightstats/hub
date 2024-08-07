@@ -22,13 +22,8 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-        String fileName = args[0];
-        File file = new File(fileName);
-        if (!isSafePath(file)) {
-            log.warn("Potential path traversal attempt: {}", file.getPath());
-            throw new UnsupportedOperationException("HubMain requires a valid property filename");
-        }
-        PropertiesLoader.getInstance().load(fileName);
+
+        PropertiesLoader.getInstance().load(args[0]);
         new HubMain().run();
     }
 
