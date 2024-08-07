@@ -11,8 +11,11 @@ ENV MIN_HEAP=1g \
 
 ADD configs /etc/hub
 
+
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
 RUN chmod +x /opt/hub/bin/*
+
+ADD config.yaml /opt/hub/config.yaml
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
