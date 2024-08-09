@@ -63,6 +63,7 @@ JAVA_OPTS="
  -XX:GCLogFileSize=100M
  -Xloggc:${LOG_DIR}/gc.log
  -Dfile.encoding=UTF-8
+ -javaagent:${JMX_AGENT}
  -Dlogback.configurationFile=${CONFIG_DIR}/logback.xml"
 
 CHILDPID=""
@@ -100,7 +101,7 @@ else
 fi
 
 echo "running hub in the background..."
-exec java -javaagent:"${JMX_AGENT}" -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
+exec java -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
 echo "... hub pid is $CHILDPID"
 
