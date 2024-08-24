@@ -101,7 +101,7 @@ class StatsDFilterTest {
 
     @Test
     void testStatsDFilterGetAllClients_twoNoOpClients() {
-        assertEquals(2, statsDFilter.getFilteredClients(true).size());
+        assertEquals(3, statsDFilter.getFilteredClients(true).size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(1).getClass());
     }
@@ -109,20 +109,20 @@ class StatsDFilterTest {
     @Test
     void testStatsDFilterGetAllClients_twoCustomClients() {
         statsDFilter.setOperatingClients();
-        assertEquals(2, statsDFilter.getFilteredClients(true).size());
+        assertEquals(3, statsDFilter.getFilteredClients(true).size());
         assertEquals(NonBlockingStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
         assertEquals(NonBlockingStatsDClient.class, statsDFilter.getFilteredClients(true).get(1).getClass());
     }
 
     @Test
     void testStatsDFilterGetFilteredClients_oneClient() {
-        assertEquals(1, statsDFilter.getFilteredClients(false).size());
+        assertEquals(2, statsDFilter.getFilteredClients(false).size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(false).get(0).getClass());
     }
 
     @Test
     void testStatsDFilterGetFilteredClients_twoClientsFiltered() {
-        assertEquals(2, statsDFilter.getFilteredClients(true).size());
+        assertEquals(3, statsDFilter.getFilteredClients(true).size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
     }
 
