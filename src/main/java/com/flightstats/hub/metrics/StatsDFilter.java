@@ -32,6 +32,7 @@ public class StatsDFilter {
     private final static String clientHost = "localhost";
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
+    private StatsDClient additionalClient = new NoOpStatsDClient(); // New client
 
     private final DatadogMetricsProperties datadogMetricsProperties;
     private final TickMetricsProperties tickMetricsProperties;
@@ -43,7 +44,7 @@ public class StatsDFilter {
 
     private StatsDClient dataGrafanaClient = new NoOpStatsDClient();
 
-    private final GrafanaMetricsProperties grafanaMetricsProperties;
+  //  private final GrafanaMetricsProperties grafanaMetricsProperties;
     private final Set<String> requestMetricsToIgnoreGrafana;
 
     @Inject
@@ -56,7 +57,7 @@ public class StatsDFilter {
         this.tickMetricsProperties = tickMetricsProperties;
         this.channelConfigDao = channelConfigDao;
         this.webhookConfigDao = webhookConfigDao;
-        this.grafanaMetricsProperties = grafanaMetricsProperties;
+     //   this.grafanaMetricsProperties = grafanaMetricsProperties;
 
         String[] ignoredRequestMetrics = StringUtils.split(datadogMetricsProperties.getRequestMetricsToIgnore());
         requestMetricsToIgnore = (null != ignoredRequestMetrics && ignoredRequestMetrics.length > 0)
@@ -73,10 +74,13 @@ public class StatsDFilter {
     void setOperatingClients() {
         int statsdPort = tickMetricsProperties.getStatsdPort();
         int dogstatsdPort = datadogMetricsProperties.getStatsdPort();
-        int grafanaStatsdPort = grafanaMetricsProperties.getStatsdPort();
+      //  int grafanaStatsdPort = grafanaMetricsProperties.getStatsdPort();
+        int additionalPort = 9125; // New port for the additional client
+
         this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, statsdPort);
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
-        this.dataGrafanaClient = new NonBlockingStatsDClient(clientPrefix, clientHost, grafanaStatsdPort);
+        this.additionalClient = new NonBlockingStatsDClient(clientPrefix, clientHost, additionalPort);
+
     }
 
     public boolean isTestChannel(String channel) {
@@ -98,18 +102,18 @@ public class StatsDFilter {
         StatsDClient secondaryClient = primaryClient.equals(dataDogClient) ? statsDClient : dataDogClient;
 
         return secondaryReporting ?
-                Arrays.asList(primaryClient, secondaryClient) :
-                Collections.singletonList(primaryClient);
+                Arrays.asList(primaryClient, secondaryClient, additionalClient) :
+                Arrays.asList(primaryClient, additionalClient);
     }
 
-    List<StatsDClient> getGrafanaFilteredClients(boolean reporting) {
+  /*  List<StatsDClient> getGrafanaFilteredClients(boolean reporting) {
         StatsDClient primaryGrafanaClient = grafanaMetricsProperties.isPrimary() ? dataGrafanaClient : statsDClient;
         StatsDClient secondaryGrafanaClient = primaryGrafanaClient.equals(dataGrafanaClient) ? statsDClient : dataGrafanaClient;
 
         return reporting ?
                 Arrays.asList(primaryGrafanaClient, secondaryGrafanaClient) :
                 Collections.singletonList(primaryGrafanaClient);
-    }
+    }*/
 
     boolean isSecondaryReporting(String name) {
         return shouldChannelReport(name).isPresent() || shouldWebhookReport(name).isPresent();

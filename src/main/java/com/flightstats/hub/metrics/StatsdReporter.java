@@ -16,18 +16,17 @@ public class StatsdReporter {
     private StatsDFilter statsDFilter;
     private StatsDFormatter statsDFormatter;
     private DataDogHandler dataDogHandler;
-    private GrafanaHandler grafanaHandler;
+    //private GrafanaHandler grafanaHandler;
 
     public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
-            DataDogHandler dataDogHandler,
-            GrafanaHandler grafanaHandler
+            DataDogHandler dataDogHandler
     ) {
         this.statsDFilter = statsDFilter;
         this.statsDFormatter = statsDFormatter;
         this.dataDogHandler = dataDogHandler;
-        this.grafanaHandler = grafanaHandler;
+      //  this.grafanaHandler = grafanaHandler;
     }
 
     public void insert(String channel, long start, ChannelMetricTag channelMetricTag, int items, long bytes) {
@@ -91,15 +90,15 @@ public class StatsdReporter {
 
     public void mute() {
         dataDogHandler.mute();
-        grafanaHandler.mute();
+        //grafanaHandler.mute();
     }
 
     private void reportWithBothClients(Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
         clients.forEach(method);
 
-        List<StatsDClient> grafanaClients = statsDFilter.getGrafanaFilteredClients(true);
-        grafanaClients.forEach(method);
+       /* List<StatsDClient> grafanaClients = statsDFilter.getGrafanaFilteredClients(true);
+        grafanaClients.forEach(method);*/
     }
 
 }

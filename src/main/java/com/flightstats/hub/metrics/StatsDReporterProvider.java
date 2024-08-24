@@ -28,8 +28,8 @@ public class StatsDReporterProvider implements Provider<StatsdReporter> {
     public StatsdReporter get() {
         StatsDFormatter statsDFormatter = new StatsDFormatter(metricsProperties);
         DataDogHandler dataDogHandler = new DataDogHandler(datadogMetricsProperties, metricsProperties);
-        GrafanaHandler grafanaHandler = new GrafanaHandler(grafanaMetricsProperties, metricsProperties);
-        return new StatsdReporter(statsDFilter, statsDFormatter, dataDogHandler, grafanaHandler);
+       // GrafanaHandler grafanaHandler = new GrafanaHandler(grafanaMetricsProperties, metricsProperties);
+        return new StatsdReporter(statsDFilter, statsDFormatter, dataDogHandler);
 
     }
 
