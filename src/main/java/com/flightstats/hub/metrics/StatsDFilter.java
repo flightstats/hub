@@ -45,14 +45,14 @@ public class StatsDFilter {
     private StatsDClient dataGrafanaClient = new NoOpStatsDClient();
 
   //  private final GrafanaMetricsProperties grafanaMetricsProperties;
-    private final Set<String> requestMetricsToIgnoreGrafana;
+    //private final Set<String> requestMetricsToIgnoreGrafana;
 
     @Inject
     public StatsDFilter(
             DatadogMetricsProperties datadogMetricsProperties,
             TickMetricsProperties tickMetricsProperties,
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-            @Named("Webhook") Dao<Webhook> webhookConfigDao, GrafanaMetricsProperties grafanaMetricsProperties) {
+            @Named("Webhook") Dao<Webhook> webhookConfigDao) {
         this.datadogMetricsProperties = datadogMetricsProperties;
         this.tickMetricsProperties = tickMetricsProperties;
         this.channelConfigDao = channelConfigDao;
@@ -64,10 +64,10 @@ public class StatsDFilter {
                 ? new HashSet<>(Arrays.asList(ignoredRequestMetrics))
                 : Collections.emptySet();
 
-        String[] ignoredGrafanaRequestMetrics = StringUtils.split(grafanaMetricsProperties.getRequestMetricsToIgnore());
+     /*   String[] ignoredGrafanaRequestMetrics = StringUtils.split(grafanaMetricsProperties.getRequestMetricsToIgnore());
         requestMetricsToIgnoreGrafana = (null != ignoredGrafanaRequestMetrics && ignoredGrafanaRequestMetrics.length > 0)
                 ? new HashSet<>(Arrays.asList(ignoredGrafanaRequestMetrics))
-                : Collections.emptySet();
+                : Collections.emptySet();*/
     }
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
@@ -92,11 +92,11 @@ public class StatsDFilter {
                 .map(requestMetricsToIgnore::contains)
                 .orElse(true);
     }
-    public boolean isIgnoredGrRequestMetric(RequestMetric metric) {
+  /*  public boolean isIgnoredGrRequestMetric(RequestMetric metric) {
         return metric.getMetricName()
                 .map(requestMetricsToIgnoreGrafana::contains)
                 .orElse(true);
-    }
+    }*/
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
         StatsDClient primaryClient = datadogMetricsProperties.isPrimary() ? dataDogClient : statsDClient;
         StatsDClient secondaryClient = primaryClient.equals(dataDogClient) ? statsDClient : dataDogClient;

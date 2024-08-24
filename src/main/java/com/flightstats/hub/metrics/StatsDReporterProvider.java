@@ -10,18 +10,18 @@ public class StatsDReporterProvider implements Provider<StatsdReporter> {
     private final StatsDFilter statsDFilter;
     private final DatadogMetricsProperties datadogMetricsProperties;
     private final MetricsProperties metricsProperties;
-    private final GrafanaMetricsProperties grafanaMetricsProperties;
+   // private final GrafanaMetricsProperties grafanaMetricsProperties;
 
 
     @Inject
     StatsDReporterProvider(
             StatsDFilter statsDFilter,
             DatadogMetricsProperties datadogMetricsProperties,
-            MetricsProperties metricsProperties, GrafanaMetricsProperties grafanaMetricsProperties) {
+            MetricsProperties metricsProperties) {
         this.statsDFilter = statsDFilter;
         this.datadogMetricsProperties = datadogMetricsProperties;
         this.metricsProperties = metricsProperties;
-        this.grafanaMetricsProperties = grafanaMetricsProperties;
+       // this.grafanaMetricsProperties = grafanaMetricsProperties;
     }
 
     @Override

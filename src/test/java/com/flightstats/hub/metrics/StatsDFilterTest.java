@@ -45,12 +45,12 @@ class StatsDFilterTest {
     @Mock
     private Webhook webhook;
     private StatsDFilter statsDFilter;
-    @Mock
-    private GrafanaMetricsProperties grafanaMetricsProperties;
+   /* @Mock
+    private GrafanaMetricsProperties grafanaMetricsProperties;*/
 
     @BeforeEach
     void setup() {
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
     }
 
     @Test
@@ -233,7 +233,7 @@ class StatsDFilterTest {
         when(metric.getMetricName()).thenReturn(Optional.of("request.api.channel"));
 
         when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
 
         assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
     }
@@ -244,7 +244,7 @@ class StatsDFilterTest {
         when(metric.getMetricName()).thenReturn(Optional.of("request.internal.channel"));
 
         when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
 
         assertFalse(statsDFilter.isIgnoredRequestMetric(metric));
     }
@@ -255,7 +255,7 @@ class StatsDFilterTest {
         when(metric.getMetricName()).thenReturn(Optional.empty());
 
         when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
 
         assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
     }

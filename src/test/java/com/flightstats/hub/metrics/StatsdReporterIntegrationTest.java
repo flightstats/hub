@@ -48,8 +48,8 @@ class StatsdReporterIntegrationTest {
     private Dao<ChannelConfig> channelConfigDao;
     @Mock
     private Dao<Webhook> webhookDao;
-    @Mock
-    private GrafanaMetricsProperties grafanaMetricsProperties;
+   /* @Mock
+    private GrafanaMetricsProperties grafanaMetricsProperties;*/
 
     @BeforeEach
     void setup(){
@@ -103,9 +103,9 @@ class StatsdReporterIntegrationTest {
     }
 
     private StatsdReporter provideStatsDHandlers() {
-        StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
         statsDFilter.setOperatingClients();
-        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties, grafanaMetricsProperties);
+        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties);
         return provider.get();
     }
 

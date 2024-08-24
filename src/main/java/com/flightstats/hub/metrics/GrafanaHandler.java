@@ -1,3 +1,4 @@
+/*
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.properties.DatadogMetricsProperties;
@@ -60,4 +61,4 @@ public class GrafanaHandler {
             log.warn("Muting grafana error ", e);
         }
     }
-}
+}*/

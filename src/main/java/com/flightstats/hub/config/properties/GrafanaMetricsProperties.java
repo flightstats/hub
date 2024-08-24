@@ -22,9 +22,9 @@ public class GrafanaMetricsProperties {
         return propertiesLoader.getProperty("metrics.grafana.api_key", "");
     }
 
-    public int getStatsdPort() {
+   /* public int getStatsdPort() {
         return propertiesLoader.getProperty("metrics.grafanastatsd.port", 9125);
-    }
+    }*/
 
     public boolean isPrimary() {
         return propertiesLoader.getProperty("metrics.grafana.primary", true);
