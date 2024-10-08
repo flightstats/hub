@@ -137,11 +137,8 @@ public class ChannelResource {
                     .entity("Modification of the creation date is not allowed").build();
         }
         if (oldConfig.isPresent()) {
-            System.out.println("Checking if the creation date is being modified");
             ChannelConfig config = oldConfig.get();
             log.trace("using old channel {} {}", config, config.getCreationDate().getTime());
-            // Check if the creation date is being modified
-
             channelConfig = ChannelConfig.updateFromJson(config, StringUtils.defaultIfBlank(json, "{}"));
         }
         channelConfig = channelService.updateChannel(channelConfig, oldConfig.orElse(null), LocalHostOnly.isLocalhost(uriInfo));
