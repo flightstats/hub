@@ -30,6 +30,7 @@ public class ChannelValidator {
 
         if (config != null) {
             channelNameOptional = Optional.ofNullable(config.getDisplayName());
+            validateChannelCreationDate(config, oldConfig);
         }
 
         validateNameWasGiven(channelNameOptional);
@@ -41,7 +42,7 @@ public class ChannelValidator {
         if (oldConfig == null) {
             validateChannelUniqueness(channelName);
         }
-        validateChannelCreationDate(config, oldConfig);
+
         validateTTL(config, oldConfig);
         validateDescription(config);
         validateTags(config);
