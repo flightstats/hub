@@ -41,6 +41,7 @@ public class ChannelValidator {
         if (oldConfig == null) {
             validateChannelUniqueness(channelName);
         }
+        validateChannelCreationDate(config, oldConfig);
         validateTTL(config, oldConfig);
         validateDescription(config);
         validateTags(config);
@@ -183,6 +184,14 @@ public class ChannelValidator {
     private void validateChannelUniqueness(String channelName) throws ConflictException {
         if (channelConfigDao.exists(channelName)) {
             throw new ConflictException("{\"error\": \"Channel name " + channelName + " already exists\"}");
+        }
+    }
+
+    public void validateChannelCreationDate(ChannelConfig request, ChannelConfig oldConfig) {
+        if (null != request.getCreationDate()) {
+            if (null != oldConfig.getCreationDate()) {
+                throw new ForbiddenRequestException("{\"error\": \"A channels Creation Date is not allowed to change\"}");
+            }
         }
     }
 }
