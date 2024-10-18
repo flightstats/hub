@@ -420,5 +420,28 @@ class ChannelValidatorTest {
                 .build();
         assertThrows(InvalidRequestException.class, () -> validator.validate(historical.toBuilder().storage(BATCH.name()).build(), historical, false));
     }
+    @Test
+    void testValidateCreationDate_NoOldConfigCreationDate() {
+        ChannelConfig request = ChannelConfig.builder().creationDate(new DateTime().toDate()).build();
+        ChannelConfig oldConfig = ChannelConfig.builder().build();
+
+        assertDoesNotThrow(() -> validator.validateCreationDate(request, oldConfig));
+    }
+
+    @Test
+    void testValidateCreationDate_WithOldConfigCreationDate() {
+        ChannelConfig request = ChannelConfig.builder().creationDate(new DateTime().toDate()).build();
+        ChannelConfig oldConfig = ChannelConfig.builder().creationDate(new DateTime().toDate()).build();
+
+        assertThrows(ForbiddenRequestException.class, () -> validator.validateCreationDate(request, oldConfig));
+    }
+
+    @Test
+    void testValidateCreationDate_NoRequestCreationDate() {
+        ChannelConfig request = ChannelConfig.builder().build();
+        ChannelConfig oldConfig = ChannelConfig.builder().creationDate(new DateTime().toDate()).build();
+
+        assertDoesNotThrow(() -> validator.validateCreationDate(request, oldConfig));
+    }
 
 }

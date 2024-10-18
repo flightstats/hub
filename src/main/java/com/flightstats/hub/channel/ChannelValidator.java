@@ -185,4 +185,12 @@ public class ChannelValidator {
             throw new ConflictException("{\"error\": \"Channel name " + channelName + " already exists\"}");
         }
     }
+    public void validateCreationDate(ChannelConfig request, ChannelConfig oldConfig) {
+        if (null != request.getCreationDate()) {
+            // if the creation date is set already, it can't be updated
+            if (null != oldConfig.getCreationDate()) {
+                throw new ForbiddenRequestException("{\"error\": \"A channels Creation Date is not allowed to change\"}");
+            }
+        }
+    }
 }
