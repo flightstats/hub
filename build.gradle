@@ -100,6 +100,8 @@ dependencies {
     compile 'org.glassfish.jersey.inject:jersey-hk2:2.26'
     compile 'org.glassfish.hk2:guice-bridge:2.5.0'
 
+    compile 'org.json:json:20210307'
+
     // TODO: migrate to the Jersey 2 client
     compile 'com.sun.jersey:jersey-client:1.19.4'
 

@@ -11,6 +11,7 @@ import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.json.JSONObject;
 import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
@@ -130,6 +132,12 @@ public class ChannelResource {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
         log.trace("put channel {} {}", channelName, json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
+        if (!oldConfig.isPresent()) {
+            json = channelService.handleCreationDate(json);
+        }
+        if (oldConfig.isPresent() && json.contains("creationDate")) {
+            throw new ForbiddenRequestException("{\"error\": \"creationDate is not allowed to change.\"}");
+        }
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (oldConfig.isPresent()) {
             ChannelConfig config = oldConfig.get();

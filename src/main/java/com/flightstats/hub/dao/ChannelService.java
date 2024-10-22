@@ -27,6 +27,7 @@ import com.google.inject.name.Named;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -35,6 +36,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 
+import static com.flightstats.hub.constant.ContentConstant.CREATION_DATE;
 import static com.flightstats.hub.constant.ZookeeperNodes.HISTORICAL_EARLIEST;
 import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATOR_WATCHER_PATH;
@@ -323,4 +325,11 @@ public class ChannelService {
         return channelConfigDao.refresh();
     }
 
+    public String handleCreationDate(String json) {
+        JSONObject jsonObject = new JSONObject(json);
+        if (jsonObject.has("creationDate")) {
+            jsonObject.remove("creationDate");
+        }
+        return jsonObject.toString();
+    }
 }
