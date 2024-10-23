@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.json.JSONObject;
 import org.owasp.encoder.Encode;
 
 import javax.inject.Inject;
@@ -50,6 +51,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Optional;
 
+import static com.flightstats.hub.constant.ContentConstant.CREATION_DATE;
 import static com.flightstats.hub.rest.Linked.linked;
 
 /**
@@ -129,6 +131,13 @@ public class ChannelResource {
         channelName = Encode.forHtml(channelName);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
         log.trace("put channel {} {}", channelName, json);
+        if (StringUtils.isNoneEmpty(json)) {
+            JSONObject jsonObject = new JSONObject(json);
+            if (jsonObject.has("creationDate")) {
+                jsonObject.remove("creationDate");
+            }
+            json = jsonObject.toString();
+        }
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (oldConfig.isPresent()) {
