@@ -32,16 +32,16 @@ public class ChannelServiceTest {
 
     @Test
     public void shouldRemoveCreationDateWhenPresent() {
-        String inputJson = "{\"creationDate\": \"2024-10-24\", \"otherKey\": \"value\"}";
-        String expectedJson = "{\"otherKey\":\"value\"}";
+        String inputJson = "{\"creationDate\": \"2024-10-24\", \"secondaryMetricsReporting\": \"false\"}";
+        String expectedJson = "{\"allowZeroBytes\":\"false\"}";
         String result = channelService.handleCreationDate(inputJson);
         assertEquals(expectedJson, result);
     }
 
     @Test
     public void shouldReturnOriginalJsonWhenCreationDateNotPresent() {
-        String inputJson = "{\"otherKey\": \"value\"}";
-        String expectedJson = "{\"otherKey\":\"value\"}";
+        String inputJson = "{\"secondaryMetricsReporting\": \"false\"}";
+        String expectedJson = "{\"allowZeroBytes\":\"true\"}";
         String result = channelService.handleCreationDate(inputJson);
         assertEquals(expectedJson, result);
     }
