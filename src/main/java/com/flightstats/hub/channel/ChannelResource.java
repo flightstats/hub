@@ -131,13 +131,7 @@ public class ChannelResource {
         channelName = Encode.forHtml(channelName);
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
         log.trace("put channel {} {}", channelName, json);
-        if (StringUtils.isNoneEmpty(json)) {
-            JSONObject jsonObject = new JSONObject(json);
-            if (jsonObject.has("creationDate")) {
-                jsonObject.remove("creationDate");
-            }
-            json = jsonObject.toString();
-        }
+        json = channelService.handleCreationDate(json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (oldConfig.isPresent()) {
@@ -160,6 +154,7 @@ public class ChannelResource {
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateMetadata", channelName));
         log.trace("patch channel {} {}", channelName, json);
+        json = channelService.handleCreationDate(json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
                     log.error("unable to patch channel " + channelName);
