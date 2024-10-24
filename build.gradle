@@ -115,6 +115,8 @@ dependencies {
     compile 'com.diffplug.durian:durian:3.4.0'
     compile 'joda-time:joda-time:2.9.9'
 
+    compile 'org.json:json:20210307'
+
     compile 'ch.qos.logback:logback-core:1.2.3'
     compile 'ch.qos.logback:logback-classic:1.2.3'
     compile 'net.logstash.logback:logstash-logback-encoder:4.11'
