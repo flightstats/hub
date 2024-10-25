@@ -26,7 +26,9 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -57,6 +59,7 @@ public class ChannelService {
     private final ContentRetriever contentRetriever;
     private final ContentProperties contentProperties;
 
+    private final static String CREATION_DATE = "creationDate";
     @Inject
     private TagWebhook tagWebhook;
 
@@ -323,4 +326,14 @@ public class ChannelService {
         return channelConfigDao.refresh();
     }
 
+    public String handleCreationDate(String json) {
+        if (StringUtils.isNoneEmpty(json)) {
+            JSONObject jsonObject = new JSONObject(json);
+            if (jsonObject.has(CREATION_DATE)) {
+                jsonObject.remove(CREATION_DATE);
+            }
+            json = jsonObject.toString();
+        }
+        return json;
+    }
 }
