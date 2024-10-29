@@ -7,6 +7,7 @@ import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.TimeInterval;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -17,8 +18,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * This is a convenience interface for external data Providers.
@@ -28,6 +31,8 @@ import java.util.Collection;
 @Path("/provider")
 public class ProviderResource {
 
+    private static final Pattern CHANNEL_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+    private static final String ALLOWED_CONTENT_TYPES = "application/hub";
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
 
@@ -80,9 +85,24 @@ public class ProviderResource {
     @Path("/bulk")
     public Response insertBulk(@HeaderParam("channelName") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
-                               final InputStream data) {
+                               final InputStream data) throws IOException {
         try {
+            // Validate channelName
+            if (channelName == null || !CHANNEL_NAME_PATTERN.matcher(channelName).matches()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid channel name").build();
+            }
+
+            // Validate contentType
+            if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid content type").build();
+            }
+
             ensureChannel(channelName);
+
+            // Sanitize data (additional checks can be added as needed)
+            if (data == null || data.available() == 0) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid data stream").build();
+            }
 
             BulkContent content = BulkContent.builder()
                     .isNew(true)
