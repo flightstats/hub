@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM amazoncorretto:8
 
 RUN apt-get update && apt-get install -y bash ntp curl && \
     mkdir -p /mnt/log && \
