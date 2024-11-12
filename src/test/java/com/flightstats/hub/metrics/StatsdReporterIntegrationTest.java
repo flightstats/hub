@@ -1,6 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
@@ -37,9 +36,6 @@ class StatsdReporterIntegrationTest {
 
     private IntegrationUdpServer udpServer;
     private IntegrationUdpServer udpServerDD;
-
-    @Mock
-    private DatadogMetricsProperties datadogMetricsProperties;
     @Mock
     private TickMetricsProperties tickMetricsProperties;
     @Mock
@@ -53,10 +49,10 @@ class StatsdReporterIntegrationTest {
 
     @BeforeEach
     void setup(){
-        when(datadogMetricsProperties.getStatsdPort()).thenReturn(8122);
+        when(grafanaMetricsProperties.getStatsdPort()).thenReturn(8122);
         when(tickMetricsProperties.getStatsdPort()).thenReturn(8123);
         udpServer = provideNewServer(tickMetricsProperties.getStatsdPort());
-        udpServerDD = provideNewServer(datadogMetricsProperties.getStatsdPort());
+        udpServerDD = provideNewServer(grafanaMetricsProperties.getStatsdPort());
     }
 
     @SneakyThrows
@@ -103,9 +99,9 @@ class StatsdReporterIntegrationTest {
     }
 
     private StatsdReporter provideStatsDHandlers() {
-        StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        StatsDFilter statsDFilter = new StatsDFilter(tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
         statsDFilter.setOperatingClients();
-        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties, grafanaMetricsProperties);
+        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter,metricsProperties, grafanaMetricsProperties);
         return provider.get();
     }
 

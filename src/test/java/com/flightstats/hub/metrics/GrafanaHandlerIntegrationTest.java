@@ -2,7 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.util.IntegrationServer;
 import com.flightstats.hub.util.TimeUtil;
@@ -32,12 +32,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class DataDogHandlerIntegrationTest {
+public class GrafanaHandlerIntegrationTest {
     private static List<String> writeResult;
     private static String queryResult;
     private static HttpServer httpServer;
     @Mock
-    private DatadogMetricsProperties datadogMetricsProperties;
+    private GrafanaMetricsProperties grafanaMetricsProperties;
     @Mock
     private MetricsProperties metricsProperties;
 
@@ -76,7 +76,7 @@ class DataDogHandlerIntegrationTest {
     @BeforeAll
     static void startMockDataDogServer() throws IOException {
         httpServer = IntegrationServer.builder()
-                .testHandler(new TestHandler())
+                .testHandler(new GrafanaHandlerIntegrationTest.TestHandler())
                 .bindAddress("localhost")
                 .bindPort(8888)
                 .path("/api")
@@ -87,12 +87,12 @@ class DataDogHandlerIntegrationTest {
 
     @Test
     void testDatadogMute_mute() throws IOException {
-        when(datadogMetricsProperties.getApiKey()).thenReturn("apiKey");
-        when(datadogMetricsProperties.getAppKey()).thenReturn("appKey");
-        when(datadogMetricsProperties.getApiUrl()).thenReturn("http://localhost:8888/api");
+        when(grafanaMetricsProperties.getApiKey()).thenReturn("apiKey");
+        when(grafanaMetricsProperties.getAppKey()).thenReturn("appKey");
+        when(grafanaMetricsProperties.getApiUrl()).thenReturn("http://localhost:8888/api");
         when(metricsProperties.getHostTag()).thenReturn("test_host");
 
-        DataDogHandler dataDogHandler = new DataDogHandler(datadogMetricsProperties, metricsProperties);
+        GrafanaHandler dataDogHandler = new GrafanaHandler(grafanaMetricsProperties, metricsProperties);
         dataDogHandler.mute();
 
         ObjectMapper mapper = new ObjectMapper();
