@@ -7,7 +7,6 @@ import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.util.TimeInterval;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
