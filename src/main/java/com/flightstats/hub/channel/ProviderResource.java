@@ -88,19 +88,19 @@ public class ProviderResource {
         try {
             // Validate channelName
             if (channelName == null || !CHANNEL_NAME_PATTERN.matcher(channelName).matches()) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid channel name").build();
+                return Response.status(400).entity("Invalid channel name").build();
             }
 
             // Validate contentType
             if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid content type").build();
+                return Response.status(400).entity("Invalid content type").build();
             }
 
             ensureChannel(channelName);
 
             // Sanitize data (additional checks can be added as needed)
             if (data == null || data.available() == 0) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid data stream").build();
+                return Response.status(400).entity("Invalid data stream").build();
             }
 
             BulkContent content = BulkContent.builder()
