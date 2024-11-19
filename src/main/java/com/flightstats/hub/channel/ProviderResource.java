@@ -81,10 +81,9 @@ public class ProviderResource {
     public Response insertBulk(@HeaderParam("channelName") String channelName,
                                @HeaderParam("Content-Type") String contentType,
                                final InputStream data){
+        channelName = Encode.forHtml(channelName);
+        contentType = Encode.forHtml(contentType);
         try {
-
-            channelName = Encode.forHtml(channelName);
-            contentType = Encode.forHtml(contentType);
 
             ensureChannel(channelName);
 
