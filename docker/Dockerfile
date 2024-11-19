@@ -1,6 +1,6 @@
 FROM amazoncorretto:8
 
-RUN apt-get update && apt-get install -y bash ntp curl && \
+RUN yum update && yum install -y bash ntp curl && \
     mkdir -p /mnt/log && \
     mkdir -p /mnt/spoke/write \
     mkdir -p /mnt/spoke/read
