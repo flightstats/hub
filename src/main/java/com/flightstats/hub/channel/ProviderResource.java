@@ -87,6 +87,8 @@ public class ProviderResource {
                                final InputStream data) throws IOException {
         try {
 
+            ensureChannel(channelName);
+
             // Validate channelName
             if (channelName == null || !CHANNEL_NAME_PATTERN.matcher(channelName).matches()) {
                 return Response.status(400).entity("Invalid channel name").build();
@@ -97,8 +99,6 @@ public class ProviderResource {
                 return Response.status(400).entity("Invalid content type").build();
             }
 
-            ensureChannel(channelName);
-            
             BulkContent content = BulkContent.builder()
                     .isNew(true)
                     .contentType(contentType)
