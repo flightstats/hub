@@ -98,12 +98,7 @@ public class ProviderResource {
             }
 
             ensureChannel(channelName);
-
-            // Sanitize data (additional checks can be added as needed)
-            if (data == null || data.available() == 0) {
-                return Response.status(400).entity("Invalid data stream").build();
-            }
-
+            
             BulkContent content = BulkContent.builder()
                     .isNew(true)
                     .contentType(contentType)
