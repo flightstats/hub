@@ -53,11 +53,11 @@ aws.retry.max.delay.millis=20000
 aws.retry.unknown.host.delay.millis=5000
 aws.signing_region=us-east-1
 
-#Datadog properties
-metrics.datadog.url=https://app.datadoghq.com/api/v1
-metrics.data_dog.app_key=
-metrics.data_dog.api_key=
-metrics.dogstatsd.port=8125
+#Grafana properties
+metrics.grafana.url=https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push
+metrics.grafana.app_key=
+metrics.grafana.api_key=
+metrics.grafanastatsd.port=9125
 
 #Dynamo properties
 dynamo.endpoint=dynamodb.us-east-1.amazonaws.com
