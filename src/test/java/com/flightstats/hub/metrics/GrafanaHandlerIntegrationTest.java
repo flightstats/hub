@@ -86,7 +86,7 @@ public class GrafanaHandlerIntegrationTest {
     }
 
     @Test
-    void testDatadogMute_mute() throws IOException {
+    void testGrafanaMute_mute() throws IOException {
         when(grafanaMetricsProperties.getApiKey()).thenReturn("apiKey");
         when(grafanaMetricsProperties.getAppKey()).thenReturn("appKey");
         when(grafanaMetricsProperties.getApiUrl()).thenReturn("http://localhost:8888/api");
