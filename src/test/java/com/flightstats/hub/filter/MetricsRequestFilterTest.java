@@ -32,7 +32,7 @@ public class MetricsRequestFilterTest {
         StatsdReporter mockStatsdReporter = mock(StatsdReporter.class);
         StatsDFilter mockFilter = mock(StatsDFilter.class);
         RequestMetric mockMetric = mock(RequestMetric.class);
-        when(mockFilter.isIgnoredRequestMetric(mockMetric)).thenReturn(false);
+        when(mockFilter.isIgnoredGrRequestMetric(mockMetric)).thenReturn(false);
 
         HashMap<String, String> tags = new HashMap<>();
         tags.put("channel", "channel1");
@@ -53,7 +53,7 @@ public class MetricsRequestFilterTest {
         StatsdReporter mockStatsdReporter = mock(StatsdReporter.class);
 
         RequestMetric mockMetric = mock(RequestMetric.class);
-        when(mockFilter.isIgnoredRequestMetric(mockMetric)).thenReturn(true);
+        when(mockFilter.isIgnoredGrRequestMetric(mockMetric)).thenReturn(true);
 
         MetricsRequestFilter metricsRequestFilter = new MetricsRequestFilter(mockStatsdReporter, mockFilter);
         metricsRequestFilter.reportTime(mockMetric, 1000);

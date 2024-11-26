@@ -1,6 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.rest.RestClient;

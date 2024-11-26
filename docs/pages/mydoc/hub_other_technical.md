@@ -57,7 +57,7 @@ http://hub/health will show if a specific hub host is up, and what version it is
 
 The hub uses [New Relic](http://newrelic.com/) for API level monitoring.  Since all hub and spoke interactions are http, the transactions automatically show up in New Relic.
 
-The hub also publishes detailed metrics data to [Hosted Graphite](http://hostedgraphite.com/) and [DataDog](https://www.datadoghq.com/)
+The hub also publishes detailed metrics data to [Hosted Graphite](http://hostedgraphite.com/) and [Grafana](https://lnrscirium.grafana.net/)
 Both are more useful for detailed metrics per channel and the health of the system.
 
 ## storage

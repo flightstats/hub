@@ -1,6 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
@@ -20,10 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,8 +28,6 @@ import static org.mockito.Mockito.when;
 @Execution(ExecutionMode.SAME_THREAD)
 class StatsDFilterTest {
 
-    @Mock
-    private DatadogMetricsProperties datadogMetricsProperties;
     @Mock
     private TickMetricsProperties tickMetricsProperties;
     @Mock
@@ -50,7 +44,7 @@ class StatsDFilterTest {
 
     @BeforeEach
     void setup() {
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        statsDFilter = new StatsDFilter(tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
     }
 
     @Test
@@ -101,29 +95,29 @@ class StatsDFilterTest {
 
     @Test
     void testStatsDFilterGetAllClients_twoNoOpClients() {
-        assertEquals(2, statsDFilter.getFilteredClients(true).size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(1).getClass());
+        assertEquals(2, statsDFilter.getGrafanaFilteredClients(true).size());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getGrafanaFilteredClients(true).get(0).getClass());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getGrafanaFilteredClients(true).get(1).getClass());
     }
 
     @Test
     void testStatsDFilterGetAllClients_twoCustomClients() {
         statsDFilter.setOperatingClients();
-        assertEquals(2, statsDFilter.getFilteredClients(true).size());
-        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
-        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getFilteredClients(true).get(1).getClass());
+        assertEquals(2, statsDFilter.getGrafanaFilteredClients(true).size());
+        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getGrafanaFilteredClients(true).get(0).getClass());
+        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getGrafanaFilteredClients(true).get(1).getClass());
     }
 
     @Test
     void testStatsDFilterGetFilteredClients_oneClient() {
-        assertEquals(1, statsDFilter.getFilteredClients(false).size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(false).get(0).getClass());
+        assertEquals(1, statsDFilter.getGrafanaFilteredClients(false).size());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getGrafanaFilteredClients(false).get(0).getClass());
     }
 
     @Test
     void testStatsDFilterGetFilteredClients_twoClientsFiltered() {
-        assertEquals(2, statsDFilter.getFilteredClients(true).size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
+        assertEquals(2, statsDFilter.getGrafanaFilteredClients(true).size());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getGrafanaFilteredClients(true).get(0).getClass());
     }
 
     @Test
@@ -232,10 +226,10 @@ class StatsDFilterTest {
         RequestMetric metric = mock(RequestMetric.class);
         when(metric.getMetricName()).thenReturn(Optional.of("request.api.channel"));
 
-        when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        when(grafanaMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
+        statsDFilter = new StatsDFilter(tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
 
-        assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
+        assertTrue(statsDFilter.isIgnoredGrRequestMetric(metric));
     }
 
     @Test
@@ -243,10 +237,10 @@ class StatsDFilterTest {
         RequestMetric metric = mock(RequestMetric.class);
         when(metric.getMetricName()).thenReturn(Optional.of("request.internal.channel"));
 
-        when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        when(grafanaMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
+        statsDFilter = new StatsDFilter(tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
 
-        assertFalse(statsDFilter.isIgnoredRequestMetric(metric));
+        assertFalse(statsDFilter.isIgnoredGrRequestMetric(metric));
     }
 
     @Test
@@ -254,9 +248,9 @@ class StatsDFilterTest {
         RequestMetric metric = mock(RequestMetric.class);
         when(metric.getMetricName()).thenReturn(Optional.empty());
 
-        when(datadogMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
-        statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
+        when(grafanaMetricsProperties.getRequestMetricsToIgnore()).thenReturn("request.api.something request.api.channel");
+        statsDFilter = new StatsDFilter(tickMetricsProperties, channelConfigDao, webhookDao, grafanaMetricsProperties);
 
-        assertTrue(statsDFilter.isIgnoredRequestMetric(metric));
+        assertTrue(statsDFilter.isIgnoredGrRequestMetric(metric));
     }
 }

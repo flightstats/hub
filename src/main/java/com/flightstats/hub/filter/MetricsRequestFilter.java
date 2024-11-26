@@ -53,7 +53,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
     void reportTime(RequestMetric metric, long startTime) {
         long time = System.currentTimeMillis() - startTime;
         log.trace("request {}, time: {}", metric.getTags().get("endpoint"), time);
-        if (statsdFilter.isIgnoredRequestMetric(metric)) {
+        if (statsdFilter.isIgnoredGrRequestMetric(metric)) {
             return;
         }
 
