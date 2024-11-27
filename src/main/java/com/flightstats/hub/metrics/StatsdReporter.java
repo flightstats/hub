@@ -7,26 +7,21 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 public class StatsdReporter {
 
     private StatsDFilter statsDFilter;
     private StatsDFormatter statsDFormatter;
-    private DataDogHandler dataDogHandler;
     private GrafanaHandler grafanaHandler;
 
     public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
-            DataDogHandler dataDogHandler,
             GrafanaHandler grafanaHandler
     ) {
         this.statsDFilter = statsDFilter;
         this.statsDFormatter = statsDFormatter;
-        this.dataDogHandler = dataDogHandler;
         this.grafanaHandler = grafanaHandler;
     }
 
@@ -90,14 +85,10 @@ public class StatsdReporter {
     }
 
     public void mute() {
-        dataDogHandler.mute();
         grafanaHandler.mute();
     }
 
     private void reportWithBothClients(Consumer<StatsDClient> method) {
-        List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
-        clients.forEach(method);
-
         List<StatsDClient> grafanaClients = statsDFilter.getGrafanaFilteredClients(true);
         grafanaClients.forEach(method);
     }

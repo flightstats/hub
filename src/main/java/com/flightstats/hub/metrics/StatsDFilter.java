@@ -1,15 +1,11 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.GrafanaMetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.RequestMetric;
 import com.flightstats.hub.webhook.Webhook;
-
-import javax.inject.Inject;
-
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;
@@ -17,6 +13,7 @@ import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,15 +28,10 @@ public class StatsDFilter {
     private final static String clientPrefix = "hub";
     private final static String clientHost = "localhost";
     private StatsDClient statsDClient = new NoOpStatsDClient();
-    private StatsDClient dataDogClient = new NoOpStatsDClient();
-
-    private final DatadogMetricsProperties datadogMetricsProperties;
     private final TickMetricsProperties tickMetricsProperties;
     // going direct to the DAO here over channelService/webhookService to avoid circular dep. condition in Guice injections
     private final Dao<ChannelConfig> channelConfigDao;
     private final Dao<Webhook> webhookConfigDao;
-
-    private final Set<String> requestMetricsToIgnore;
 
     private StatsDClient dataGrafanaClient = new NoOpStatsDClient();
 
@@ -48,20 +40,13 @@ public class StatsDFilter {
 
     @Inject
     public StatsDFilter(
-            DatadogMetricsProperties datadogMetricsProperties,
             TickMetricsProperties tickMetricsProperties,
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
             @Named("Webhook") Dao<Webhook> webhookConfigDao, GrafanaMetricsProperties grafanaMetricsProperties) {
-        this.datadogMetricsProperties = datadogMetricsProperties;
         this.tickMetricsProperties = tickMetricsProperties;
         this.channelConfigDao = channelConfigDao;
         this.webhookConfigDao = webhookConfigDao;
         this.grafanaMetricsProperties = grafanaMetricsProperties;
-
-        String[] ignoredRequestMetrics = StringUtils.split(datadogMetricsProperties.getRequestMetricsToIgnore());
-        requestMetricsToIgnore = (null != ignoredRequestMetrics && ignoredRequestMetrics.length > 0)
-                ? new HashSet<>(Arrays.asList(ignoredRequestMetrics))
-                : Collections.emptySet();
 
         String[] ignoredGrafanaRequestMetrics = StringUtils.split(grafanaMetricsProperties.getRequestMetricsToIgnore());
         requestMetricsToIgnoreGrafana = (null != ignoredGrafanaRequestMetrics && ignoredGrafanaRequestMetrics.length > 0)
@@ -72,34 +57,18 @@ public class StatsDFilter {
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
     void setOperatingClients() {
         int statsdPort = tickMetricsProperties.getStatsdPort();
-        int dogstatsdPort = datadogMetricsProperties.getStatsdPort();
         int grafanaStatsdPort = grafanaMetricsProperties.getStatsdPort();
         this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, statsdPort);
-        this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
         this.dataGrafanaClient = new NonBlockingStatsDClient(clientPrefix, clientHost, grafanaStatsdPort);
     }
 
     public boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
     }
-
-    public boolean isIgnoredRequestMetric(RequestMetric metric) {
-        return metric.getMetricName()
-                .map(requestMetricsToIgnore::contains)
-                .orElse(true);
-    }
     public boolean isIgnoredGrRequestMetric(RequestMetric metric) {
         return metric.getMetricName()
                 .map(requestMetricsToIgnoreGrafana::contains)
                 .orElse(true);
-    }
-    List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
-        StatsDClient primaryClient = datadogMetricsProperties.isPrimary() ? dataDogClient : statsDClient;
-        StatsDClient secondaryClient = primaryClient.equals(dataDogClient) ? statsDClient : dataDogClient;
-
-        return secondaryReporting ?
-                Arrays.asList(primaryClient, secondaryClient) :
-                Collections.singletonList(primaryClient);
     }
 
     List<StatsDClient> getGrafanaFilteredClients(boolean reporting) {
