@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 
 @Singleton
 @Slf4j
@@ -87,11 +89,18 @@ public class TimeService {
     }
 
     private void deleteFile() {
-        File file = new File(remoteFile);
-        if (file.exists()) {
-            file.delete();
+        try {
+            // Validate and sanitize the remoteFile path
+            File file = Paths.get(remoteFile).normalize().toFile();
+
+            if (file.exists()) {
+                file.delete();
+            }
+            log.info("deleted remote file {}; will use local ", remoteFile);
+        } catch (InvalidPathException e) {
+            log.error("invalid path for remote file", e);
+            throw new RuntimeException("invalid path for remoteFile " + remoteFile);
         }
-        log.info("deleted remote file {}; will use local ", remoteFile);
     }
 
     private void createFile() {
