@@ -12,7 +12,14 @@ const urlInput = arguments.url || arguments._[0];
 if (!urlInput) throw new Error('You must specify a consumer URL (e.g. --url http://some.where/out/there).');
 const url = new URL(urlInput);
 const oneSecondInMS = 1000;
-const frequency = arguments.frequency || oneSecondInMS;
+const MIN_FREQUENCY = 1000; // 1 second
+const MAX_FREQUENCY = 60000; // 1 minute
+
+let frequency = parseInt(arguments.frequency, 10) || oneSecondInMS;
+if (isNaN(frequency) || frequency < MIN_FREQUENCY || frequency > MAX_FREQUENCY) {
+    console.warn(`Invalid frequency value. Using default: ${oneSecondInMS}ms.`);
+    frequency = oneSecondInMS;
+}
 
 logParameters({
     url: url.href,
