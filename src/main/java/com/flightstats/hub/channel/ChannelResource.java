@@ -134,6 +134,11 @@ public class ChannelResource {
         json = channelService.handleCreationDate(json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
+        if (channelConfig.getCreationDate()!= null) {
+            // If the creation date is being modified, throw a 500 error
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Modification of the creation date is not allowed").build();
+        }
         if (oldConfig.isPresent()) {
             ChannelConfig config = oldConfig.get();
             log.trace("using old channel {} {}", config, config.getCreationDate().getTime());
