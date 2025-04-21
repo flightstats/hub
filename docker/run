@@ -100,6 +100,7 @@ else
     echo "Configuration file already exists at $CONFIG_FILE"
 fi
 
+
 echo "running hub in the background..."
 exec java -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
